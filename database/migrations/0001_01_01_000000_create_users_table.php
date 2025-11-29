@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -14,8 +13,32 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('username')->unique();
+            $table->text('bio')->nullable();
+            $table->string('avatar')->nullable();
+            $table->string('cover_image')->nullable();
+            $table->string('website')->nullable();
+            $table->string('location')->nullable();
+            $table->date('birth_date')->nullable();
+            $table->boolean('is_underage')->default(false);
+            $table->foreignId('parent_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->boolean('is_private')->default(false);
+            $table->boolean('is_verified')->default(false);
+            $table->boolean('is_banned')->default(false);
+            $table->boolean('two_factor_enabled')->default(false);
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->integer('followers_count')->default(0);
+            $table->integer('following_count')->default(0);
+            $table->integer('posts_count')->default(0);
+            $table->timestamp('last_login_at')->nullable();
+            $table->ipAddress('last_login_ip')->nullable();
             $table->string('email')->unique();
+            $table->string('phone')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
+            $table->timestamp('phone_verified_at')->nullable();
+            $table->string('provider')->nullable();
+            $table->string('provider_id')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
