@@ -27,8 +27,8 @@ class UploadLimitSeeder extends Seeder
                 'allowed_mimes' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
                 'max_total_size' => 51200, // 50MB
                 'is_video_allowed' => false,
-                'max_video_duration' => null,
-                'max_video_size' => null,
+                'max_video_duration' => 0,
+                'max_video_size' => 0,
             ],
             [
                 'type' => 'message',
@@ -47,8 +47,8 @@ class UploadLimitSeeder extends Seeder
                 'allowed_mimes' => ['jpg', 'jpeg', 'png', 'gif'],
                 'max_total_size' => 2048, // 2MB
                 'is_video_allowed' => false,
-                'max_video_duration' => null,
-                'max_video_size' => null,
+                'max_video_duration' => 0,
+                'max_video_size' => 0,
             ],
         ];
 

@@ -87,6 +87,6 @@ class UserSeeder extends Seeder
         ]);
 
         // ایجاد چند کاربر دیگر
-        User::factory()->count(10)->create();
+        User::factory()->count(12)->create();
     }
 }
