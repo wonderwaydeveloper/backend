@@ -9,10 +9,15 @@ use App\Models\User;
 use App\Services\AdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AdminController extends Controller
 {
-    public function __construct(private AdminService $adminService) {}
+    use AuthorizesRequests;
+
+    public function __construct(private AdminService $adminService)
+    {
+    }
 
     /**
      * آمار کلی پلتفرم

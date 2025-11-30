@@ -8,10 +8,17 @@ use App\Models\Post;
 use App\Services\PostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class PostController extends Controller
 {
-    public function __construct(private PostService $postService) {}
+
+    use AuthorizesRequests;
+
+
+    public function __construct(private PostService $postService)
+    {
+    }
 
     /**
      * نمایش تمام پست‌ها

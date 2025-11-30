@@ -8,10 +8,15 @@ use App\Models\Comment;
 use App\Services\CommentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class CommentController extends Controller
 {
-    public function __construct(private CommentService $commentService) {}
+    use AuthorizesRequests;
+
+    public function __construct(private CommentService $commentService)
+    {
+    }
 
     /**
      * ایجاد کامنت جدید

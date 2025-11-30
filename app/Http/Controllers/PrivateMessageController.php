@@ -9,9 +9,17 @@ use App\Services\PrivateMessageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+
 class PrivateMessageController extends Controller
 {
-    public function __construct(private PrivateMessageService $privateMessageService) {}
+
+    use AuthorizesRequests;
+
+    public function __construct(private PrivateMessageService $privateMessageService)
+    {
+    }
 
     /**
      * دریافت مکالمات کاربر

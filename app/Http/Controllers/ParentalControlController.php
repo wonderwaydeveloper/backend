@@ -7,10 +7,17 @@ use App\Models\User;
 use App\Services\ParentalControlService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ParentalControlController extends Controller
 {
-    public function __construct(private ParentalControlService $parentalControlService) {}
+
+    use AuthorizesRequests;
+
+
+    public function __construct(private ParentalControlService $parentalControlService)
+    {
+    }
 
     /**
      * افزودن کنترل والدین

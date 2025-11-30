@@ -27,31 +27,37 @@ class PostResource extends JsonResource
             'published_at' => $this->published_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
-            
+
             // نویسنده
             'user' => new UserResource($this->whenLoaded('user')),
-            
+
             // مدیا
             'media' => PostMediaResource::collection($this->whenLoaded('media')),
-            
+
             // پست والد برای پاسخ‌ها
             'parent' => new PostResource($this->whenLoaded('parent')),
-            
+
             // پست اصلی برای بازنشرها
             'original_post' => new PostResource($this->whenLoaded('originalPost')),
-            
+
             // تعاملات کاربر جاری
             'interactions' => $this->when(auth()->check(), function () {
                 return [
-                    'liked' => $this->likes->contains('user_id', auth()->id()),
-                    'bookmarked' => $this->bookmarks->contains('user_id', auth()->id()),
-                    'reposted' => $this->reposts->contains('user_id', auth()->id()) ?? false,
+                    'liked' => $this->whenLoaded('likes', function () {
+                        return $this->likes->contains('user_id', auth()->id());
+                    }, false),
+                    'bookmarked' => $this->whenLoaded('bookmarks', function () {
+                        return $this->bookmarks->contains('user_id', auth()->id());
+                    }, false),
+                    'reposted' => $this->whenLoaded('reposts', function () {
+                        return $this->reposts->contains('user_id', auth()->id());
+                    }, false),
                 ];
             }),
-            
+
             // پاسخ‌ها
             'replies' => PostResource::collection($this->whenLoaded('replies')),
-            
+
             // اطلاعات اضافی برای ادمین
             'scheduled_at' => $this->when(
                 $request->user()?->username === 'admin',

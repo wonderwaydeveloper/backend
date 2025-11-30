@@ -54,13 +54,48 @@ class RedisService
     /**
      * دریافت پست‌های فید از کش
      */
-    public function getCachedUserFeed(int $userId): ?array
+    public function getCachedUserFeed($userId): ?array
     {
-        $key = "user:feed:{$userId}";
-        $data = Redis::get($key);
-        
-        return $data ? json_decode($data, true) : null;
+        // حذف type hinting از int یا تبدیل به string
+        $key = "user_feed:{$userId}";
+
+        try {
+            $cached = $this->redis->get($key);
+
+            if ($cached) {
+                return json_decode($cached, true);
+            }
+        } catch (\Exception $e) {
+            \Log::error("Redis error for key {$key}: " . $e->getMessage());
+        }
+
+        return null;
     }
+
+
+    public function cachePosts($posts, $ttl = 3600): void
+    {
+        try {
+            $key = "public_posts";
+            $this->redis->setex($key, $ttl, json_encode($posts));
+        } catch (\Exception $e) {
+            \Log::error("Failed to cache posts: " . $e->getMessage());
+        }
+    }
+
+    public function getCachedPosts(): ?array
+    {
+        try {
+            $key = "public_posts";
+            $cached = $this->redis->get($key);
+
+            return $cached ? json_decode($cached, true) : null;
+        } catch (\Exception $e) {
+            \Log::error("Failed to get cached posts: " . $e->getMessage());
+            return null;
+        }
+    }
+
 
     /**
      * کش کردن نتایج جستجو
@@ -78,7 +113,7 @@ class RedisService
     {
         $key = "search:" . md5($query);
         $data = Redis::get($key);
-        
+
         return $data ? json_decode($data, true) : null;
     }
 
@@ -106,7 +141,7 @@ class RedisService
     public function checkRateLimit(string $key, int $maxAttempts, int $decaySeconds): bool
     {
         $key = "rate_limit:{$key}";
-        
+
         $current = Redis::get($key);
         if ($current && $current >= $maxAttempts) {
             return false;
@@ -166,7 +201,7 @@ class RedisService
             $keys = array_map(function ($key) {
                 return str_replace($this->prefix, '', $key);
             }, $keys);
-            
+
             Redis::del($keys);
         }
     }
@@ -177,14 +212,14 @@ class RedisService
     public function getStats(): array
     {
         $info = Redis::info();
-        
+
         return [
             'used_memory' => $info['used_memory_human'] ?? '0',
             'connected_clients' => $info['connected_clients'] ?? 0,
             'total_commands_processed' => $info['total_commands_processed'] ?? 0,
             'keyspace_hits' => $info['keyspace_hits'] ?? 0,
             'keyspace_misses' => $info['keyspace_misses'] ?? 0,
-            'hit_rate' => $info['keyspace_hits'] && $info['keyspace_misses'] ? 
+            'hit_rate' => $info['keyspace_hits'] && $info['keyspace_misses'] ?
                 round($info['keyspace_hits'] / ($info['keyspace_hits'] + $info['keyspace_misses']) * 100, 2) : 0,
         ];
     }

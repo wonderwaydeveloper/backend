@@ -9,8 +9,14 @@ use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+
 class UserController extends Controller
 {
+
+    use AuthorizesRequests;
+
     public function __construct(private UserService $userService)
     {
     }

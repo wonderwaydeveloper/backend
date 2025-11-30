@@ -8,9 +8,13 @@ use App\Models\Article;
 use App\Services\ArticleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ArticleController extends Controller
 {
+        use AuthorizesRequests;
+
+        
     public function __construct(private ArticleService $articleService) {}
 
     /**
