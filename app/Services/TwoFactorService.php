@@ -28,6 +28,7 @@ class TwoFactorService
             $user->update([
                 'two_factor_secret' => $secret,
                 'two_factor_recovery_codes' => json_encode($recoveryCodes),
+                'two_factor_enabled' => true,
             ]);
 
             $qrCodeUrl = $this->google2fa->getQRCodeUrl(
