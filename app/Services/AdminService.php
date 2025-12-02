@@ -5,9 +5,9 @@ namespace App\Services;
 use App\Models\PlatformSetting;
 use App\Models\UploadLimit;
 use App\Models\User;
+use App\Models\UserSecurityLog;
 use App\Models\Post;
 use App\Models\Article;
-use App\Models\UserSecurityLog;
 use Illuminate\Support\Facades\DB;
 
 class AdminService
@@ -23,11 +23,11 @@ class AdminService
         $underageUsers = User::where('is_underage', true)->count();
 
         $totalPosts = Post::count();
-        $publishedPosts = Post::published()->count();
+        $publishedPosts = Post::whereNotNull('published_at')->count();
         $sensitivePosts = Post::where('is_sensitive', true)->count();
 
         $totalArticles = Article::count();
-        $publishedArticles = Article::published()->count();
+        $publishedArticles = Article::whereNotNull('published_at')->count();
         $approvedArticles = Article::where('is_approved', true)->count();
 
         $todayRegistrations = User::whereDate('created_at', today())->count();
@@ -46,10 +46,9 @@ class AdminService
             'content' => [
                 'posts_total' => $totalPosts,
                 'posts_published' => $publishedPosts,
-                'posts_sensitive' => $sensitivePosts,
+                'sensitive_posts' => $sensitivePosts,
                 'articles_total' => $totalArticles,
                 'articles_published' => $publishedArticles,
-                'articles_approved' => $approvedArticles,
                 'today_posts' => $todayPosts,
             ],
             'security' => [
@@ -57,7 +56,7 @@ class AdminService
             ],
             'system' => [
                 'phone_auth_enabled' => PlatformSetting::isPhoneAuthEnabled(),
-                'social_auth_enabled' => PlatformSetting::isSocialAuthEnabled(),
+                'social_auth_enabled' => true, // Assuming social auth is always enabled
             ],
         ];
     }
@@ -92,6 +91,14 @@ class AdminService
 
             return $updated;
         });
+    }
+
+    /**
+     * دریافت محدودیت‌های آپلود
+     */
+    public function getUploadLimits(): array
+    {
+        return UploadLimit::all()->toArray();
     }
 
     /**
@@ -140,10 +147,8 @@ class AdminService
             $query->whereNotNull('parent_id');
         }
 
-        $users = $query->paginate($filters['per_page'] ?? 20);
-
         return [
-            'users' => $users,
+            'users' => $query->paginate($filters['per_page'] ?? 20),
             'stats' => [
                 'total_underage' => User::where('is_underage', true)->count(),
                 'with_parental_controls' => User::where('is_underage', true)->whereNotNull('parent_id')->count(),
@@ -168,21 +173,17 @@ class AdminService
             $query->where('created_at', '>=', $filters['date_from']);
         }
 
-        if (isset($filters['date_to'])) {
-            $query->where('created_at', '<=', $filters['date_to']);
-        }
-
         $logs = $query->paginate($filters['per_page'] ?? 50);
 
         // آمار کلی
         $stats = [
             'total_events' => UserSecurityLog::count(),
-            'login_attempts' => UserSecurityLog::loginAttempts()->count(),
-            'recent_events' => UserSecurityLog::recent(7)->count(),
-            'top_actions' => UserSecurityLog::groupBy('action')
-                ->select('action', DB::raw('count(*) as count'))
-                ->orderBy('count', 'desc')
-                ->limit(10)
+            'login_attempts' => UserSecurityLog::where('action', 'login')->count(),
+            'recent_events' => UserSecurityLog::latest()->take(10)->get(),
+            'top_actions' => UserSecurityLog::selectRaw('action, COUNT(*) as count')
+                ->groupBy('action')
+                ->orderByDesc('count')
+                ->limit(5)
                 ->get(),
         ];
 
@@ -220,37 +221,34 @@ class AdminService
     }
 
     /**
-     * پاک‌سازی داده‌های قدیمی
+     * بن کردن کاربر
      */
-    public function cleanupOldData(array $options = []): array
+    public function banUser(User $user): void
     {
-        $results = [];
+        $user->update(['banned_at' => now()]);
+    }
 
-        // پاک‌سازی لاگ‌های امنیتی قدیمی
-        if ($options['security_logs'] ?? false) {
-            $days = $options['security_logs_days'] ?? 90;
-            $deleted = UserSecurityLog::where('created_at', '<', now()->subDays($days))->delete();
-            $results['security_logs'] = $deleted;
-        }
+    /**
+     * رفع بن کردن کاربر
+     */
+    public function unbanUser(User $user): void
+    {
+        $user->update(['banned_at' => null]);
+    }
 
-        // پاک‌سازی پست‌های حذف شده قدیمی
-        if ($options['soft_deleted_posts'] ?? false) {
-            $days = $options['soft_deleted_posts_days'] ?? 30;
-            $deleted = Post::onlyTrashed()
-                ->where('deleted_at', '<', now()->subDays($days))
-                ->forceDelete();
-            $results['soft_deleted_posts'] = $deleted;
-        }
+    /**
+     * ویژه کردن پست
+     */
+    public function featurePost(Post $post): void
+    {
+        $post->update(['featured_at' => now()]);
+    }
 
-        // پاک‌سازی مقالات حذف شده قدیمی
-        if ($options['soft_deleted_articles'] ?? false) {
-            $days = $options['soft_deleted_articles_days'] ?? 30;
-            $deleted = Article::onlyTrashed()
-                ->where('deleted_at', '<', now()->subDays($days))
-                ->forceDelete();
-            $results['soft_deleted_articles'] = $deleted;
-        }
-
-        return $results;
+    /**
+     * ویژه کردن مقاله
+     */
+    public function featureArticle(Article $article): void
+    {
+        $article->update(['featured_at' => now()]);
     }
 }

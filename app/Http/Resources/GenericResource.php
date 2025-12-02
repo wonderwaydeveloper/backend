@@ -17,11 +17,6 @@ class GenericResource extends JsonResource
         $this->status = $status;
     }
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -29,9 +24,6 @@ class GenericResource extends JsonResource
         ];
     }
 
-    /**
-     * داده‌های اضافی
-     */
     public function with(Request $request): array
     {
         return [
@@ -44,16 +36,18 @@ class GenericResource extends JsonResource
     }
 
     /**
-     * ایجاد پاسخ موفق
+     * این متد، کد وضعیت HTTP را که در constructor تنظیم شده، به پاسخ نهایی اعمال می‌کند.
      */
+    public function toResponse($request)
+    {
+        return parent::toResponse($request)->setStatusCode($this->status);
+    }
+
     public static function success($data = null, $message = 'Operation completed successfully', $status = 200)
     {
         return new self($data, $message, $status);
     }
 
-    /**
-     * ایجاد پاسخ خطا
-     */
     public static function error($message = 'An error occurred', $status = 400, $errors = null)
     {
         return new self($errors, $message, $status);

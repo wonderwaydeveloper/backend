@@ -14,17 +14,33 @@ class AuthResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'user' => new UserResource($this['user']),
-            'access_token' => $this['token'],
+        // ارسال یک پرچم به UserResource برای نمایش ایمیل
+        $userResource = new \App\Http\Resources\UserResource($this['user'], ['include_email' => true]);
+
+        $data = [
+            'user' => $userResource,
             'token_type' => 'Bearer',
             'expires_in' => config('sanctum.expiration') ? config('sanctum.expiration') * 60 : null,
-            'two_factor_required' => $this['two_factor_required'] ?? false,
         ];
+
+        // فقط در صورتی که توکن وجود داشت، آن را اضافه کن
+        if (isset($this['token'])) {
+            $data['access_token'] = $this['token'];
+        }
+
+        // فقط در صورتی که احراز هویت دو مرحله‌ای لازم بود، آن را اضافه کن
+        if (isset($this['two_factor_required'])) {
+            $data['two_factor_required'] = $this['two_factor_required'];
+        }
+
+        return $data;
     }
 
     /**
-     * داده‌های اضافی
+     * Get additional data that should be returned with the resource array.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
      */
     public function with(Request $request): array
     {

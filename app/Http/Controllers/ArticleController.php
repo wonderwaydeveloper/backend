@@ -12,10 +12,12 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ArticleController extends Controller
 {
-        use AuthorizesRequests;
+    use AuthorizesRequests;
 
-        
-    public function __construct(private ArticleService $articleService) {}
+
+    public function __construct(private ArticleService $articleService)
+    {
+    }
 
     /**
      * نمایش تمام مقالات

@@ -30,7 +30,7 @@ abstract class TestCase extends BaseTestCase
         return \App\Models\Article::factory()->create($attributes);
     }
 
-    protected function actingAsUser(User $user = null): self
+    protected function actingAsUser(?User $user = null): self
     {
         $user = $user ?: $this->createUser();
         $token = $user->createToken('test-token')->plainTextToken;

@@ -10,7 +10,9 @@ use Illuminate\Http\Request;
 
 class BookmarkController extends Controller
 {
-    public function __construct(private BookmarkService $bookmarkService) {}
+    public function __construct(private BookmarkService $bookmarkService)
+    {
+    }
 
     /**
      * دریافت بوکمارک‌های کاربر
@@ -39,6 +41,7 @@ class BookmarkController extends Controller
     /**
      * حذف بوکمارک
      */
+
     public function destroy(Request $request, $bookmarkableType, $bookmarkableId)
     {
         try {
@@ -51,8 +54,11 @@ class BookmarkController extends Controller
             return GenericResource::success([
                 'deleted' => $deleted,
             ], 'Bookmark removed successfully');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return GenericResource::error('Bookmark not found', 404);
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 400);
         }
     }
+
 }

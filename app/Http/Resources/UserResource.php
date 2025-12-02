@@ -7,6 +7,14 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
+    private $customData = [];
+
+    public function __construct($resource, $customData = [])
+    {
+        parent::__construct($resource);
+        $this->customData = $customData;
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -18,8 +26,9 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'username' => $this->username,
-            'email' => $this->when($this->shouldIncludeEmail(), $this->email),
-            'phone' => $this->when($this->shouldIncludePhone(), $this->phone),
+            // **اصلاح مهم:** اگر پرچم وجود داشت، ایمیل را نمایش بده
+            'email' => $this->when($this->shouldIncludeEmail($request), $this->email),
+            'phone' => $this->when($this->shouldIncludePhone($request), $this->phone),
             'bio' => $this->bio,
             'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
             'cover_image' => $this->cover_image ? asset('storage/' . $this->cover_image) : null,
@@ -37,11 +46,11 @@ class UserResource extends JsonResource
             'updated_at' => $this->updated_at?->toISOString(),
             
             // روابط
-            'is_following' => $this->whenLoaded('followers', function () {
-                return $this->followers->contains('id', auth()->id());
+            'is_following' => $this->whenLoaded('followers', function () use ($request) {
+                return $this->followers->contains('id', $request->user()->id);
             }),
-            'is_followed_by' => $this->whenLoaded('following', function () {
-                return $this->following->contains('id', auth()->id());
+            'is_followed_by' => $this->whenLoaded('following', function () use ($request) {
+                return $this->following->contains('id', $request->user()->id);
             }),
             'followers' => UserResource::collection($this->whenLoaded('followers')),
             'following' => UserResource::collection($this->whenLoaded('following')),
@@ -59,19 +68,25 @@ class UserResource extends JsonResource
     }
 
     /**
-     * بررسی آیا باید ایمیل را شامل شود
+     * **اصلاح مهم:** بررسی آیا باید ایمیل را شامل شود
      */
-    private function shouldIncludeEmail(): bool
+    private function shouldIncludeEmail(Request $request): bool
     {
-        return auth()->check() && (auth()->id() === $this->id || auth()->user()->username === 'admin');
+        // اگر پرچم وجود داشت، حتماً نمایش بده
+        if (isset($this->customData['include_email']) && $this->customData['include_email'] === true) {
+            return true;
+        }
+
+        // در غیر این صورت، منطق قبلی را اعمال کن
+        return $request->user() && ($request->user()->id === $this->id || $request->user()->username === 'admin');
     }
 
     /**
      * بررسی آیا باید شماره تلفن را شامل شود
      */
-    private function shouldIncludePhone(): bool
+    private function shouldIncludePhone(Request $request): bool
     {
-        return auth()->check() && (auth()->id() === $this->id || auth()->user()->username === 'admin');
+        return $request->user() && ($request->user()->id === $this->id || $request->user()->username === 'admin');
     }
 
     /**

@@ -28,7 +28,7 @@ class EmailVerification extends Model
     public function scopeValid($query)
     {
         return $query->whereNull('verified_at')
-                    ->where('expires_at', '>', now());
+            ->where('expires_at', '>', now());
     }
 
     public function scopeType($query, $type)
@@ -61,6 +61,10 @@ class EmailVerification extends Model
         ]);
     }
 
+    /**
+     * **اصلاح نهایی:** ایجاد یک رکورد تأییدیه جدید با کد و توکن یکتا
+     * این روش مشکل null value in column "code" را حل می‌کند.
+     */
     public static function createVerification(string $email, string $type): self
     {
         // غیرفعال کردن کدهای قبلی
@@ -69,13 +73,17 @@ class EmailVerification extends Model
             ->whereNull('verified_at')
             ->update(['verified_at' => now()]);
 
-        $verification = self::create([
+        // تولید کد و توکن *قبل* از ایجاد رکورد
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $token = Str::random(32);
+
+        // ایجاد رکورد با تمام مقادیر لازم
+        return static::create([
             'email' => $email,
             'type' => $type,
+            'code' => $code,
+            'token' => $token,
+            'expires_at' => now()->addMinutes(30),
         ]);
-
-        $verification->generateCode();
-
-        return $verification;
     }
 }

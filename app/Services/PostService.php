@@ -284,8 +284,8 @@ class PostService
         $bookmark = $post->bookmarks()->where('user_id', $user->id)->first();
 
         if ($bookmark) {
-            $bookmark->delete();
-            return false;
+            // به جای حذف بوکمارک، استثنا پرتاب کن
+            throw new \Exception('Already bookmarked');
         } else {
             $post->bookmarks()->create(['user_id' => $user->id]);
             return true;

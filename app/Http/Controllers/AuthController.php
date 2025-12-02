@@ -18,6 +18,8 @@ use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use App\Services\EmailVerificationService;
 
+use Illuminate\Validation\ValidationException; 
+
 class AuthController extends Controller
 {
     public function __construct(
@@ -41,8 +43,9 @@ class AuthController extends Controller
             'birth_date' => 'required|date|before:-10 years',
         ]);
 
+        // **اصلاح نهایی:** پرتاب کردن استثنا به جای برگرداندن پاسخ دستی
         if ($validator->fails()) {
-            return GenericResource::error('Validation failed', 422, $validator->errors());
+            throw new ValidationException($validator);
         }
 
         try {
@@ -69,8 +72,9 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
+        // **اصلاح نهایی:** پرتاب کردن استثنا به جای برگرداندن پاسخ دستی
         if ($validator->fails()) {
-            return GenericResource::error('Validation failed', 422, $validator->errors());
+            throw new ValidationException($validator);
         }
 
         try {
@@ -93,6 +97,7 @@ class AuthController extends Controller
             return GenericResource::error($e->getMessage(), 401);
         }
     }
+
 
     /**
      * ارسال کد تأیید برای شماره موبایل

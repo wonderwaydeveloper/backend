@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Str;
+
 
 class User extends Authenticatable
 {
@@ -32,8 +34,12 @@ class User extends Authenticatable
         'is_verified',
         'is_banned',
         'two_factor_enabled',
+        'two_factor_secret',
         'provider',
         'provider_id',
+        'is_underage',
+        'email_verified_at',
+        'phone_verified_at',
     ];
 
     /**
@@ -187,6 +193,18 @@ class User extends Authenticatable
         return $this->birth_date?->age;
     }
 
+    /**
+     * این متد را اضافه کنید تا وضعیت سنی به صورت پویا محاسبه شود
+     */
+    public function getIsUnderageAttribute(): bool
+    {
+        // اگر تاریخ تولد وجود ندارد، فرض می‌کنیم زیر سن قانونی نیست
+        if (!$this->birth_date) {
+            return false;
+        }
+        return $this->birth_date->age < 18;
+    }
+
     public function markAsUnderage(): void
     {
         $this->update(['is_underage' => true]);
@@ -194,6 +212,10 @@ class User extends Authenticatable
 
     public function enableTwoFactor(): void
     {
+        $this->update([
+            'two_factor_enabled' => true,
+            'two_factor_secret' => Str::random(32), // تولید یک رشته تصادفی به عنوان رمز
+        ]);
         $this->update(['two_factor_enabled' => true]);
     }
 

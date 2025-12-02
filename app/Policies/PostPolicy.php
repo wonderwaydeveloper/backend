@@ -15,25 +15,31 @@ class PostPolicy
      */
     public function view(User $user, Post $post): bool
     {
-        // اگر پست حذف شده است، فقط نویسنده یا ادمین می‌تواند ببیند
-        if ($post->trashed()) {
-            return $user->id === $post->user_id || $this->managePosts($user);
-        }
-
         // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند پست را ببیند
         if ($post->user->is_banned) {
             return $this->managePosts($user);
         }
 
+        // اگر پست حذف شده است، فقط نویسنده یا ادمین می‌تواند ببیند
+        if ($post->trashed()) {
+            return $user->id === $post->user_id || $this->managePosts($user);
+        }
+
         // اگر نویسنده خصوصی است، فقط دنبال‌کنندگان تایید شده می‌توانند ببینند
-        if ($post->user->is_private && $post->user->id !== $user->id) {
+        if ($post->user->is_private) {
+            // نویسنده همیشه می‌تواند پست خودش را ببیند
+            if ($post->user_id === $user->id) {
+                return true;
+            }
+
+            // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
             return $post->user->followers()
                 ->where('follower_id', $user->id)
                 ->whereNotNull('approved_at')
                 ->exists();
         }
 
-        // بررسی محدودیت‌های سنی
+        // بررسی محدودیت‌های سنی برای محتوای حساس
         if ($post->is_sensitive && $user->is_underage) {
             return false;
         }

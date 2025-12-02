@@ -51,8 +51,8 @@ class PostPolicyTest extends TestCase
     /** @test */
     public function user_cannot_view_sensitive_content_if_underage()
     {
-        $adult = User::factory()->create(['is_underage' => false]);
-        $child = User::factory()->create(['is_underage' => true]);
+        $adult = User::factory()->create();
+        $child = User::factory()->underage()->create();
         
         $post = Post::factory()->create(['is_sensitive' => true]);
 
@@ -141,8 +141,8 @@ class PostPolicyTest extends TestCase
     /** @test */
     public function underage_user_cannot_create_sensitive_content()
     {
-        $adult = User::factory()->create(['is_underage' => false]);
-        $child = User::factory()->create(['is_underage' => true]);
+        $adult = User::factory()->create();
+        $child = User::factory()->underage()->create();
 
         $this->assertTrue($this->policy->createSensitiveContent($adult));
         $this->assertFalse($this->policy->createSensitiveContent($child));

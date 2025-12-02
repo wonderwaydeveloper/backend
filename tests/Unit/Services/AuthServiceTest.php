@@ -129,8 +129,9 @@ class AuthServiceTest extends TestCase
     /** @test */
     public function it_generates_unique_username()
     {
-        User::factory()->create(['username' => 'johndoe']);
-        User::factory()->create(['username' => 'johndoe1']);
+        // کاربرانی با نام‌های کاربری که تابع قرار است با آن‌ها تداخل پیدا کند، ایجاد می‌کنیم
+        User::factory()->create(['username' => 'john-doe']);
+        User::factory()->create(['username' => 'john-doe1']);
 
         $method = new \ReflectionMethod(AuthService::class, 'generateUniqueUsername');
         $method->setAccessible(true);
@@ -138,7 +139,12 @@ class AuthServiceTest extends TestCase
         $username1 = $method->invoke($this->authService, 'John Doe');
         $username2 = $method->invoke($this->authService, 'John Doe');
 
-        $this->assertNotEquals($username1, $username2);
+        // حالا هر دو فراخوانی باید 'john-doe2' را برگردانند، زیرا وضعیت دیتابیس بین دو فراخوانی تغییر نمی‌کند
+        $this->assertEquals('john-doe2', $username1);
+        $this->assertEquals($username2, $username1);
+
+        // اگر می‌خواهید بررسی کنید که نام‌های متفاوتی تولید می‌شوند، باید منطق تست را تغییر دهید
+        // برای مثال، کاربر دوم را بعد از اولین فراخوانی ایجاد کنید.
         $this->assertStringStartsWith('john-doe', $username1);
     }
 

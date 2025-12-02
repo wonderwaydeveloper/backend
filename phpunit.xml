@@ -6,11 +6,13 @@
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,defects"
          beStrictAboutOutputDuringTests="true"
+         failOnRisky="true"
+         failOnWarning="true">
+    <!-- این سه خط حذف شده‌اند:
          beStrictAboutTodoAnnotatedTests="true"
          convertDeprecationsToExceptions="true"
-         failOnRisky="true"
-         failOnWarning="true"
-         verbose="true">
+         verbose="true"
+    -->
     <testsuites>
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
