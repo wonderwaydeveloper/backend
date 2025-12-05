@@ -27,6 +27,10 @@ class Article extends Model
         'reading_time',
         'tags',
         'metadata',
+        'comment_count',
+        'like_count',
+        'share_count',
+        'view_count',
     ];
 
     protected $casts = [
@@ -78,7 +82,7 @@ class Article extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published')
-                    ->where('published_at', '<=', now());
+            ->where('published_at', '<=', now());
     }
 
     public function scopeFeatured($query)

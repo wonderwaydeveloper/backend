@@ -273,7 +273,8 @@ class UserController extends Controller
         }
 
         try {
-            $users = $this->userService->searchUsers($request->query, $request->user());
+            
+             $users = $this->userService->searchUsers($request->get('query'), $request->user());
 
             return GenericResource::success(
                 UserResource::collection($users),

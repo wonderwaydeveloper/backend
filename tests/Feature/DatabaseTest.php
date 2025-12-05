@@ -10,18 +10,22 @@ use App\Models\Comment;
 use App\Models\Follow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\Group;
 
 class DatabaseTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function database_connections_work()
     {
         $this->assertNotNull(DB::connection()->getPdo());
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function user_table_has_correct_structure()
     {
         $user = User::factory()->create([
@@ -39,7 +43,8 @@ class DatabaseTest extends TestCase
         $this->assertNotNull($user->updated_at);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function posts_table_has_correct_structure()
     {
         $user = User::factory()->create();
@@ -58,7 +63,8 @@ class DatabaseTest extends TestCase
         $this->assertSoftDeleted('posts', ['id' => $post->id]);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function articles_table_has_correct_structure()
     {
         $user = User::factory()->create();
@@ -78,7 +84,8 @@ class DatabaseTest extends TestCase
         $this->assertIsArray($article->tags);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function follows_table_has_correct_constraints()
     {
         $user1 = User::factory()->create();
@@ -107,7 +114,8 @@ class DatabaseTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function polymorphic_relationships_work_correctly()
     {
         $user = User::factory()->create();
@@ -134,7 +142,8 @@ class DatabaseTest extends TestCase
         $this->assertInstanceOf(Article::class, $articleComment->commentable);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function database_indexes_are_effective()
     {
         // Create test data
@@ -153,7 +162,8 @@ class DatabaseTest extends TestCase
         $this->assertCount(100, $userPosts);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function database_transactions_work_correctly()
     {
         DB::beginTransaction();
@@ -175,29 +185,58 @@ class DatabaseTest extends TestCase
         $this->assertDatabaseMissing('posts', ['id' => $post->id ?? 0]);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
     public function foreign_key_constraints_work()
     {
+        // در PostgreSQL با cascade، وقتی کاربر حذف می‌شود، پست‌هایش هم حذف می‌شوند
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
-
-        // Try to delete user (should fail due to foreign key constraint)
-        try {
-            $user->delete();
-            $this->fail('Should have thrown foreign key constraint violation');
-        } catch (\Exception $e) {
-            $this->assertTrue(true); // Expected to fail
-        }
-
-        // Delete post first, then user (should succeed)
+        
+        // ابتدا پست را soft delete می‌کنیم
         $post->delete();
-        $user->delete();
-
         $this->assertSoftDeleted('posts', ['id' => $post->id]);
+        
+        // سپس کاربر را حذف می‌کنیم - به دلیل cascade در دیتابیس، پست هم حذف می‌شود
+        $user->delete();
+        
+        // کاربر باید حذف شده باشد
         $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        
+        // پست هم باید کاملاً حذف شده باشد (نه فقط soft delete)
+        $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
 
-    /** @test */
+    #[Test]
+    #[Group('database')]
+    public function test_foreign_key_without_cascade_works()
+    {
+        // تست جداگانه برای بررسی cascade
+        $user = User::factory()->create();
+        $post = Post::factory()->create(['user_id' => $user->id]);
+        
+        // فقط پست را حذف می‌کنیم
+        $post->delete();
+        
+        // پست باید soft delete شده باشد
+        $this->assertSoftDeleted('posts', ['id' => $post->id]);
+        
+        // کاربر باید همچنان وجود داشته باشد
+        $this->assertDatabaseHas('users', ['id' => $user->id]);
+        
+        // کاربر را حذف می‌کنیم
+        $user->delete();
+        
+        // کاربر حذف شده
+        $this->assertDatabaseMissing('users', ['id' => $user->id]);
+        
+        // پست باید همچنان soft delete شده باشد (در صورت عدم cascade)
+        // اما با cascade، پست هم حذف می‌شود
+        $this->assertDatabaseMissing('posts', ['id' => $post->id]);
+    }
+
+    #[Test]
+    #[Group('database')]
     public function full_text_search_works()
     {
         // Create posts with searchable content

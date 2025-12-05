@@ -23,6 +23,9 @@ return new class extends Migration {
             $table->integer('reply_count')->default(0);
             $table->integer('repost_count')->default(0);
             $table->integer('view_count')->default(0);
+            $table->integer('comment_count')->default(0);
+            $table->boolean('is_featured')->default(false);
+            $table->boolean('is_private')->default(false);
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->softDeletes();

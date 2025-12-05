@@ -18,7 +18,7 @@ class BookmarkTest extends TestCase
     public function user_can_view_bookmarks()
     {
         $user = User::factory()->create();
-        
+
         // Bookmark some posts
         $posts = Post::factory()->count(3)->create();
         foreach ($posts as $post) {
@@ -51,7 +51,7 @@ class BookmarkTest extends TestCase
     public function user_can_filter_bookmarks_by_type()
     {
         $user = User::factory()->create();
-        
+
         // Bookmark posts
         $posts = Post::factory()->count(3)->create();
         foreach ($posts as $post) {
@@ -92,7 +92,7 @@ class BookmarkTest extends TestCase
     {
         $user = User::factory()->create();
         $post = Post::factory()->create();
-        
+
         $bookmark = Bookmark::create([
             'user_id' => $user->id,
             'bookmarkable_id' => $post->id,
@@ -117,7 +117,7 @@ class BookmarkTest extends TestCase
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
         $post = Post::factory()->create();
-        
+
         $bookmark = Bookmark::create([
             'user_id' => $user1->id,
             'bookmarkable_id' => $post->id,
@@ -147,7 +147,12 @@ class BookmarkTest extends TestCase
         // Try to bookmark again
         $response = $this->postJson("/api/posts/{$post->id}/bookmark");
         $response->assertStatus(400)
-            ->assertJson(['message' => 'Already bookmarked']);
+            // کد اصلاح شده:
+            ->assertJson([
+                'meta' => [
+                    'message' => 'Already bookmarked',
+                ]
+            ]);
 
         // Should still have only one bookmark
         $bookmarkCount = Bookmark::where('user_id', $user->id)
@@ -162,8 +167,9 @@ class BookmarkTest extends TestCase
     public function bookmarked_items_have_bookmark_flag_in_response()
     {
         $user = User::factory()->create();
-        $post = Post::factory()->create();
-        
+        // این خط را تغییر دهید:
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
         // Bookmark the post
         Bookmark::create([
             'user_id' => $user->id,
@@ -189,8 +195,9 @@ class BookmarkTest extends TestCase
     public function bookmark_count_is_accurate()
     {
         $user = User::factory()->create();
-        $post = Post::factory()->create();
-        
+        // کد اصلاح شده: پست را توسط کاربر ایجاد کنید
+        $post = Post::factory()->create(['user_id' => $user->id]);
+
         // Multiple users bookmark the same post
         $users = User::factory()->count(5)->create();
         foreach ($users as $bookmarkUser) {
@@ -214,4 +221,5 @@ class BookmarkTest extends TestCase
 
         $this->assertEquals(5, $bookmarkCount);
     }
+
 }

@@ -225,7 +225,10 @@ class AdminService
      */
     public function banUser(User $user): void
     {
-        $user->update(['banned_at' => now()]);
+        $user->update(['is_banned' => true]);
+
+        // ثبت لاگ امنیتی
+        UserSecurityLog::logSecurityEvent($user, 'banned');
     }
 
     /**
@@ -233,7 +236,10 @@ class AdminService
      */
     public function unbanUser(User $user): void
     {
-        $user->update(['banned_at' => null]);
+        $user->update(['is_banned' => false]);
+
+        // ثبت لاگ امنیتی
+        UserSecurityLog::logSecurityEvent($user, 'unbanned');
     }
 
     /**
@@ -241,7 +247,7 @@ class AdminService
      */
     public function featurePost(Post $post): void
     {
-        $post->update(['featured_at' => now()]);
+        $post->update(['is_featured' => true]);
     }
 
     /**
@@ -249,6 +255,6 @@ class AdminService
      */
     public function featureArticle(Article $article): void
     {
-        $article->update(['featured_at' => now()]);
+        $article->update(['is_featured' => true]);
     }
 }

@@ -19,7 +19,18 @@ class GenericResource extends JsonResource
 
     public function toArray(Request $request): array
     {
+        // اگر وضعیت خطا است، داده‌های خطا را برگردان
+        if ($this->status >= 400) {
+            return [
+                'success' => false,
+                'message' => $this->message,
+                'errors' => $this->resource,
+            ];
+        }
+
+        // در غیر این صورت، داده‌های موفقیت را برگردان
         return [
+            'success' => true,
             'data' => $this->resource,
         ];
     }

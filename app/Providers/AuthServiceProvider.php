@@ -7,6 +7,7 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
 use App\Policies\ArticlePolicy;
+use App\Policies\BookmarkPolicy;
 use App\Policies\CommentPolicy;
 use App\Policies\PostPolicy;
 use App\Policies\UserPolicy;
@@ -24,6 +25,7 @@ class AuthServiceProvider extends ServiceProvider
         Post::class => PostPolicy::class,
         Article::class => ArticlePolicy::class,
         Comment::class => CommentPolicy::class,
+        Bookmark::class => BookmarkPolicy::class,
     ];
 
     /**

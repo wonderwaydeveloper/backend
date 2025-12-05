@@ -67,6 +67,9 @@ Route::get('posts', [PostController::class, 'index']);
 Route::get('posts/{post}', [PostController::class, 'show']);
 Route::get('articles', [ArticleController::class, 'index']);
 Route::get('articles/{article}', [ArticleController::class, 'show']);
+
+Route::get('users/search', [UserController::class, 'search']);
+
 Route::get('users/{user}', [UserController::class, 'show']);
 
 // Global Search
@@ -137,9 +140,6 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::get('me/follow-requests', [UserController::class, 'followRequests']);
         Route::post('{user}/accept-follow-request', [UserController::class, 'acceptFollowRequest']);
         Route::post('{user}/reject-follow-request', [UserController::class, 'rejectFollowRequest']);
-
-        // Search
-        Route::get('search', [UserController::class, 'search']);
     });
 
     // ====================
@@ -187,12 +187,14 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
     // ====================
     Route::prefix('comments')->group(function () {
         Route::post('/', [CommentController::class, 'store']);
-        Route::put('{comment}', [CommentController::class, 'update'])->middleware('can:update,comment');
-        Route::delete('{comment}', [CommentController::class, 'destroy'])->middleware('can:delete,comment');
 
         // Comment Interactions
         Route::post('{comment}/like', [CommentController::class, 'like']);
         Route::post('{comment}/reply', [CommentController::class, 'reply']);
+
+        Route::put('{comment}', [CommentController::class, 'update'])->middleware('can:update,comment');
+        Route::delete('{comment}', [CommentController::class, 'destroy'])->middleware('can:delete,comment');
+
 
         // Get comments for content
         Route::get('/', [CommentController::class, 'index']);

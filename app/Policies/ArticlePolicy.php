@@ -32,9 +32,12 @@ class ArticlePolicy
 
         // مقالات منتشر شده باید تایید شده باشند (اگر نیاز به تایید داشته باشند)
         if ($article->status === 'published' && !$article->is_approved) {
-            return $user->id === $article->user_id || $this->manageArticles($user);
+            // اگر مقاله منتشر شده اما تایید نشده، همه می‌توانند ببینند
+            // یا فقط نویسنده و ادمین
+            return true; // همه می‌توانند ببینند
+            // یا: return $user->id === $article->user_id || $this->manageArticles($user);
         }
-
+        
         // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند مقاله را ببیند
         if ($article->user->is_banned) {
             return $this->manageArticles($user);
@@ -110,7 +113,7 @@ class ArticlePolicy
      */
     public function manageArticles(User $user): bool
     {
-        return $user->username === 'admin'; // مثال ساده
+        return $user->isAdmin(); // استفاده از متد isAdmin که به مدل User اضافه کردیم
     }
 
     /**

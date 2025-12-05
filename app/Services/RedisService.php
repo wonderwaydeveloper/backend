@@ -45,32 +45,25 @@ class RedisService
     /**
      * کش کردن پست‌های فید کاربر
      */
-    public function cacheUserFeed(int $userId, array $posts, int $ttl = 300): void
+    public function cacheUserFeed(string $key, array $posts, int $ttl = 300): void
     {
-        $key = "user:feed:{$userId}";
         Redis::setex($key, $ttl, json_encode($posts));
     }
 
     /**
      * دریافت پست‌های فید از کش
      */
-    public function getCachedUserFeed($userId): ?array
+    public function getCachedUserFeed(string $key): ?array
     {
-        // حذف type hinting از int یا تبدیل به string
-        $key = "user_feed:{$userId}";
-
         try {
-            $cached = $this->redis->get($key);
-
-            if ($cached) {
-                return json_decode($cached, true);
-            }
+            $cached = Redis::get($key);
+            return $cached ? json_decode($cached, true) : null;
         } catch (\Exception $e) {
             \Log::error("Redis error for key {$key}: " . $e->getMessage());
+            return null;
         }
-
-        return null;
     }
+
 
 
     public function cachePosts($posts, $ttl = 3600): void

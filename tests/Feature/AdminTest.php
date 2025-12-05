@@ -221,7 +221,7 @@ class AdminTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.banned', true);
 
-        $this->assertTrue($user->fresh()->is_banned);
+        $this->assertTrue($user->refresh()->is_banned);
     }
 
     /** @test */
@@ -237,7 +237,7 @@ class AdminTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonPath('data.unbanned', true);
 
-        $this->assertFalse($user->fresh()->is_banned);
+        $this->assertFalse($user->refresh()->is_banned);
     }
 
     /** @test */

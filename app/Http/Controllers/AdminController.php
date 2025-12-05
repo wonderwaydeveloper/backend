@@ -6,6 +6,8 @@ use App\Http\Resources\GenericResource;
 use App\Models\PlatformSetting;
 use App\Models\UploadLimit;
 use App\Models\User;
+use App\Models\Post;
+use App\Models\Article;
 use App\Services\AdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -170,6 +172,78 @@ class AdminController extends Controller
             return GenericResource::success($reports, 'Security reports retrieved successfully');
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 403);
+        }
+    }
+
+    /**
+     * بن کردن کاربر
+     */
+    public function banUser(Request $request, User $user)
+    {
+        try {
+            $this->authorize('ban', $user);
+
+            $this->adminService->banUser($user);
+
+            return GenericResource::success([
+                'banned' => true,
+            ], 'User banned successfully');
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * آزاد کردن کاربر
+     */
+    public function unbanUser(Request $request, User $user)
+    {
+        try {
+            $this->authorize('ban', $user);
+
+            $this->adminService->unbanUser($user);
+
+            return GenericResource::success([
+                'unbanned' => true,
+            ], 'User unbanned successfully');
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * ویژه کردن پست
+     */
+    public function featurePost(Request $request, Post $post)
+    {
+        try {
+            $this->authorize('managePosts', Post::class);
+
+            $this->adminService->featurePost($post);
+
+            return GenericResource::success([
+                'featured' => true,
+            ], 'Post featured successfully');
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * ویژه کردن مقاله
+     */
+    public function featureArticle(Request $request, Article $article)
+    {
+        try {
+            $this->authorize('manageArticles', Article::class);
+
+            $this->adminService->featureArticle($article);
+
+            return GenericResource::success([
+                'featured' => true,
+            ], 'Article featured successfully');
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 400);
         }
     }
 }

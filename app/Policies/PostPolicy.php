@@ -15,8 +15,11 @@ class PostPolicy
      */
     public function view(User $user, Post $post): bool
     {
+        // مهم: همیشه آخرین اطلاعات کاربر را از پایگاه داده بخوان
+        $postOwner = User::find($post->user_id);
+
         // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند پست را ببیند
-        if ($post->user->is_banned) {
+        if ($postOwner->is_banned) {
             return $this->managePosts($user);
         }
 
@@ -26,14 +29,14 @@ class PostPolicy
         }
 
         // اگر نویسنده خصوصی است، فقط دنبال‌کنندگان تایید شده می‌توانند ببینند
-        if ($post->user->is_private) {
+        if ($postOwner->is_private) {
             // نویسنده همیشه می‌تواند پست خودش را ببیند
             if ($post->user_id === $user->id) {
                 return true;
             }
 
             // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
-            return $post->user->followers()
+            return $postOwner->followers()
                 ->where('follower_id', $user->id)
                 ->whereNotNull('approved_at')
                 ->exists();
@@ -46,6 +49,7 @@ class PostPolicy
 
         return true;
     }
+
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست ایجاد کند
@@ -111,16 +115,22 @@ class PostPolicy
      */
     public function like(User $user, Post $post): bool
     {
-        // کاربر نمی‌تواند پست خودش را لایک کند
-        if ($user->id === $post->user_id) {
-            return false;
-        }
-
         // کاربران مسدود شده نمی‌توانند لایک کنند
         if ($user->is_banned) {
             return false;
         }
 
+        // **مهمه: کاربر نمی‌تواند پست خودش را لایک کند**
+        if ($user->id === $post->user_id) {
+            return false;
+        }
+
+        // بررسی محدودیت‌های سنی برای محتوای حساس
+        if ($post->is_sensitive && $user->is_underage) {
+            return false;
+        }
+
+        // در نهایت، کاربر باید بتواند پست را ببیند تا بتواند آن را لایک کند
         return $this->view($user, $post);
     }
 
@@ -147,7 +157,7 @@ class PostPolicy
      */
     public function managePosts(User $user): bool
     {
-        return $user->username === 'admin'; // مثال ساده
+        return $user->isAdmin(); // استفاده از متد isAdmin که به مدل User اضافه کردیم
     }
 
     /**

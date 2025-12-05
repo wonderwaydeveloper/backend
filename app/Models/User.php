@@ -193,18 +193,6 @@ class User extends Authenticatable
         return $this->birth_date?->age;
     }
 
-    /**
-     * این متد را اضافه کنید تا وضعیت سنی به صورت پویا محاسبه شود
-     */
-    public function getIsUnderageAttribute(): bool
-    {
-        // اگر تاریخ تولد وجود ندارد، فرض می‌کنیم زیر سن قانونی نیست
-        if (!$this->birth_date) {
-            return false;
-        }
-        return $this->birth_date->age < 18;
-    }
-
     public function markAsUnderage(): void
     {
         $this->update(['is_underage' => true]);
@@ -226,5 +214,11 @@ class User extends Authenticatable
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
         ]);
+    }
+
+
+    public function isAdmin()
+    {
+        return $this->username === 'admin';
     }
 }

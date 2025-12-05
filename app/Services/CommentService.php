@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Comment;
 use App\Models\CommentMedia;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -32,12 +32,16 @@ class CommentService
             }
 
             // آپدیت تعداد کامنت‌ها
-            $commentable->increment('comment_count');
+            if ($commentable) {
+                $commentable->increment('comment_count');
+            }
 
             // اگر پاسخ به کامنت دیگری است
             if (isset($data['parent_id'])) {
                 $parentComment = Comment::find($data['parent_id']);
-                $parentComment->increment('reply_count');
+                if ($parentComment) {
+                    $parentComment->increment('reply_count');
+                }
             }
 
             return $comment->load('user', 'media');
@@ -70,12 +74,16 @@ class CommentService
             }
 
             // آپدیت تعداد کامنت‌های محتوای اصلی
-            $comment->commentable->decrement('comment_count');
+            if ($comment->commentable) {
+                $comment->commentable->decrement('comment_count');
+            }
 
             // اگر پاسخ به کامنت دیگری است
             if ($comment->parent_id) {
                 $parentComment = Comment::find($comment->parent_id);
-                $parentComment->decrement('reply_count');
+                if ($parentComment) {
+                    $parentComment->decrement('reply_count');
+                }
             }
 
             $comment->delete();
@@ -85,7 +93,7 @@ class CommentService
     /**
      * دریافت کامنت‌های یک محتوا
      */
-    public function getComments(Model $commentable, array $filters = []): LengthAwarePaginator
+    public function getComments(Model $commentable, array $filters = []): Collection
     {
         $query = Comment::with(['user', 'media', 'replies.user'])
             ->where('commentable_id', $commentable->id)
@@ -93,7 +101,7 @@ class CommentService
             ->root()
             ->orderBy('created_at', 'desc');
 
-        return $query->paginate($filters['per_page'] ?? 15);
+        return $query->get();
     }
 
     /**
@@ -112,7 +120,11 @@ class CommentService
 
             // آپدیت تعداد پاسخ‌ها
             $parent->increment('reply_count');
-            $parent->commentable->increment('comment_count');
+
+            // آپدیت تعداد کامنت‌های محتوای اصلی
+            if ($parent->commentable) {
+                $parent->commentable->increment('comment_count');
+            }
 
             return $reply->load('user', 'parent');
         });
@@ -150,7 +162,7 @@ class CommentService
      */
     private function getModelClass(string $type): string
     {
-        return match($type) {
+        return match ($type) {
             'post' => \App\Models\Post::class,
             'article' => \App\Models\Article::class,
             default => throw new \Exception('Invalid commentable type'),

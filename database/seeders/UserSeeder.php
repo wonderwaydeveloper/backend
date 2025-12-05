@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
     {
         // ایجاد کاربر ادمین
         $admin = User::create([
-            'name' => 'ادمین',
+            'name' => 'Admin User',
             'username' => 'admin',
             'email' => 'admin@example.com',
             'phone' => '+989111111111',
@@ -28,7 +28,7 @@ class UserSeeder extends Seeder
 
         // ایجاد کاربر معمولی
         $user1 = User::create([
-            'name' => 'کاربر تست یک',
+            'name' => 'Test User 1',
             'username' => 'user1',
             'email' => 'user1@example.com',
             'phone' => '+989122222222',
@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
         ]);
 
         $user2 = User::create([
-            'name' => 'کاربر تست دو',
+            'name' => 'Test User 2',
             'username' => 'user2',
             'email' => 'user2@example.com',
             'phone' => '+989133333333',
@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
 
         // ایجاد کاربر زیر سن قانونی
         $childUser = User::create([
-            'name' => 'کاربر کودک',
+            'name' => "Child User",
             'username' => 'childuser',
             'email' => 'child@example.com',
             'phone' => '+989144444444',

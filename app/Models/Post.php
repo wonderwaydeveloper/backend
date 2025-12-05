@@ -18,6 +18,8 @@ class Post extends Model
         'original_post_id',
         'is_sensitive',
         'is_edited',
+        'is_featured',
+        'is_private', // این ستون را اضافه کنید
         'scheduled_at',
         'published_at',
     ];
@@ -25,6 +27,8 @@ class Post extends Model
     protected $casts = [
         'is_sensitive' => 'boolean',
         'is_edited' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_private' => 'boolean', // این ستون را اضافه کنید
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
         'like_count' => 'integer',
@@ -34,9 +38,13 @@ class Post extends Model
     ];
 
     // Relationships
+
+    /**
+     * Get the user that owns the post.
+     */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->select(['id', 'name', 'username', 'avatar', 'is_private']);
     }
 
     public function media()
@@ -78,13 +86,13 @@ class Post extends Model
     public function scopePublished($query)
     {
         return $query->whereNotNull('published_at')
-                    ->where('published_at', '<=', now());
+            ->where('published_at', '<=', now());
     }
 
     public function scopeScheduled($query)
     {
         return $query->whereNotNull('scheduled_at')
-                    ->where('scheduled_at', '>', now());
+            ->where('scheduled_at', '>', now());
     }
 
     public function scopeWithMedia($query)
@@ -126,5 +134,14 @@ class Post extends Model
     public function getExcerptAttribute($length = 100): string
     {
         return str($this->content)->limit($length);
+    }
+
+    public function isBookmarkedBy(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        return $this->bookmarks()->where('user_id', $user->id)->exists();
     }
 }

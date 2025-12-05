@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Storage;
 class PostService
 {
     public function __construct(
-        private RedisService $redisService
+        private RedisService $redisService,
+        private NotificationService $notificationService
     ) {
     }
 
@@ -181,30 +182,47 @@ class PostService
     /**
      * دریافت فید کاربر با کش
      */
+
+
     public function getUserFeed(User $user, array $filters = []): LengthAwarePaginator
     {
         $cacheKey = "user_feed:{$user->id}:" . md5(json_encode($filters));
 
+        // 1. بررسی کش (باید در تست به گونه‌ای mock شود که false برگرداند)
         $cached = $this->redisService->getCachedUserFeed($cacheKey);
         if ($cached) {
-            return $this->paginateFromCache($cached, $filters);
+            // اگر داده‌های کش شده آرایه‌ای از IDها هستند، آنها را به مدل Post تبدیل کنید
+            $postIds = collect($cached)->pluck('id')->toArray();
+            $posts = Post::with(['user', 'media'])
+                ->whereIn('id', $postIds)
+                ->orderByRaw('FIELD(id, ' . implode(',', $postIds) . ')')
+                ->paginate($filters['per_page'] ?? 20);
+            return $posts;
         }
 
-        $followingIds = $user->following()->pluck('users.id');
+        // 2. دریافت ID کاربران دنبال شده
+        // استفاده از pluck('id') کافی است و استانداردتر است
+        $followingIds =  $user->following()->pluck('users.id');
 
+        // 3. اضافه کردن ID کاربر فعلی به لیست و اطمینان از یکتا بودن
+        $userIdsForFeed = $followingIds->push($user->id)->unique();
+
+        // 4. ساخت کوئری اصلی
         $query = Post::with(['user', 'media'])
-            ->whereIn('user_id', $followingIds->push($user->id))
-            ->published()
+            ->whereIn('user_id', $userIdsForFeed)
+            ->published() // اطمینان از اینکه این اسکوپ در مدل Post به درستی تعریف شده
             ->orderBy('created_at', 'desc');
 
+        // 5. اعمال فیلتر محتوای حساس برای کاربران زیر سن
         if ($user->is_underage) {
             $query->where('is_sensitive', false);
         }
 
+        // 6. اجرای کوئری و صفحه‌بندی
         $posts = $query->paginate($filters['per_page'] ?? 20);
 
-        // کش کردن
-        $this->redisService->cacheUserFeed($cacheKey, $posts->items(), 300);
+        // 7. کش کردن نتایج (فقط IDها برای صرفه‌جویی در حافظه)
+        $this->redisService->cacheUserFeed($cacheKey, $posts->pluck('id')->toArray(), 300);
 
         return $posts;
     }
@@ -242,18 +260,39 @@ class PostService
     /**
      * لایک/آنلایک پست
      */
+
     public function toggleLike(User $user, Post $post): bool
     {
-        $like = $post->likes()->where('user_id', $user->id)->first();
+        try {
+            $like = $post->likes()->where('user_id', $user->id)->first();
 
-        if ($like) {
-            $like->delete();
-            $post->decrement('like_count');
-            return false;
-        } else {
-            $post->likes()->create(['user_id' => $user->id]);
-            $post->increment('like_count');
-            return true;
+            if ($like) {
+                $like->delete();
+                $post->decrement('like_count');
+                return false;
+            } else {
+                $post->likes()->create(['user_id' => $user->id]);
+                $post->increment('like_count');
+
+                // ارسال نوتیفیکیشن - فقط اگر کاربر، مالک پست نباشد
+                if ($post->user_id !== $user->id) {
+                    try {
+                        $this->notificationService->sendNewLikeNotification(
+                            $post->user,
+                            $user,
+                            $post
+                        );
+                    } catch (\Exception $e) {
+                        \Log::error('Failed to send like notification: ' . $e->getMessage());
+                        // خطا را throw نکنید، فقط لاگ کنید
+                    }
+                }
+
+                return true;
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error in toggleLike: ' . $e->getMessage());
+            throw $e; // خطا را دوباره throw کنید تا controller آن را بگیرد
         }
     }
 

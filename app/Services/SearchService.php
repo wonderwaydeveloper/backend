@@ -20,6 +20,7 @@ class SearchService
     /**
      * جستجوی جامع در پلتفرم با کش
      */
+
     public function globalSearch(string $query, ?User $user = null, array $filters = []): array
     {
         $cacheKey = "global_search:" . md5($query . json_encode($filters));
@@ -32,18 +33,18 @@ class SearchService
 
         $results = [];
 
-        // جستجو در کاربران
-        if (!$filters['exclude_users'] ?? false) {
+        // جستجو در کاربران - اصلاح شرط
+        if (!isset($filters['exclude_users']) || !$filters['exclude_users']) {
             $results['users'] = $this->searchUsers($query, $user, $filters);
         }
 
-        // جستجو در پست‌ها
-        if (!$filters['exclude_posts'] ?? false) {
+        // جستجو در پست‌ها - اصلاح شرط
+        if (!isset($filters['exclude_posts']) || !$filters['exclude_posts']) {
             $results['posts'] = $this->searchPosts($query, $user, $filters);
         }
 
-        // جستجو در مقالات
-        if (!$filters['exclude_articles'] ?? false) {
+        // جستجو در مقالات - اصلاح شرط
+        if (!isset($filters['exclude_articles']) || !$filters['exclude_articles']) {
             $results['articles'] = $this->searchArticles($query, $user, $filters);
         }
 
@@ -52,6 +53,7 @@ class SearchService
 
         return $results;
     }
+
     /**
      * جستجو در کاربران
      */

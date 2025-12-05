@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\Comment;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class CommentPolicy
 {
@@ -69,20 +70,24 @@ class CommentPolicy
     /**
      * تعیین اینکه آیا کاربر می‌تواند کامنت را لایک کند
      */
-    public function like(User $user, Comment $comment): bool
-    {
-        // کاربر نمی‌تواند کامنت خودش را لایک کند
-        if ($user->id === $comment->user_id) {
-            return false;
-        }
 
-        // کاربران مسدود شده نمی‌توانند لایک کنند
-        if ($user->is_banned) {
-            return false;
-        }
-
-        return $this->view($user, $comment);
+    // اصلاح متد like در CommentPolicy.php
+public function like(User $user, Comment $comment): bool
+{
+    // کاربر نمی‌تواند کامنت خودش را لایک کند
+    if ($user->id === $comment->user_id) {
+        throw new AuthorizationException('You cannot like your own comment');
     }
+
+    // کاربران مسدود شده نمی‌توانند لایک کنند
+    if ($user->is_banned) {
+        return false;
+    }
+
+    // کاربر باید بتواند کامنت را ببیند
+    return $this->view($user, $comment);
+}
+    
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پاسخ به کامنت ایجاد کند
@@ -97,7 +102,7 @@ class CommentPolicy
      */
     public function manageComments(User $user): bool
     {
-        return $user->username === 'admin'; // مثال ساده
+        return $user->isAdmin(); // استفاده از متد isAdmin که به مدل User اضافه کردیم
     }
 
     /**
@@ -109,11 +114,63 @@ class CommentPolicy
             return $this->canViewParent($user, $model->commentable);
         }
 
-        // استفاده از پالیسی مربوط به مدل والد
-        if (method_exists($model, 'policy') && policy($model)->view($user, $model)) {
+        // بررسی دسترسی به پست‌ها
+        if ($model instanceof \App\Models\Post) {
+            // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند پست را ببیند
+            if ($model->user->is_banned) {
+                return $this->manageComments($user);
+            }
+
+            // اگر پست حذف شده است، فقط نویسنده یا ادمین می‌تواند ببیند
+            if ($model->trashed()) {
+                return $user->id === $model->user_id || $this->manageComments($user);
+            }
+
+            // اگر نویسنده خصوصی است، فقط دنبال‌کنندگان تایید شده می‌توانند ببینند
+            if ($model->user->is_private) {
+                // نویسنده همیشه می‌تواند پست خودش را ببیند
+                if ($model->user_id === $user->id) {
+                    return true;
+                }
+
+                // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
+                return $model->user->followers()
+                    ->where('follower_id', $user->id)
+                    ->whereNotNull('approved_at')
+                    ->exists();
+            }
+
+            // بررسی محدودیت‌های سنی برای محتوای حساس
+            if ($model->is_sensitive && $user->is_underage) {
+                return false;
+            }
+
             return true;
         }
 
-        return false;
+        // بررسی دسترسی به مقالات
+        if ($model instanceof \App\Models\Article) {
+            // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند مقاله را ببیند
+            if ($model->user->is_banned) {
+                return $this->manageComments($user);
+            }
+
+            // اگر مقاله خصوصی است، فقط نویسنده یا کاربرانی که دنبال می‌کنند می‌توانند ببینند
+            if ($model->user->is_private) {
+                // نویسنده همیشه می‌تواند مقاله خودش را ببیند
+                if ($model->user_id === $user->id) {
+                    return true;
+                }
+
+                // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
+                return $model->user->followers()
+                    ->where('follower_id', $user->id)
+                    ->whereNotNull('approved_at')
+                    ->exists();
+            }
+            return true;
+        }
+
+        return true; // به طور پیش‌فرض اجازه دسترسی می‌دهیم
     }
 }

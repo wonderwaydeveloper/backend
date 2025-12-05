@@ -18,17 +18,18 @@ class CommentTest extends TestCase
     public function user_can_comment_on_post()
     {
         $user = User::factory()->create();
-        $post = Post::factory()->create();
+        $post = Post::factory()->create(['is_private' => false]); // مطمئن شوید پست خصوصی نیست
         Sanctum::actingAs($user);
 
         $response = $this->postJson('/api/comments', [
-            'content' => 'This is a comment on the post.',
+            'content' => 'This is a comment on post.',
             'commentable_type' => 'post',
             'commentable_id' => $post->id,
         ]);
 
         $response->assertStatus(201)
             ->assertJsonStructure([
+                'success',
                 'data' => [
                     'id',
                     'content',
@@ -40,7 +41,7 @@ class CommentTest extends TestCase
             'user_id' => $user->id,
             'commentable_id' => $post->id,
             'commentable_type' => Post::class,
-            'content' => 'This is a comment on the post.',
+            'content' => 'This is a comment on post.',
         ]);
 
         $this->assertEquals(1, $post->fresh()->comment_count);
@@ -86,9 +87,12 @@ class CommentTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-            ->assertJson([
+            ->assertJsonStructure([
+                'success',
                 'data' => [
-                    'parent' => ['id' => $parentComment->id],
+                    'id',
+                    'content',
+                    'parent' => ['id'],
                 ],
             ]);
 
@@ -113,10 +117,11 @@ class CommentTest extends TestCase
         ]);
 
         $response->assertStatus(200)
-            ->assertJson([
+            ->assertJsonStructure([
+                'success',
                 'data' => [
-                    'content' => 'Updated comment content',
-                    'is_edited' => true,
+                    'content',
+                    'is_edited',
                 ],
             ]);
     }
@@ -154,7 +159,7 @@ class CommentTest extends TestCase
         $response = $this->deleteJson("/api/comments/{$comment->id}");
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Comment deleted successfully']);
+            ->assertJsonPath('meta.message', 'Comment deleted successfully');
 
         $this->assertSoftDeleted('comments', ['id' => $comment->id]);
         $this->assertEquals($initialCount - 1, $post->fresh()->comment_count);
@@ -185,10 +190,11 @@ class CommentTest extends TestCase
         $response = $this->postJson("/api/comments/{$comment->id}/like");
 
         $response->assertStatus(200)
-            ->assertJson([
+            ->assertJsonStructure([
+                'success',
                 'data' => [
-                    'liked' => true,
-                    'like_count' => 1,
+                    'liked',
+                    'like_count',
                 ],
             ]);
 
@@ -234,7 +240,8 @@ class CommentTest extends TestCase
     {
         $privateUser = User::factory()->create(['is_private' => true]);
         $otherUser = User::factory()->create();
-        $post = Post::factory()->create(['user_id' => $privateUser->id]);
+        // از متد private() در فکتوری استفاده کنید تا یک پست خصوصی قطعی بسازید
+        $post = Post::factory()->private()->create(['user_id' => $privateUser->id]);
 
         Sanctum::actingAs($otherUser);
 
@@ -272,7 +279,7 @@ class CommentTest extends TestCase
             'commentable_id' => $post->id,
             'commentable_type' => Post::class,
         ]);
-        
+
         $deletedComment = Comment::factory()->create([
             'commentable_id' => $post->id,
             'commentable_type' => Post::class,

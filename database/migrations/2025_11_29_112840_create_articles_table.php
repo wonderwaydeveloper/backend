@@ -26,8 +26,8 @@ return new class extends Migration {
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->integer('view_count')->default(0);
-            $table->integer('like_count')->default(0);
             $table->integer('comment_count')->default(0);
+            $table->integer('like_count')->default(0);
             $table->integer('share_count')->default(0);
             $table->string('reading_time')->nullable();
             $table->json('tags')->nullable();

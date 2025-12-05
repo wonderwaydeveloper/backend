@@ -9,6 +9,8 @@ use App\Services\CommentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 
 class CommentController extends Controller
 {
@@ -54,7 +56,13 @@ class CommentController extends Controller
                 'Comment created successfully',
                 201
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
+        } catch (ValidationException $e) {
+            return GenericResource::error($e->getMessage(), 422, $e->errors());
         } catch (\Exception $e) {
+            // برای دیباگ کردن، خطا را لاگ کن و پیام دقیق را برگردان
+            \Log::error('Comment creation error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -81,7 +89,12 @@ class CommentController extends Controller
                 new CommentResource($comment->load('user', 'media')),
                 'Comment updated successfully'
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
+        } catch (ValidationException $e) {
+            return GenericResource::error($e->getMessage(), 422, $e->errors());
         } catch (\Exception $e) {
+            \Log::error('Comment update error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -97,14 +110,17 @@ class CommentController extends Controller
             $this->commentService->deleteComment($comment);
 
             return GenericResource::success(null, 'Comment deleted successfully');
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
+            \Log::error('Comment deletion error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
-
     /**
      * لایک کردن کامنت
      */
+
     public function like(Request $request, Comment $comment)
     {
         try {
@@ -116,10 +132,19 @@ class CommentController extends Controller
                 'liked' => $liked,
                 'like_count' => $comment->fresh()->like_count,
             ], $liked ? 'Comment liked' : 'Comment unliked');
+
+        } catch (AuthorizationException $e) {
+            // برای خطای لایک کردن کامنت خود کاربر
+            if (str_contains($e->getMessage(), 'cannot like your own')) {
+                return GenericResource::error($e->getMessage(), 400);
+            }
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
+            \Log::error('Comment like error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
+
 
     /**
      * پاسخ به کامنت
@@ -148,7 +173,12 @@ class CommentController extends Controller
                 'Reply created successfully',
                 201
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
+        } catch (ValidationException $e) {
+            return GenericResource::error($e->getMessage(), 422, $e->errors());
         } catch (\Exception $e) {
+            \Log::error('Comment reply error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -181,7 +211,12 @@ class CommentController extends Controller
                 CommentResource::collection($comments),
                 'Comments retrieved successfully'
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
+        } catch (ValidationException $e) {
+            return GenericResource::error($e->getMessage(), 422, $e->errors());
         } catch (\Exception $e) {
+            \Log::error('Comment retrieval error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
