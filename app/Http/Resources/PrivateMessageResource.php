@@ -25,16 +25,16 @@ class PrivateMessageResource extends JsonResource
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
             'edited_at' => $this->edited_at?->toISOString(),
-            
+
             // فرستنده
             'user' => new UserResource($this->whenLoaded('user')),
-            
+
             // مدیا
             'media' => MessageMediaResource::collection($this->whenLoaded('media')),
-            
+
             // پاسخ به
             'reply_to' => new PrivateMessageResource($this->whenLoaded('replyTo')),
-            
+
             // اطلاعات مکالمه
             'conversation_id' => $this->conversation_id,
         ];
@@ -43,14 +43,15 @@ class PrivateMessageResource extends JsonResource
     /**
      * داده‌های اضافی
      */
+
     public function with(Request $request): array
     {
         return [
             'meta' => [
-                'can_reply' => auth()->check() && auth()->user()->can('sendMessage', $this->conversation),
-                'can_delete' => auth()->check() && (
-                    auth()->id() === $this->user_id || 
-                    auth()->user()->username === 'admin'
+                'can_reply' => $request->user() && $request->user()->can('sendMessage', $this->conversation),
+                'can_delete' => $request->user() && (
+                    $request->user()->id === $this->user_id ||
+                    $request->user()->isAdmin()
                 ),
             ],
         ];

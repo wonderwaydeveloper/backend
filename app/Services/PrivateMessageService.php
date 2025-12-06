@@ -80,17 +80,22 @@ class PrivateMessageService
             // آپدیت زمان آخرین پیام
             $conversation->updateLastMessage();
 
-            return $message->load('user', 'media', 'replyTo');
+            // بارگذاری روابط
+            $message->load(['user', 'replyTo', 'media']);
+
+            return $message;
         });
     }
 
     /**
      * دریافت پیام‌های مکالمه
      */
+
+
     public function getConversationMessages(Conversation $conversation, array $filters = []): LengthAwarePaginator
     {
         $query = $conversation->messages()
-            ->with(['user', 'media', 'replyTo.user'])
+            ->with(['user', 'replyTo.user', 'media']) // اضافه کردن media
             ->visible()
             ->orderBy('created_at', 'desc');
 
@@ -122,9 +127,7 @@ class PrivateMessageService
     public function deleteMessage(User $user, int $messageId): bool
     {
         return DB::transaction(function () use ($user, $messageId) {
-            $message = PrivateMessage::where('id', $messageId)
-                ->where('user_id', $user->id)
-                ->firstOrFail();
+            $message = PrivateMessage::findOrFail($messageId);
 
             // حذف مدیاها
             foreach ($message->media as $media) {

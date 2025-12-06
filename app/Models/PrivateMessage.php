@@ -46,7 +46,7 @@ class PrivateMessage extends Model
 
     public function media()
     {
-        return $this->hasMany(MessageMedia::class);
+        return $this->hasMany(MessageMedia::class, 'message_id');
     }
 
     // Scopes
@@ -99,7 +99,7 @@ class PrivateMessage extends Model
 
     private function getMediaPreview(): string
     {
-        return match($this->type) {
+        return match ($this->type) {
             'image' => '📷 تصویر',
             'video' => '🎥 ویدیو',
             'file' => '📎 فایل',

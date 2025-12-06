@@ -43,7 +43,13 @@ class CommentPolicy
         // کاربران زیر سن ممکن است محدودیت داشته باشند
         if ($user->is_underage) {
             // بررسی کنترل والدین
-            return true; // به طور موقت true می‌گذاریم
+            // به طور موقت true می‌گذاریم، اما می‌توانید منطق خود را اضافه کنید
+            return true;
+        }
+
+        // اگر parentModel وجود نداشته باشد، اجازه نمی‌دهیم
+        if (!$parentModel) {
+            return false;
         }
 
         // بررسی اینکه آیا کاربر به محتوای اصلی دسترسی دارد
@@ -72,22 +78,22 @@ class CommentPolicy
      */
 
     // اصلاح متد like در CommentPolicy.php
-public function like(User $user, Comment $comment): bool
-{
-    // کاربر نمی‌تواند کامنت خودش را لایک کند
-    if ($user->id === $comment->user_id) {
-        throw new AuthorizationException('You cannot like your own comment');
+    public function like(User $user, Comment $comment): bool
+    {
+        // کاربر نمی‌تواند کامنت خودش را لایک کند
+        if ($user->id === $comment->user_id) {
+            throw new AuthorizationException('You cannot like your own comment');
+        }
+
+        // کاربران مسدود شده نمی‌توانند لایک کنند
+        if ($user->is_banned) {
+            return false;
+        }
+
+        // کاربر باید بتواند کامنت را ببیند
+        return $this->view($user, $comment);
     }
 
-    // کاربران مسدود شده نمی‌توانند لایک کنند
-    if ($user->is_banned) {
-        return false;
-    }
-
-    // کاربر باید بتواند کامنت را ببیند
-    return $this->view($user, $comment);
-}
-    
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پاسخ به کامنت ایجاد کند

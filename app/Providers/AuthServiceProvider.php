@@ -11,6 +11,10 @@ use App\Policies\BookmarkPolicy;
 use App\Policies\CommentPolicy;
 use App\Policies\PostPolicy;
 use App\Policies\UserPolicy;
+use App\Models\Conversation;
+use App\Models\PrivateMessage;
+use App\Policies\ConversationPolicy;
+use App\Policies\PrivateMessagePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -26,6 +30,8 @@ class AuthServiceProvider extends ServiceProvider
         Article::class => ArticlePolicy::class,
         Comment::class => CommentPolicy::class,
         Bookmark::class => BookmarkPolicy::class,
+        Conversation::class => ConversationPolicy::class,
+        PrivateMessage::class => PrivateMessagePolicy::class,
     ];
 
     /**

@@ -8,13 +8,11 @@ use App\Models\Conversation;
 use App\Services\PrivateMessageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-
+use Illuminate\Auth\Access\AuthorizationException;
 
 class PrivateMessageController extends Controller
 {
-
     use AuthorizesRequests;
 
     public function __construct(private PrivateMessageService $privateMessageService)
@@ -77,7 +75,7 @@ class PrivateMessageController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required_without:media|string|max:5000',
-            'type' => 'sometimes|in:text,image,video,file',
+            'type' => 'required|in:text,image,video,file',
             'reply_to' => 'sometimes|exists:private_messages,id',
             'media' => 'sometimes|file|max:10240',
         ]);
@@ -96,11 +94,14 @@ class PrivateMessageController extends Controller
             );
 
             return GenericResource::success(
-                new PrivateMessageResource($message->load('user', 'media')),
+                new PrivateMessageResource($message),
                 'Message sent successfully',
                 201
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
+            \Log::error('Send message error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -122,7 +123,10 @@ class PrivateMessageController extends Controller
                 PrivateMessageResource::collection($messages),
                 'Messages retrieved successfully'
             );
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
+            \Log::error('Message retrieval error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -143,6 +147,8 @@ class PrivateMessageController extends Controller
             return GenericResource::success([
                 'marked' => $marked,
             ], 'Messages marked as seen');
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 400);
         }
@@ -154,6 +160,9 @@ class PrivateMessageController extends Controller
     public function deleteMessage(Request $request, $messageId)
     {
         try {
+            $message = \App\Models\PrivateMessage::findOrFail($messageId);
+            $this->authorize('delete', $message);
+
             $deleted = $this->privateMessageService->deleteMessage(
                 $request->user(),
                 $messageId
@@ -162,7 +171,10 @@ class PrivateMessageController extends Controller
             return GenericResource::success([
                 'deleted' => $deleted,
             ], 'Message deleted successfully');
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
+            \Log::error('Message deletion error: ' . $e->getMessage());
             return GenericResource::error($e->getMessage(), 400);
         }
     }
@@ -191,6 +203,8 @@ class PrivateMessageController extends Controller
             return GenericResource::success([
                 'added' => $added,
             ], 'User added to conversation');
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 400);
         }
@@ -212,6 +226,8 @@ class PrivateMessageController extends Controller
             return GenericResource::success([
                 'left' => $left,
             ], 'Left conversation successfully');
+        } catch (AuthorizationException $e) {
+            return GenericResource::error($e->getMessage(), 403);
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 400);
         }

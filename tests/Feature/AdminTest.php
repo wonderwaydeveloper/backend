@@ -198,14 +198,22 @@ class AdminTest extends TestCase
         $admin = $this->createAdminUser();
         Sanctum::actingAs($admin);
 
-        // Create underage users
-        User::factory()->count(3)->create(['is_underage' => true]);
-        User::factory()->count(2)->create(['is_underage' => false]);
+        User::factory()->count(3)->underage()->create();
+        User::factory()->count(2)->create();
 
         $response = $this->getJson('/api/admin/underage-users');
 
+        // بررسی اولیه
         $response->assertStatus(200)
-            ->assertJsonCount(3, 'data.users.data'); // Paginated response
+            ->assertJson(['success' => true])
+            ->assertJsonStructure([
+                'success',
+                'data'
+            ]);
+
+        // بررسی تعداد کاربران
+        $responseData = $response->json();
+        $this->assertCount(3, $responseData['data']['users']['data']);
     }
 
     /** @test */
