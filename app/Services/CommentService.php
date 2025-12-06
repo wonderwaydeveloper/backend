@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 
 class CommentService
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {}
+
     /**
      * ایجاد کامنت جدید
      */
@@ -41,6 +45,19 @@ class CommentService
                 $parentComment = Comment::find($data['parent_id']);
                 if ($parentComment) {
                     $parentComment->increment('reply_count');
+                }
+            }
+
+            // ارسال نوتیفیکیشن - فقط اگر کاربر، مالک محتوا نباشد
+            if ($commentable->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendNewCommentNotification(
+                        $commentable->user,
+                        $user,
+                        $commentable
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send comment notification: ' . $e->getMessage());
                 }
             }
 
@@ -126,6 +143,19 @@ class CommentService
                 $parent->commentable->increment('comment_count');
             }
 
+            // ارسال نوتیفیکیشن به صاحب کامنت اصلی
+            if ($parent->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendNewCommentNotification(
+                        $parent->user,
+                        $user,
+                        $parent->commentable
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send reply notification: ' . $e->getMessage());
+                }
+            }
+
             return $reply->load('user', 'parent');
         });
     }
@@ -144,6 +174,20 @@ class CommentService
         } else {
             $comment->likes()->create(['user_id' => $user->id]);
             $comment->increment('like_count');
+
+            // ارسال نوتیفیکیشن - فقط اگر کاربر، مالک کامنت نباشد
+            if ($comment->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendNewLikeNotification(
+                        $comment->user,
+                        $user,
+                        $comment
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send like notification for comment: ' . $e->getMessage());
+                }
+            }
+
             return true;
         }
     }

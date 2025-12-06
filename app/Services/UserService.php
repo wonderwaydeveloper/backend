@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {
+    }
+
     /**
      * دریافت کاربران
      */
@@ -22,8 +27,8 @@ class UserService
         if (isset($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('name', 'like', "%{$filters['search']}%")
-                  ->orWhere('username', 'like', "%{$filters['search']}%")
-                  ->orWhere('email', 'like', "%{$filters['search']}%");
+                    ->orWhere('username', 'like', "%{$filters['search']}%")
+                    ->orWhere('email', 'like', "%{$filters['search']}%");
             });
         }
 
@@ -117,11 +122,20 @@ class UserService
                 $follower->increment('following_count');
             }
 
+            // ارسال نوتیفیکیشن
+            if ($requiresApproval) {
+                // درخواست فالو برای حساب خصوصی
+                $this->notificationService->sendFollowRequestNotification($following, $follower);
+            } else {
+                // فالوور جدید برای حساب عمومی
+                $this->notificationService->sendNewFollowerNotification($following, $follower);
+            }
+
             return [
                 'following' => true,
                 'requires_approval' => $requiresApproval,
-                'message' => $requiresApproval ? 
-                    'Follow request sent' : 
+                'message' => $requiresApproval ?
+                    'Follow request sent' :
                     'Successfully followed user',
             ];
         });
@@ -216,6 +230,9 @@ class UserService
             $user->increment('followers_count');
             $follower->increment('following_count');
 
+            // ارسال نوتیفیکیشن جدید برای فالوور
+            $this->notificationService->sendNewFollowerNotification($user, $follower);
+
             return true;
         });
     }
@@ -260,8 +277,8 @@ class UserService
             ->active()
             ->where(function ($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('username', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%");
+                    ->orWhere('username', 'like', "%{$query}%")
+                    ->orWhere('email', 'like', "%{$query}%");
             })
             ->orderByRaw("
                 CASE 

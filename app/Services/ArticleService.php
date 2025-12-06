@@ -12,6 +12,13 @@ use Illuminate\Support\Str;
 
 class ArticleService
 {
+
+    public function __construct(
+        private NotificationService $notificationService
+    ) {
+    }
+
+
     /**
      * ایجاد مقاله جدید
      */
@@ -48,6 +55,7 @@ class ArticleService
             return $article->load('user', 'media');
         });
     }
+
 
     /**
      * آپدیت مقاله
@@ -173,6 +181,8 @@ class ArticleService
         return $article->load('user', 'media', 'approver');
     }
 
+
+
     /**
      * لایک/آنلایک مقاله
      */
@@ -187,6 +197,20 @@ class ArticleService
         } else {
             $article->likes()->create(['user_id' => $user->id]);
             $article->increment('like_count');
+
+            // ارسال نوتیفیکیشن - فقط اگر کاربر، مالک مقاله نباشد
+            if ($article->user_id !== $user->id) {
+                try {
+                    $this->notificationService->sendNewLikeNotification(
+                        $article->user,
+                        $user,
+                        $article
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send like notification for article: ' . $e->getMessage());
+                }
+            }
+
             return true;
         }
     }
