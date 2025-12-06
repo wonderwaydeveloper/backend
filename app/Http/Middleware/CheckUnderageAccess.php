@@ -12,7 +12,7 @@ class CheckUnderageAccess
     {
         $user = $request->user();
 
-        // اگر کاربر زیر سن است و ویژگی مورد نظر محدود شده است
+        // If the user is underage and the requested feature is restricted
         if ($user && $user->is_underage) {
             $restrictedFeatures = [
                 'private_messaging',
@@ -23,7 +23,7 @@ class CheckUnderageAccess
 
             if (in_array($feature, $restrictedFeatures)) {
                 return response()->json([
-                    'message' => 'این قابلیت برای کاربران زیر سن محدود شده است.',
+                    'message' => 'This feature is restricted for underage users.',
                     'feature' => $feature,
                 ], 403);
             }

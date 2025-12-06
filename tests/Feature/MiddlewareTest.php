@@ -12,18 +12,29 @@ class MiddlewareTest extends TestCase
 {
     use RefreshDatabase;
 
+
     #[Test]
     public function underage_user_cannot_access_restricted_features()
     {
-        $child = User::factory()->create(['is_underage' => true]);
+        $child = User::factory()->underage()->create();
+
+        $this->assertTrue(
+            $child->is_underage,
+            "User should be underage. Birth date: {$child->birth_date}, Age: " . $child->birth_date->age
+        );
+
         Sanctum::actingAs($child);
 
-        // Try to access private messaging (should be restricted)
         $response = $this->getJson('/api/messages/conversations');
+
+        \Log::debug('Underage test response', [
+            'status' => $response->getStatusCode(),
+            'content' => $response->getContent(),
+        ]);
 
         $response->assertStatus(403)
             ->assertJson([
-                'message' => 'این قابلیت برای کاربران زیر سن محدود شده است.',
+                'message' => 'This feature is restricted for underage users.', // تغییر به انگلیسی
                 'feature' => 'private_messaging',
             ]);
     }
@@ -54,31 +65,34 @@ class MiddlewareTest extends TestCase
         $this->assertTrue($response->isOk());
     }
 
+
     #[Test]
     public function rate_limiting_middleware_prevents_abuse()
     {
-        $user = User::factory()->create();
-        Sanctum::actingAs($user);
+        $rateLimited = false;
 
-        // Make multiple rapid requests to trigger rate limiting
-        $responses = [];
-        for ($i = 0; $i < 15; $i++) {
-            $responses[] = $this->postJson('/api/auth/login', [
+        // 6 درخواست سریع
+        for ($i = 0; $i < 6; $i++) {
+            $response = $this->postJson('/api/auth/login', [
                 'email' => 'test@example.com',
                 'password' => 'wrongpassword',
             ]);
-        }
 
-        // Check if any response is 429 Too Many Requests
-        $rateLimited = false;
-        foreach ($responses as $response) {
+            \Log::debug("Rate limiting attempt $i", [
+                'status' => $response->getStatusCode(),
+            ]);
+
             if ($response->getStatusCode() === 429) {
                 $rateLimited = true;
                 break;
             }
         }
 
-        $this->assertTrue($rateLimited, 'Rate limiting should trigger after multiple requests');
+        $this->assertTrue(
+            $rateLimited,
+            'Rate limiting should trigger after multiple requests. ' .
+            'Make sure route has throttle:5,1 middleware'
+        );
     }
 
     #[Test]

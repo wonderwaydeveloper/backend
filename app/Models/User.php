@@ -217,8 +217,10 @@ class User extends Authenticatable
     }
 
 
-    public function isAdmin()
+    public function isAdmin(): bool
     {
-        return $this->username === 'admin';
+        // منطق تشخیص ادمین را اینجا قرار دهید
+        return $this->username === 'admin' || $this->role === 'admin'; // مثال
     }
+
 }

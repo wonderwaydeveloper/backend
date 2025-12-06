@@ -41,7 +41,7 @@ Route::get('/health', function () {
 Route::prefix('auth')->group(function () {
     // Email Authentication
     Route::post('register', [AuthController::class, 'register']);
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     // Phone Authentication
     Route::post('phone/send-verification', [AuthController::class, 'sendPhoneVerification']);
@@ -69,8 +69,7 @@ Route::get('articles', [ArticleController::class, 'index']);
 Route::get('articles/{article}', [ArticleController::class, 'show']);
 
 Route::get('users/search', [UserController::class, 'search']);
-
-Route::get('users/{user}', [UserController::class, 'show']);
+Route::get('users/{user}', [UserController::class, 'show'])->where('user', '[0-9]+');
 
 // Global Search
 Route::get('search', function (Request $request) {
@@ -128,18 +127,21 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::get('me', [UserController::class, 'showCurrent']);
         Route::put('me', [UserController::class, 'updateCurrent']);
 
+        // Update other user (requires permission)
+        Route::put('{user}', [UserController::class, 'update'])->where('user', '[0-9]+')->middleware('can:update,user');
+
         // User Actions
-        Route::post('{user}/follow', [UserController::class, 'follow']);
-        Route::post('{user}/unfollow', [UserController::class, 'unfollow']);
+        Route::post('{user}/follow', [UserController::class, 'follow'])->where('user', '[0-9]+');
+        Route::post('{user}/unfollow', [UserController::class, 'unfollow'])->where('user', '[0-9]+');
 
         // User Relationships
-        Route::get('{user}/followers', [UserController::class, 'followers']);
-        Route::get('{user}/following', [UserController::class, 'following']);
+        Route::get('{user}/followers', [UserController::class, 'followers'])->where('user', '[0-9]+');
+        Route::get('{user}/following', [UserController::class, 'following'])->where('user', '[0-9]+');
 
         // Follow Requests (for private accounts)
         Route::get('me/follow-requests', [UserController::class, 'followRequests']);
-        Route::post('{user}/accept-follow-request', [UserController::class, 'acceptFollowRequest']);
-        Route::post('{user}/reject-follow-request', [UserController::class, 'rejectFollowRequest']);
+        Route::post('{user}/accept-follow-request', [UserController::class, 'acceptFollowRequest'])->where('user', '[0-9]+');
+        Route::post('{user}/reject-follow-request', [UserController::class, 'rejectFollowRequest'])->where('user', '[0-9]+');
     });
 
     // ====================
@@ -156,7 +158,7 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::post('{post}/bookmark', [PostController::class, 'bookmark']);
 
         // User-specific posts
-        Route::get('user/{userId}', [PostController::class, 'userPosts']);
+        Route::get('user/{userId}', [PostController::class, 'userPosts'])->where('userId', '[0-9]+');
 
         // Feed
         Route::get('feed/personal', [PostController::class, 'feed']);
@@ -179,7 +181,7 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::post('{article}/approve', [ArticleController::class, 'approve'])->middleware('can:approve,article');
 
         // User-specific articles
-        Route::get('user/{userId}', [ArticleController::class, 'userArticles']);
+        Route::get('user/{userId}', [ArticleController::class, 'userArticles'])->where('userId', '[0-9]+');
     });
 
     // ====================
@@ -194,7 +196,6 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
 
         Route::put('{comment}', [CommentController::class, 'update'])->middleware('can:update,comment');
         Route::delete('{comment}', [CommentController::class, 'destroy'])->middleware('can:delete,comment');
-
 
         // Get comments for content
         Route::get('/', [CommentController::class, 'index']);
@@ -229,15 +230,15 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
     Route::prefix('parental-controls')->group(function () {
         Route::get('/', [ParentalControlController::class, 'index']);
         Route::post('/', [ParentalControlController::class, 'store']);
-        Route::put('{childId}', [ParentalControlController::class, 'update']);
-        Route::delete('{childId}', [ParentalControlController::class, 'destroy']);
-        Route::get('{childId}/usage-report', [ParentalControlController::class, 'usageReport']);
+        Route::put('{childId}', [ParentalControlController::class, 'update'])->where('childId', '[0-9]+');
+        Route::delete('{childId}', [ParentalControlController::class, 'destroy'])->where('childId', '[0-9]+');
+        Route::get('{childId}/usage-report', [ParentalControlController::class, 'usageReport'])->where('childId', '[0-9]+');
     });
 
     // ====================
     // ADMIN MANAGEMENT
     // ====================
-    Route::middleware(['can:manageUsers,App\Models\User'])->prefix('admin')->group(function () {
+    Route::middleware(['admin'])->prefix('admin')->group(function () {
         // Stats & Analytics
         Route::get('stats', [AdminController::class, 'stats']);
         Route::get('redis-stats', [AdminController::class, 'redisStats']);
@@ -256,8 +257,8 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::get('security-reports', [AdminController::class, 'securityReports']);
 
         // Content Moderation
-        Route::post('users/{user}/ban', [AdminController::class, 'banUser']);
-        Route::post('users/{user}/unban', [AdminController::class, 'unbanUser']);
+        Route::post('users/{user}/ban', [AdminController::class, 'banUser'])->where('user', '[0-9]+');
+        Route::post('users/{user}/unban', [AdminController::class, 'unbanUser'])->where('user', '[0-9]+');
         Route::post('posts/{post}/feature', [AdminController::class, 'featurePost']);
         Route::post('articles/{article}/feature', [AdminController::class, 'featureArticle']);
     });

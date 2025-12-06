@@ -21,7 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'underage.access' => \App\Http\Middleware\CheckUnderageAccess::class,
             'track.online' => \App\Http\Middleware\TrackOnlineUser::class,
+            'custom.throttle' => \App\Http\Middleware\CustomThrottleRequests::class,
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        // اضافه کردن middleware rate limiter برای API
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // هندل کردن exceptionهای API
