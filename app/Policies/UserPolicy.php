@@ -70,8 +70,7 @@ class UserPolicy
      */
     public function manageUsers(User $currentUser): bool
     {
-        // در اینجا می‌توانید منطق بررسی ادمین را اضافه کنید
-        return $currentUser->username === 'admin'; // مثال ساده
+        return $currentUser->isAdmin();
     }
 
     /**
@@ -83,11 +82,39 @@ class UserPolicy
     }
 
     /**
-     * تعیین اینکه آیا کاربر می‌تواند کنترل والدین اعمال کند
+     * تعیین اینکه آیا کاربر می‌تواند کنترل والدین را مدیریت کند
      */
+
+    // در app/Policies/UserPolicy.php
     public function manageParentalControls(User $currentUser, User $child): bool
     {
+        // اگر کاربر ادمین باشد، اجازه دسترسی دارد
+        if ($currentUser->isAdmin()) {
+            return true;
+        }
+
+        // اگر کودک زیر سن نیست، اجازه نمی‌دهیم
+        if (!$child->is_underage) {
+            return false;
+        }
+
+        // اگر کودک والد ندارد، اجازه ایجاد کنترل والدین را می‌دهیم
+        // (اولین کاربری که کنترل ایجاد کند، والد می‌شود)
+        if (is_null($child->parent_id)) {
+            return true;
+        }
+
+        // اگر کودک والد دارد، فقط همان والد می‌تواند مدیریت کند
         return $currentUser->id === $child->parent_id;
+    }
+
+    /**
+     * تعیین اینکه آیا کاربر می‌تواند لیست کنترل‌های والدین را ببیند
+     */
+    public function viewParentalControls(User $currentUser): bool
+    {
+        // کاربر باید والد حداقل یک کودک باشد یا ادمین باشد
+        return $currentUser->parentalControls()->exists() || $currentUser->isAdmin();
     }
 
     /**

@@ -35,7 +35,7 @@ class UserFactory extends Factory
 
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
             'phone_verified_at' => null,
         ]);
@@ -43,9 +43,21 @@ class UserFactory extends Factory
 
     public function underage(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'birth_date' => fake()->dateTimeBetween('-17 years', '-10 years')->format('Y-m-d'),
+        $birthDate = fake()->dateTimeBetween('-17 years', '-10 years')->format('Y-m-d');
+
+        return $this->state(fn(array $attributes) => [
+            'birth_date' => $birthDate,
             'is_underage' => true,
+        ]);
+    }
+
+    public function adult(): static
+    {
+        $birthDate = fake()->dateTimeBetween('-50 years', '-18 years')->format('Y-m-d');
+
+        return $this->state(fn(array $attributes) => [
+            'birth_date' => $birthDate,
+            'is_underage' => false,
         ]);
     }
 }

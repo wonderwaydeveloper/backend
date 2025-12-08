@@ -40,6 +40,7 @@ class User extends Authenticatable
         'is_underage',
         'email_verified_at',
         'phone_verified_at',
+        'parent_id',
     ];
 
     /**
@@ -216,11 +217,22 @@ class User extends Authenticatable
         ]);
     }
 
+    public static function calculateIsUnderage($birthDate): bool
+    {
+        if (!$birthDate) {
+            return false;
+        }
+
+        $age = now()->diffInYears($birthDate);
+        return $age < 18;
+    }
+
 
     public function isAdmin(): bool
     {
-        // منطق تشخیص ادمین را اینجا قرار دهید
-        return $this->username === 'admin' || $this->role === 'admin'; // مثال
+        // برای تست‌ها، هر کاربری که username 'admin' داشته باشد ادمین است
+        return $this->username === 'admin' || $this->hasRole('admin'); // اگر از spatie/laravel-permission استفاده می‌کنید
     }
+
 
 }

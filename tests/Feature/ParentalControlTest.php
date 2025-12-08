@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\ParentalControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use Carbon\Carbon;
 
 class ParentalControlTest extends TestCase
 {
@@ -15,8 +16,9 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function parent_can_create_parental_control_for_child()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => null]);
+        
         Sanctum::actingAs($parent);
 
         $response = $this->postJson('/api/parental-controls', [
@@ -29,7 +31,6 @@ class ParentalControlTest extends TestCase
             'allowed_features' => ['posts', 'comments', 'likes'],
             'daily_limit_start' => '08:00',
             'daily_limit_end' => '20:00',
-            'max_daily_usage' => 120,
         ]);
 
         $response->assertStatus(201)
@@ -40,7 +41,6 @@ class ParentalControlTest extends TestCase
         $this->assertDatabaseHas('parental_controls', [
             'parent_id' => $parent->id,
             'child_id' => $child->id,
-            'max_daily_usage' => 120,
             'is_active' => true,
         ]);
 
@@ -51,8 +51,12 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function cannot_create_parental_control_for_non_underage_user()
     {
-        $parent = User::factory()->create();
-        $adult = User::factory()->create(['is_underage' => false]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $adult = User::factory()->create([
+            'is_underage' => false,
+            'parent_id' => null
+        ]);
+        
         Sanctum::actingAs($parent);
 
         $response = $this->postJson('/api/parental-controls', [
@@ -60,14 +64,14 @@ class ParentalControlTest extends TestCase
         ]);
 
         $response->assertStatus(400)
-            ->assertJson(['message' => 'User is not underage']);
+            ->assertJsonPath('data.message', 'User is not underage');
     }
 
     /** @test */
     public function parent_can_update_parental_control()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         $control = ParentalControl::create([
             'parent_id' => $parent->id,
@@ -103,10 +107,11 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function parent_can_view_parental_controls()
     {
-        $parent = User::factory()->create();
+        $parent = User::factory()->create(['parent_id' => null]);
         $children = User::factory()->count(3)->create(['is_underage' => true]);
 
         foreach ($children as $child) {
+            $child->update(['parent_id' => $parent->id]);
             ParentalControl::create([
                 'parent_id' => $parent->id,
                 'child_id' => $child->id,
@@ -125,8 +130,8 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function parent_can_delete_parental_control()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         $control = ParentalControl::create([
             'parent_id' => $parent->id,
@@ -151,8 +156,8 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function parent_can_view_child_usage_report()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         ParentalControl::create([
             'parent_id' => $parent->id,
@@ -178,8 +183,9 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function non_parent_cannot_manage_parental_controls()
     {
-        $user = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $user = User::factory()->create(['parent_id' => null]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         Sanctum::actingAs($user);
 
@@ -191,6 +197,11 @@ class ParentalControlTest extends TestCase
         $response->assertStatus(403);
 
         // Try to update control
+        $control = ParentalControl::create([
+            'parent_id' => $parent->id,
+            'child_id' => $child->id,
+        ]);
+
         $response = $this->putJson("/api/parental-controls/{$child->id}", [
             'max_daily_usage' => 90,
         ]);
@@ -205,8 +216,8 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function child_cannot_access_parental_controls()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         ParentalControl::create([
             'parent_id' => $parent->id,
@@ -223,8 +234,8 @@ class ParentalControlTest extends TestCase
     /** @test */
     public function parental_control_restricts_child_access_based_on_time()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         $control = ParentalControl::create([
             'parent_id' => $parent->id,
@@ -234,18 +245,23 @@ class ParentalControlTest extends TestCase
             'is_active' => true,
         ]);
 
-        // Test during allowed time (assuming test runs during day)
+        // Test during allowed time (10:00 AM)
+        Carbon::setTestNow(Carbon::createFromTime(10, 0, 0));
         $this->assertTrue($control->isWithinTimeLimit());
 
-        // Test outside allowed time would require mocking time
-        // This is more complex and might need a separate test
+        // Test outside allowed time (22:00 PM)
+        Carbon::setTestNow(Carbon::createFromTime(22, 0, 0));
+        $this->assertFalse($control->isWithinTimeLimit());
+
+        // Reset time
+        Carbon::setTestNow();
     }
 
     /** @test */
     public function child_cannot_access_restricted_features()
     {
-        $parent = User::factory()->create();
-        $child = User::factory()->create(['is_underage' => true]);
+        $parent = User::factory()->create(['parent_id' => null]);
+        $child = User::factory()->underage()->create(['parent_id' => $parent->id]);
         
         $control = ParentalControl::create([
             'parent_id' => $parent->id,

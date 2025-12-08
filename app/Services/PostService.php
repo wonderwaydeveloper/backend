@@ -42,6 +42,11 @@ class PostService
             // آپدیت تعداد پست‌های کاربر
             $user->increment('posts_count');
 
+            // اگر reply است، reply_count پست والد را افزایش بده
+            if ($post->parent_id) {
+                Post::where('id', $post->parent_id)->increment('reply_count');
+            }
+
             return $post->load('user', 'media');
         });
     }
@@ -163,15 +168,20 @@ class PostService
     }
 
 
-
     /**
      * دریافت پست‌های کاربر
      */
+
     public function getUserPosts(int $userId, ?User $currentUser, array $filters = []): LengthAwarePaginator
     {
         $user = User::findOrFail($userId);
 
-        // بررسی دسترسی به پست‌های کاربر خصوصی
+        // کاربر همیشه می‌تواند پست‌های خودش را ببیند
+        if ($currentUser && $currentUser->id === $user->id) {
+            return $this->getPosts($currentUser, array_merge($filters, ['user_id' => $userId]));
+        }
+
+        // بررسی دسترسی به پست‌های کاربر خصوصی برای دیگران
         if ($user->is_private && $currentUser && !$user->followers()->where('follower_id', $currentUser->id)->exists()) {
             throw new \Exception('Cannot view posts of private user');
         }
@@ -182,35 +192,39 @@ class PostService
     /**
      * دریافت فید کاربر با کش
      */
-
-
     public function getUserFeed(User $user, array $filters = []): LengthAwarePaginator
     {
         $cacheKey = "user_feed:{$user->id}:" . md5(json_encode($filters));
 
-        // 1. بررسی کش (باید در تست به گونه‌ای mock شود که false برگرداند)
-        $cached = $this->redisService->getCachedUserFeed($cacheKey);
-        if ($cached) {
-            // اگر داده‌های کش شده آرایه‌ای از IDها هستند، آنها را به مدل Post تبدیل کنید
-            $postIds = collect($cached)->pluck('id')->toArray();
-            $posts = Post::with(['user', 'media'])
-                ->whereIn('id', $postIds)
-                ->orderByRaw('FIELD(id, ' . implode(',', $postIds) . ')')
-                ->paginate($filters['per_page'] ?? 20);
-            return $posts;
+        // 1. بررسی کش
+        try {
+            $cached = $this->redisService->getCachedUserFeed($cacheKey);
+            if ($cached) {
+                $postIds = collect($cached)->pluck('id')->toArray();
+                $posts = Post::with(['user', 'media'])
+                    ->whereIn('id', $postIds)
+                    ->orderByRaw('FIELD(id, ' . implode(',', $postIds) . ')')
+                    ->paginate($filters['per_page'] ?? 20);
+                return $posts;
+            }
+        } catch (\Exception $e) {
+            \Log::warning('Redis cache failed: ' . $e->getMessage());
         }
 
         // 2. دریافت ID کاربران دنبال شده
-        // استفاده از pluck('id') کافی است و استانداردتر است
-        $followingIds =  $user->following()->pluck('users.id');
+        $followingIds = $user->following()->pluck('following_id')->toArray();
 
-        // 3. اضافه کردن ID کاربر فعلی به لیست و اطمینان از یکتا بودن
-        $userIdsForFeed = $followingIds->push($user->id)->unique();
+        // 3. اضافه کردن ID کاربر فعلی به لیست
+        $userIdsForFeed = array_merge($followingIds, [$user->id]);
+        $userIdsForFeed = array_unique($userIdsForFeed);
 
         // 4. ساخت کوئری اصلی
         $query = Post::with(['user', 'media'])
             ->whereIn('user_id', $userIdsForFeed)
-            ->published() // اطمینان از اینکه این اسکوپ در مدل Post به درستی تعریف شده
+            ->where(function ($q) {
+                $q->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            })
             ->orderBy('created_at', 'desc');
 
         // 5. اعمال فیلتر محتوای حساس برای کاربران زیر سن
@@ -221,8 +235,12 @@ class PostService
         // 6. اجرای کوئری و صفحه‌بندی
         $posts = $query->paginate($filters['per_page'] ?? 20);
 
-        // 7. کش کردن نتایج (فقط IDها برای صرفه‌جویی در حافظه)
-        $this->redisService->cacheUserFeed($cacheKey, $posts->pluck('id')->toArray(), 300);
+        // 7. کش کردن نتایج
+        try {
+            $this->redisService->cacheUserFeed($cacheKey, $posts->items(), 300);
+        } catch (\Exception $e) {
+            // خطای کش کردن رو نادیده بگیر
+        }
 
         return $posts;
     }
@@ -304,6 +322,7 @@ class PostService
         return DB::transaction(function () use ($user, $post) {
             $repost = Post::create([
                 'user_id' => $user->id,
+                'content' => $post->content,
                 'type' => 'quote',
                 'original_post_id' => $post->id,
                 'published_at' => now(),

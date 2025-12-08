@@ -13,40 +13,38 @@ class PostPolicy
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست را مشاهده کند
      */
+
+
     public function view(User $user, Post $post): bool
     {
-        // مهم: همیشه آخرین اطلاعات کاربر را از پایگاه داده بخوان
-        $postOwner = User::find($post->user_id);
-
-        // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند پست را ببیند
-        if ($postOwner->is_banned) {
-            return $this->managePosts($user);
-        }
-
-        // اگر پست حذف شده است، فقط نویسنده یا ادمین می‌تواند ببیند
+        // اگر پست حذف شده، فقط مالک یا ادمین می‌توانند ببینند
         if ($post->trashed()) {
-            return $user->id === $post->user_id || $this->managePosts($user);
+            return $user->id === $post->user_id || $user->isAdmin();
         }
 
-        // اگر نویسنده خصوصی است، فقط دنبال‌کنندگان تایید شده می‌توانند ببینند
-        if ($postOwner->is_private) {
-            // نویسنده همیشه می‌تواند پست خودش را ببیند
-            if ($post->user_id === $user->id) {
+        // اگر کاربر مسدود شده، فقط ادمین می‌تواند ببیند
+        if ($post->user->is_banned && !$user->isAdmin()) {
+            return false;
+        }
+
+        // اگر پست خصوصی است، فقط مالک یا دنبال‌کنندگان تایید شده می‌توانند ببینند
+        if ($post->user->is_private) {
+            if ($user->id === $post->user_id) {
                 return true;
             }
 
-            // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
-            return $postOwner->followers()
+            return $post->user->followers()
                 ->where('follower_id', $user->id)
                 ->whereNotNull('approved_at')
                 ->exists();
         }
 
-        // بررسی محدودیت‌های سنی برای محتوای حساس
+        // اگر محتوای حساس و کاربر زیر سن است
         if ($post->is_sensitive && $user->is_underage) {
             return false;
         }
 
+        // بقیه موارد
         return true;
     }
 

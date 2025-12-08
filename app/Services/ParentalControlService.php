@@ -11,6 +11,7 @@ class ParentalControlService
     /**
      * ایجاد کنترل والدین
      */
+
     public function createParentalControl(User $parent, array $data): ParentalControl
     {
         return DB::transaction(function () use ($parent, $data) {
@@ -21,31 +22,40 @@ class ParentalControlService
                 throw new \Exception('User is not underage');
             }
 
-            // بررسی وجود کنترل والدین قبلی
-            $existingControl = ParentalControl::where('parent_id', $parent->id)
-                ->where('child_id', $child->id)
-                ->first();
-
-            if ($existingControl) {
-                throw new \Exception('Parental control already exists for this child');
+            // بررسی اینکه کودک قبلاً والد دارد یا خیر
+            if (!is_null($child->parent_id) && $child->parent_id !== $parent->id) {
+                throw new \Exception('Child already has a parent');
             }
 
-            // تنظیم کنترل والدین برای کودک
-            $child->update(['parent_id' => $parent->id]);
+            // تنظیم کنترل والدین برای کودک (اگر قبلاً والد نداشت)
+            if (is_null($child->parent_id)) {
+                $child->update(['parent_id' => $parent->id]);
+            }
+
+            // مقدار پیش‌فرض برای restrictions
+            $defaultRestrictions = [
+                'max_daily_usage' => 120,
+                'content_filter' => true,
+                'block_explicit_content' => true,
+                'block_private_messages' => false,
+            ];
+
+            // ادغام restrictions ارسال شده با پیش‌فرض
+            $restrictions = array_merge($defaultRestrictions, $data['restrictions'] ?? []);
+
+            // اگر max_daily_usage به صورت جداگانه ارسال شده، آن را به restrictions اضافه کن
+            if (isset($data['max_daily_usage'])) {
+                $restrictions['max_daily_usage'] = $data['max_daily_usage'];
+            }
 
             $control = ParentalControl::create([
                 'parent_id' => $parent->id,
                 'child_id' => $child->id,
-                'restrictions' => $data['restrictions'] ?? [
-                    'max_daily_usage' => 120,
-                    'content_filter' => true,
-                    'block_explicit_content' => true,
-                    'block_private_messages' => false,
-                ],
+                'restrictions' => $restrictions,
                 'allowed_features' => $data['allowed_features'] ?? ['posts', 'comments', 'likes'],
                 'daily_limit_start' => $data['daily_limit_start'] ?? null,
                 'daily_limit_end' => $data['daily_limit_end'] ?? null,
-                'max_daily_usage' => $data['max_daily_usage'] ?? 120,
+                'max_daily_usage' => $restrictions['max_daily_usage'], // از restrictions می‌گیریم
                 'is_active' => true,
             ]);
 
@@ -56,18 +66,36 @@ class ParentalControlService
     /**
      * آپدیت کنترل والدین
      */
+
     public function updateParentalControl(User $parent, int $childId, array $data): ParentalControl
     {
         $control = ParentalControl::where('parent_id', $parent->id)
             ->where('child_id', $childId)
             ->firstOrFail();
 
+        // اگر restrictions ارسال شده، آن را به‌روز کن
+        if (isset($data['restrictions'])) {
+            $restrictions = array_merge($control->restrictions ?? [], $data['restrictions']);
+
+            // اگر max_daily_usage در restrictions به‌روز شده، آن را در فیلد جداگانه هم به‌روز کن
+            if (isset($data['restrictions']['max_daily_usage'])) {
+                $data['max_daily_usage'] = $data['restrictions']['max_daily_usage'];
+            }
+        } else {
+            $restrictions = $control->restrictions;
+        }
+
+        // اگر max_daily_usage به صورت جداگانه ارسال شده، آن را به restrictions هم اضافه کن
+        if (isset($data['max_daily_usage'])) {
+            $restrictions['max_daily_usage'] = $data['max_daily_usage'];
+        }
+
         $control->update([
-            'restrictions' => $data['restrictions'] ?? $control->restrictions,
+            'restrictions' => $restrictions,
             'allowed_features' => $data['allowed_features'] ?? $control->allowed_features,
             'daily_limit_start' => $data['daily_limit_start'] ?? $control->daily_limit_start,
             'daily_limit_end' => $data['daily_limit_end'] ?? $control->daily_limit_end,
-            'max_daily_usage' => $data['max_daily_usage'] ?? $control->max_daily_usage,
+            'max_daily_usage' => $restrictions['max_daily_usage'] ?? $control->max_daily_usage,
             'is_active' => $data['is_active'] ?? $control->is_active,
         ]);
 
@@ -98,7 +126,8 @@ class ParentalControlService
             // حذف parent_id از کاربر کودک
             $child = User::find($childId);
             if ($child) {
-                $child->update(['parent_id' => null]);
+                $child->parent_id = null;
+                $child->save();
             }
 
             return $control->delete();
