@@ -43,7 +43,30 @@ class PostController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:1000',
+            'content' => [
+                'required',
+                'string',
+                'max:1000',
+                function ($attribute, $value, $fail) {
+                    // جلوگیری از تگ‌های خطرناک با regex قوی‌تر
+                    $dangerousPatterns = [
+                        '/<script\b[^>]*>(.*?)<\/script>/is',
+                        '/<iframe\b[^>]*>(.*?)<\/iframe>/is',
+                        '/<object\b[^>]*>(.*?)<\/object>/is',
+                        '/<embed\b[^>]*>(.*?)<\/embed>/is',
+                        '/javascript:/i',
+                        '/onclick=/i',
+                        '/onload=/i',
+                        '/onerror=/i',
+                    ];
+
+                    foreach ($dangerousPatterns as $pattern) {
+                        if (preg_match($pattern, $value)) {
+                            $fail('The content contains potentially dangerous HTML or JavaScript.');
+                        }
+                    }
+                }
+            ],
             'type' => 'sometimes|in:post,reply,quote',
             'parent_id' => 'sometimes|exists:posts,id',
             'original_post_id' => 'sometimes|exists:posts,id',
@@ -98,7 +121,30 @@ class PostController extends Controller
     public function update(Request $request, Post $post)
     {
         $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:1000',
+            'content' => [
+                'required',
+                'string',
+                'max:1000',
+                function ($attribute, $value, $fail) {
+                    // جلوگیری از تگ‌های خطرناک با regex قوی‌تر
+                    $dangerousPatterns = [
+                        '/<script\b[^>]*>(.*?)<\/script>/is',
+                        '/<iframe\b[^>]*>(.*?)<\/iframe>/is',
+                        '/<object\b[^>]*>(.*?)<\/object>/is',
+                        '/<embed\b[^>]*>(.*?)<\/embed>/is',
+                        '/javascript:/i',
+                        '/onclick=/i',
+                        '/onload=/i',
+                        '/onerror=/i',
+                    ];
+
+                    foreach ($dangerousPatterns as $pattern) {
+                        if (preg_match($pattern, $value)) {
+                            $fail('The content contains potentially dangerous HTML or JavaScript.');
+                        }
+                    }
+                }
+            ],
             'is_sensitive' => 'sometimes|boolean',
         ]);
 

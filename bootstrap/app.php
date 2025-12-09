@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'custom.throttle' => \App\Http\Middleware\CustomThrottleRequests::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
-
+    
         // اضافه کردن middleware rate limiter برای API
         $middleware->throttleApi();
     })

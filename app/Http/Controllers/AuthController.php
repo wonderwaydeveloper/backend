@@ -8,17 +8,20 @@ use App\Http\Resources\TwoFactorResource;
 use App\Models\PhoneVerification;
 use App\Models\SocialAccount;
 use App\Models\User;
+use App\Models\UserSecurityLog;
 use App\Services\AuthService;
 use App\Services\PhoneVerificationService;
 use App\Services\TwoFactorService;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use App\Services\EmailVerificationService;
+use Illuminate\Support\Facades\DB;
 
-use Illuminate\Validation\ValidationException; 
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -281,15 +284,47 @@ class AuthController extends Controller
     }
 
     /**
-     * خروج کاربر
+     * خروج کاربر (فقط توکن جاری)
      */
     public function logout(Request $request)
     {
         try {
-            $request->user()->currentAccessToken()->delete();
+            $user = $request->user();
+            $currentToken = $request->bearerToken();
 
-            return GenericResource::success(null, 'Logged out successfully');
+            \Log::info('Logout attempt (current token only)', [
+                'user_id' => $user->id,
+                'has_token' => !empty($currentToken),
+            ]);
+
+            if ($currentToken) {
+                // پیدا کردن توکن فعلی
+                $tokenModel = \Laravel\Sanctum\PersonalAccessToken::findToken($currentToken);
+
+                if ($tokenModel) {
+                    // فقط همین توکن را حذف کنیم
+                    $tokenModel->delete();
+
+                    // پاک کردن کش این توکن خاص
+                    \Illuminate\Support\Facades\Cache::forget('sanctum-token-' . $currentToken);
+
+                    \Log::info('Current token deleted', [
+                        'user_id' => $user->id,
+                        'token_id' => $tokenModel->id,
+                        'name' => $tokenModel->name,
+                        'deleted_count' => 1
+                    ]);
+                } else {
+                    \Log::warning('Current token not found for deletion', [
+                        'user_id' => $user->id,
+                        'token' => substr($currentToken, 0, 20) . '...'
+                    ]);
+                }
+            }
+
+            return GenericResource::success(null, 'Logged out successfully (current session only)');
         } catch (\Exception $e) {
+            \Log::error('Logout failed', ['error' => $e->getMessage()]);
             return GenericResource::error($e->getMessage(), 500);
         }
     }
@@ -444,4 +479,229 @@ class AuthController extends Controller
             return GenericResource::error($e->getMessage(), 400);
         }
     }
+
+
+    /**
+     * مشاهده session‌های فعال کاربر
+     */
+
+    public function activeSessions(Request $request)
+    {
+        try {
+            \Log::info('ActiveSessions endpoint called', [
+                'user_id' => $request->user()->id,
+                'has_user' => !is_null($request->user()),
+            ]);
+
+            $user = $request->user();
+
+            if (!$user) {
+                return GenericResource::error('User not authenticated', 401);
+            }
+
+            // دیباگ: بررسی tokens
+            \Log::info('User tokens count: ' . $user->tokens()->count());
+
+            $tokens = $user->tokens()
+                ->select(['id', 'name', 'last_used_at', 'created_at', 'ip_address', 'user_agent'])
+                ->orderBy('last_used_at', 'desc')
+                ->get();
+
+            \Log::info('Tokens retrieved: ' . $tokens->count());
+
+            $mappedTokens = $tokens->map(function ($token) use ($user) {
+                $currentToken = $user->currentAccessToken();
+
+                return [
+                    'id' => $token->id,
+                    'name' => $token->name ?? 'Unknown',
+                    'last_used_at' => $token->last_used_at?->toISOString(),
+                    'created_at' => $token->created_at->toISOString(),
+                    'ip_address' => $token->ip_address ?? 'Unknown',
+                    'user_agent' => $token->user_agent ?? 'Unknown',
+                    'is_current' => $currentToken && $token->id === $currentToken->id,
+                    'device_type' => $this->detectDeviceType($token->user_agent),
+                ];
+            });
+
+            return GenericResource::success($mappedTokens, 'Active sessions retrieved successfully');
+        } catch (\Exception $e) {
+            \Log::error('ActiveSessions error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return GenericResource::error('Failed to retrieve sessions: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * حذف session خاص
+     */
+    public function revokeSession(Request $request, $tokenId)
+    {
+        try {
+            $token = $request->user()->tokens()->find($tokenId);
+
+            if (!$token) {
+                return GenericResource::error('Session not found', 404);
+            }
+
+            // نمی‌توان session جاری را حذف کرد (باید از logout استفاده شود)
+            $currentToken = $request->user()->currentAccessToken();
+            if ($currentToken && $token->id === $currentToken->id) {
+                return GenericResource::error('Cannot revoke current session. Use logout instead.', 400);
+            }
+
+            $token->delete();
+
+            return GenericResource::success(null, 'Session revoked successfully');
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * حذف همه session‌ها به جز جاری
+     */
+    public function revokeOtherSessions(Request $request)
+    {
+        try {
+            $currentToken = $request->user()->currentAccessToken();
+
+            if (!$currentToken) {
+                return GenericResource::error('No active session found', 400);
+            }
+
+            $deletedCount = $request->user()->tokens()
+                ->where('id', '!=', $currentToken->id)
+                ->delete();
+
+            // لاگ امنیتی
+            UserSecurityLog::logSecurityEvent(
+                $request->user(),
+                'revoke_other_sessions',
+                ['revoked_count' => $deletedCount]
+            );
+
+            return GenericResource::success(
+                ['revoked_count' => $deletedCount],
+                'All other sessions revoked successfully'
+            );
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * لاگ‌اوت از همه دستگاه‌ها (همه توکن‌ها، شامل توکن جاری)
+     */
+    public function logoutFromAllDevices(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // شمارش توکن‌ها قبل از حذف
+            $tokensBefore = DB::table('personal_access_tokens')
+                ->where('tokenable_type', get_class($user))
+                ->where('tokenable_id', $user->id)
+                ->count();
+
+            \Log::info('Logout from ALL devices (including current)', [
+                'user_id' => $user->id,
+                'tokens_before' => $tokensBefore,
+            ]);
+
+            // حذف ALL توکن‌ها (شامل توکن جاری)
+            $deletedCount = DB::table('personal_access_tokens')
+                ->where('tokenable_type', get_class($user))
+                ->where('tokenable_id', $user->id)
+                ->delete();
+
+            // **پاک کردن کش Sanctum**
+            $this->clearSanctumCacheForUser($user);
+
+            \Log::info('All tokens deleted (including current)', [
+                'user_id' => $user->id,
+                'deleted_count' => $deletedCount,
+            ]);
+
+            return GenericResource::success(null, 'Logged out from ALL devices successfully (including this device)');
+        } catch (\Exception $e) {
+            \Log::error('Logout from all devices failed', ['error' => $e->getMessage()]);
+            return GenericResource::error($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * پاک کردن کش Sanctum برای کاربر خاص
+     */
+    private function clearSanctumCacheForUser(User $user)
+    {
+        try {
+            // پیدا کردن همه توکن‌های کاربر قبل از حذف (برای پاک کردن کش)
+            $tokens = DB::table('personal_access_tokens')
+                ->where('tokenable_type', get_class($user))
+                ->where('tokenable_id', $user->id)
+                ->get(['token']);
+
+            foreach ($tokens as $tokenRecord) {
+                // پاک کردن کش این توکن خاص
+                $cacheKey = 'sanctum-token-' . $tokenRecord->token;
+                \Illuminate\Support\Facades\Cache::forget($cacheKey);
+            }
+
+            // همچنین پاک کردن cacheهای مرتبط با کاربر
+            \Illuminate\Support\Facades\Cache::tags(['user-' . $user->id, 'sanctum'])->flush();
+
+            \Log::info('Sanctum cache cleared for user', ['user_id' => $user->id]);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to clear Sanctum cache', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    /**
+     * تشخیص نوع دستگاه از User-Agent
+     */
+    private function detectDeviceType(?string $userAgent): string
+    {
+        if (!$userAgent) {
+            return 'unknown';
+        }
+
+        $userAgent = strtolower($userAgent);
+
+        if (
+            strpos($userAgent, 'mobile') !== false ||
+            strpos($userAgent, 'android') !== false ||
+            strpos($userAgent, 'iphone') !== false
+        ) {
+            return 'mobile';
+        }
+
+        if (
+            strpos($userAgent, 'tablet') !== false ||
+            strpos($userAgent, 'ipad') !== false
+        ) {
+            return 'tablet';
+        }
+
+        if (
+            strpos($userAgent, 'windows') !== false ||
+            strpos($userAgent, 'macintosh') !== false ||
+            strpos($userAgent, 'linux') !== false
+        ) {
+            return 'desktop';
+        }
+
+        return 'other';
+    }
+
+
+
+
 }

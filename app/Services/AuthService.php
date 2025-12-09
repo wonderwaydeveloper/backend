@@ -15,7 +15,8 @@ class AuthService
     public function __construct(
         private PhoneVerificationService $phoneVerificationService,
         private TwoFactorService $twoFactorService
-    ) {}
+    ) {
+    }
 
     /**
      * ثبت‌نام کاربر با ایمیل
@@ -42,6 +43,7 @@ class AuthService
     /**
      * ورود کاربر با ایمیل
      */
+
     public function loginUser(string $email, string $password): array
     {
         $user = User::where('email', $email)->first();
@@ -54,11 +56,22 @@ class AuthService
             throw new \Exception('Account is banned');
         }
 
+        // **پاک کردن هرگونه کش قدیمی قبل از ایجاد توکن جدید**
+        $this->clearUserOldTokensCache($user);
+
         // بررسی احراز هویت دو مرحله‌ای
         $twoFactorRequired = $user->two_factor_enabled;
 
         if (!$twoFactorRequired) {
-            $token = $user->createToken('auth-token')->plainTextToken;
+            $token = $user->createToken('auth-token');
+
+            // ذخیره اطلاعات session
+            $token->accessToken->update([
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            $tokenPlainText = $token->plainTextToken;
             $this->updateLastLogin($user);
         }
 
@@ -66,11 +79,28 @@ class AuthService
 
         return [
             'user' => $user,
-            'token' => $token ?? null,
+            'token' => $tokenPlainText ?? null,
             'two_factor_required' => $twoFactorRequired,
         ];
     }
 
+    /**
+     * پاک کردن کش توکن‌های قدیمی کاربر
+     */
+    private function clearUserOldTokensCache(User $user)
+    {
+        try {
+            // پاک کردن cacheهای مرتبط با کاربر
+            \Illuminate\Support\Facades\Cache::tags(['user-' . $user->id])->flush();
+
+            \Log::info('Old user tokens cache cleared', ['user_id' => $user->id]);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to clear old user tokens cache', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
     /**
      * ثبت‌نام با شماره موبایل
      */
@@ -228,6 +258,8 @@ class AuthService
         $user->update([
             'last_login_at' => now(),
             'last_login_ip' => request()->ip(),
+            'last_login_user_agent' => request()->userAgent(),
         ]);
     }
+
 }

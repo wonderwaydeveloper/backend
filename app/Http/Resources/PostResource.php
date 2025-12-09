@@ -13,6 +13,7 @@ class PostResource extends JsonResource
      *
      * @return array<string, mixed>
      */
+
     public function toArray(Request $request): array
     {
         // اگر resource یک آرایه است (مثلاً از کش)
@@ -28,7 +29,7 @@ class PostResource extends JsonResource
         // حالت پیش‌فرض
         return [
             'id' => $this->id ?? null,
-            'content' => $this->content ?? null,
+            'content' => e($this->content ?? ''), // اینجا escape اضافه شده
             'type' => $this->type ?? 'post',
             'is_sensitive' => $this->is_sensitive ?? false,
             'is_edited' => $this->is_edited ?? false,
@@ -49,7 +50,7 @@ class PostResource extends JsonResource
     {
         return [
             'id' => $data['id'] ?? null,
-            'content' => $data['content'] ?? null,
+            'content' => e($data['content'] ?? ''), // اینجا escape اضافه شده
             'type' => $data['type'] ?? 'post',
             'is_sensitive' => $data['is_sensitive'] ?? false,
             'is_edited' => $data['is_edited'] ?? false,
@@ -83,7 +84,7 @@ class PostResource extends JsonResource
     {
         return [
             'id' => $post->id,
-            'content' => $post->content,
+            'content' => e($post->content), // اینجا escape اضافه شده
             'type' => $post->type,
             'is_sensitive' => $post->is_sensitive,
             'is_edited' => $post->is_edited,

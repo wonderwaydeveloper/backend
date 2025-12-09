@@ -117,6 +117,15 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::post('two-factor/enable', [AuthController::class, 'enableTwoFactor']);
         Route::post('two-factor/disable', [AuthController::class, 'disableTwoFactor']);
         Route::post('two-factor/verify', [AuthController::class, 'verifyTwoFactor']);
+
+        // ====================
+        // SESSION MANAGEMENT (NEW)
+        // ====================
+        Route::get('sessions', [AuthController::class, 'activeSessions']); // مشاهده session‌های فعال
+        Route::delete('sessions/{tokenId}', [AuthController::class, 'revokeSession'])->where('tokenId', '[0-9]+'); // حذف session خاص
+        Route::delete('sessions/others', [AuthController::class, 'revokeOtherSessions']); // حذف همه session‌ها به جز جاری
+        Route::post('logout-all', [AuthController::class, 'logoutFromAllDevices']); // لاگ‌اوت از همه دستگاه‌ها
+        Route::post('logout/{tokenId}', [AuthController::class, 'logoutFromSpecificDevice'])->where('tokenId', '[0-9]+'); 
     });
 
     // ====================
@@ -148,6 +157,7 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
     // POST MANAGEMENT
     // ====================
     Route::prefix('posts')->group(function () {
+        
         Route::post('/', [PostController::class, 'store']);
         Route::put('{post}', [PostController::class, 'update'])->middleware('can:update,post');
         Route::delete('{post}', [PostController::class, 'destroy'])->middleware('can:delete,post');
