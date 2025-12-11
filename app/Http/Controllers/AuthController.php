@@ -701,7 +701,4 @@ class AuthController extends Controller
         return 'other';
     }
 
-
-
-
 }
