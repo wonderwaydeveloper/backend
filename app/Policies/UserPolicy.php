@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\Log;
 
 class UserPolicy
 {
@@ -60,9 +61,10 @@ class UserPolicy
     /**
      * تعیین اینکه آیا کاربر می‌تواند درخواست دنبال کردن را بپذیرد/رد کند
      */
+
     public function manageFollowRequests(User $currentUser, User $user): bool
     {
-        return $currentUser->id === $user->id && $user->is_private;
+        return $currentUser->id === $user->id && $currentUser->is_private;
     }
 
     /**

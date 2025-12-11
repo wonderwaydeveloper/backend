@@ -125,7 +125,7 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::delete('sessions/{tokenId}', [AuthController::class, 'revokeSession'])->where('tokenId', '[0-9]+'); // حذف session خاص
         Route::delete('sessions/others', [AuthController::class, 'revokeOtherSessions']); // حذف همه session‌ها به جز جاری
         Route::post('logout-all', [AuthController::class, 'logoutFromAllDevices']); // لاگ‌اوت از همه دستگاه‌ها
-        Route::post('logout/{tokenId}', [AuthController::class, 'logoutFromSpecificDevice'])->where('tokenId', '[0-9]+'); 
+        Route::post('logout/{tokenId}', [AuthController::class, 'logoutFromSpecificDevice'])->where('tokenId', '[0-9]+');
     });
 
     // ====================
@@ -149,15 +149,16 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
 
         // Follow Requests (for private accounts)
         Route::get('me/follow-requests', [UserController::class, 'followRequests']);
-        Route::post('{user}/accept-follow-request', [UserController::class, 'acceptFollowRequest'])->where('user', '[0-9]+');
-        Route::post('{user}/reject-follow-request', [UserController::class, 'rejectFollowRequest'])->where('user', '[0-9]+');
+
+        Route::post('{follower}/accept-follow-request', [UserController::class, 'acceptFollowRequest'])->where('follower', '[0-9]+');
+        Route::post('{follower}/reject-follow-request', [UserController::class, 'rejectFollowRequest'])->where('follower', '[0-9]+');
     });
 
     // ====================
     // POST MANAGEMENT
     // ====================
     Route::prefix('posts')->group(function () {
-        
+
         Route::post('/', [PostController::class, 'store']);
         Route::put('{post}', [PostController::class, 'update'])->middleware('can:update,post');
         Route::delete('{post}', [PostController::class, 'destroy'])->middleware('can:delete,post');

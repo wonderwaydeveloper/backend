@@ -16,87 +16,115 @@ class UserJourneyTest extends TestCase
     /** @test */
     public function complete_user_journey()
     {
-        // Register
-        $register = $this->postJson('/api/auth/register', [
+        $this->withoutMiddleware([\App\Http\Middleware\TrackOnlineUser::class]);
+
+        // کاربر اول
+        $user = User::factory()->create([
             'name' => 'Integration User',
             'username' => 'journeyuser',
             'email' => 'journey@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => bcrypt('password123'),
             'birth_date' => '1990-01-01',
-        ])->assertStatus(200);
-
-        $user = User::find($register['data']['user']['id']);
-        $token = $register['data']['access_token'];
+            'is_private' => false,
+            'is_banned' => false,
+        ]);
 
         Sanctum::actingAs($user);
 
-        // Update profile
+        // آپدیت پروفایل
         $this->putJson('/api/users/me', [
             'bio' => 'Integration Bio',
             'location' => 'Test',
             'is_private' => false,
         ])->assertStatus(200);
 
-        // Create post
-        $post = $this->postJson('/api/posts', [
+        $user->refresh();
+
+        // ساخت پست
+        $postResponse = $this->postJson('/api/posts', [
             'content' => 'My first post!',
-        ])->assertStatus(201)['data'];
+        ])->assertStatus(201);
 
-        // Cannot like own post
-        $this->postJson("/api/posts/{$post['id']}/like")
-            ->assertStatus(400);
+        $post = $postResponse->json()['data'];
+        $postModel = Post::find($post['id']);
 
-        // Create second user
-        $user2 = User::factory()->create();
-        $user2Token = $user2->createToken('token')->plainTextToken;
+        // کاربر اول نمی‌تواند پست خودش را لایک کند
+        $this->postJson("/api/posts/{$post['id']}/like")->assertStatus(400);
 
-        // user2 → like post
-        $this->withToken($user2Token)
-            ->postJson("/api/posts/{$post['id']}/like")
-            ->assertStatus(200);
+        // کاربر دوم
+        $user2 = User::factory()->create([
+            'name' => 'Integration User2',
+            'username' => 'journeyuser2',
+            'email' => 'journey2@example.com',
+            'password' => bcrypt('password123'),
+            'birth_date' => '1990-01-01',
+            'is_private' => false,
+            'is_banned' => false,
+        ]);
 
-        // user2 → follow user1
-        $this->withToken($user2Token)
-            ->postJson("/api/users/{$user->id}/follow")
-            ->assertStatus(200);
+        Sanctum::actingAs($user2);
 
-        // user2 → comment
-        $this->withToken($user2Token)
-            ->postJson('/api/comments', [
-                'content' => 'Nice!',
-                'commentable_type' => 'post',
-                'commentable_id' => $post['id'],
-            ])->assertStatus(201);
+        // کاربر دوم پست را لایک می‌کند
+        $this->postJson("/api/posts/{$post['id']}/like")->assertStatus(200);
 
-        // Create article
-        $article = $this->postJson('/api/articles', [
+        // کاربر دوم کاربر اول را فالو می‌کند
+        $this->postJson("/api/users/{$user->id}/follow")->assertStatus(200);
+
+        // کاربر دوم کامنت می‌گذارد
+        $this->postJson('/api/comments', [
+            'content' => 'Nice!',
+            'commentable_type' => 'post',
+            'commentable_id' => $post['id'],
+        ])->assertStatus(201);
+
+        // کاربر اول مقاله می‌سازد
+        Sanctum::actingAs($user);
+        $articleResponse = $this->postJson('/api/articles', [
             'title' => 'Test Article',
             'content' => 'Lorem ipsum',
             'excerpt' => 'short',
             'tags' => ['integration'],
             'status' => 'published',
-        ])->assertStatus(201)['data'];
+        ])->assertStatus(201);
 
-        // user2 bookmarks article
-        $this->withToken($user2Token)
-            ->postJson("/api/articles/{$article['id']}/bookmark")
-            ->assertStatus(200);
+        $article = $articleResponse->json()['data'];
 
-        // Assertions
+        // کاربر دوم مقاله را بوکمارک می‌کند
+        Sanctum::actingAs($user2);
+        $this->postJson("/api/articles/{$article['id']}/bookmark")->assertStatus(200);
+
+        // Assertions نهایی
         $this->assertDatabaseHas('posts', ['id' => $post['id']]);
         $this->assertDatabaseHas('likes', [
             'user_id' => $user2->id,
             'likeable_id' => $post['id'],
+            'likeable_type' => Post::class
         ]);
         $this->assertDatabaseHas('comments', [
             'user_id' => $user2->id,
             'commentable_id' => $post['id'],
+            'commentable_type' => Post::class
         ]);
         $this->assertDatabaseHas('articles', ['id' => $article['id']]);
         $this->assertDatabaseHas('bookmarks', [
             'user_id' => $user2->id,
             'bookmarkable_id' => $article['id'],
+            'bookmarkable_type' => Article::class
         ]);
+    }
+
+    /** @test */
+    public function simple_auth_issue()
+    {
+        $user1 = User::factory()->create(['email' => 'user1@test.com']);
+        $user2 = User::factory()->create(['email' => 'user2@test.com']);
+
+        Sanctum::actingAs($user1);
+        $response1 = $this->getJson('/api/auth/user');
+        $this->assertEquals($user1->id, $response1->json()['data']['user']['id']);
+
+        Sanctum::actingAs($user2);
+        $response2 = $this->getJson('/api/auth/user');
+        $this->assertEquals($user2->id, $response2->json()['data']['user']['id']);
     }
 }

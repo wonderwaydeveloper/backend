@@ -222,16 +222,17 @@ class UserService
             $follow = Follow::where('follower_id', $follower->id)
                 ->where('following_id', $user->id)
                 ->whereNull('approved_at')
-                ->firstOrFail();
+                ->first();
 
-            $follow->approve();
+            if (!$follow) {
+                throw new \Exception('Follow request not found');
+            }
+
+            $follow->update(['approved_at' => now()]);
 
             // آپدیت شمارنده‌ها
             $user->increment('followers_count');
             $follower->increment('following_count');
-
-            // ارسال نوتیفیکیشن جدید برای فالوور
-            $this->notificationService->sendNewFollowerNotification($user, $follower);
 
             return true;
         });
@@ -245,7 +246,11 @@ class UserService
         $follow = Follow::where('follower_id', $follower->id)
             ->where('following_id', $user->id)
             ->whereNull('approved_at')
-            ->firstOrFail();
+            ->first();
+
+        if (!$follow) {
+            throw new \Exception('Follow request not found');
+        }
 
         return $follow->delete();
     }

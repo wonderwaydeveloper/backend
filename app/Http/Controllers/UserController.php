@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -187,6 +188,8 @@ class UserController extends Controller
         }
     }
 
+
+
     /**
      * قبول درخواست دنبال کردن
      */
@@ -273,8 +276,8 @@ class UserController extends Controller
         }
 
         try {
-            
-             $users = $this->userService->searchUsers($request->get('query'), $request->user());
+
+            $users = $this->userService->searchUsers($request->get('query'), $request->user());
 
             return GenericResource::success(
                 UserResource::collection($users),
