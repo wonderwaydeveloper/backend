@@ -19,7 +19,7 @@ class BookmarkTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Bookmark some posts
+        // Bookmark some posts - فقط ۳ تا ایجاد کرده‌اید
         $posts = Post::factory()->count(3)->create();
         foreach ($posts as $post) {
             Bookmark::create([
@@ -34,7 +34,7 @@ class BookmarkTest extends TestCase
         $response = $this->getJson('/api/bookmarks');
 
         $response->assertStatus(200)
-            ->assertJsonCount(5, 'data');
+            ->assertJsonCount(3, 'data'); // تغییر از ۵ به ۳
     }
 
     #[Test]

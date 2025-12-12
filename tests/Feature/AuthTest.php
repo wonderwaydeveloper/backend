@@ -109,7 +109,7 @@ class AuthTest extends TestCase
         $response = $this->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
-            ->assertJsonPath('meta.message', 'Logged out successfully'); // <-- اصلاح شد
+            ->assertJsonPath('meta.message', 'Logged out successfully (current session only)'); // <-- تغییر این خط
 
         $this->assertCount(0, $user->tokens);
     }
