@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('bookmarks', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->morphs('bookmarkable'); // post, article
+            $table->morphs('bookmarkable'); // post
             $table->timestamps();
 
             $table->unique(['user_id', 'bookmarkable_id', 'bookmarkable_type']);

@@ -26,6 +26,7 @@ return new class extends Migration {
             $table->integer('comment_count')->default(0);
             $table->boolean('is_featured')->default(false);
             $table->boolean('is_private')->default(false);
+            $table->boolean('comments_disabled')->default(false);
             $table->timestamp('scheduled_at')->nullable();
             $table->timestamp('published_at')->nullable();
             $table->softDeletes();

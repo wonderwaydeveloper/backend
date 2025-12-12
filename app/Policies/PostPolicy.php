@@ -12,64 +12,90 @@ class PostPolicy
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست را مشاهده کند
+     * این متد اصلی برای کنترل دسترسی مشاهده پست است
      */
-
-
     public function view(User $user, Post $post): bool
     {
-        // اگر پست حذف شده، فقط مالک یا ادمین می‌توانند ببینند
+        //1. اگر پست حذف شده باشد، فقط نویسنده یا ادمین می‌توانند ببینند
         if ($post->trashed()) {
             return $user->id === $post->user_id || $user->isAdmin();
         }
 
-        // اگر کاربر مسدود شده، فقط ادمین می‌تواند ببیند
+        //2. کاربر همیشه می‌تواند پست خود را ببیند (حتی اگر مسدود شده باشد)
+        if ($user->id === $post->user_id) {
+            return true;
+        }
+
+        //3. بررسی مسدود بودن صاحب پست:اگر صاحب پست مسدود باشد، فقط ادمین می‌تواند پست را ببیند 
         if ($post->user->is_banned && !$user->isAdmin()) {
             return false;
         }
 
-        // اگر پست خصوصی است، فقط مالک یا دنبال‌کنندگان تایید شده می‌توانند ببینند
-        if ($post->user->is_private) {
-            if ($user->id === $post->user_id) {
-                return true;
-            }
-
-            return $post->user->followers()
-                ->where('follower_id', $user->id)
-                ->whereNotNull('approved_at')
-                ->exists();
+        //4. بررسی دسترسی به محتوای کاربر صاحب پست
+        if (!$this->canAccessUserContent($user, $post->user)) {
+            return false;
         }
 
-        // اگر محتوای حساس و کاربر زیر سن است
+        //5. اگر پست خصوصی باشد و صاحب پست عمومی باشد، فقط دنبال‌کنندگان تایید شده
+        if ($post->is_private && !$post->user->is_private) {
+            if (!$this->isApprovedFollower($user, $post->user)) {
+                return false;
+            }
+        }
+
+        //6. اگر پست حساس باشد و کاربر زیر سن باشد، اجازه مشاهده ندارد
         if ($post->is_sensitive && $user->is_underage) {
             return false;
         }
 
-        // بقیه موارد
+        // در غیر این صورت اجازه مشاهده داده می‌شود
         return true;
     }
 
+    /**
+     * بررسی دسترسی کاربر به محتوای یک کاربر دیگر
+     * این متد کمکی برای ساده‌سازی منطق دسترسی است
+     */
+    protected function canAccessUserContent(User $viewer, User $contentOwner): bool
+    {
+        // کاربر همیشه به محتوای خودش دسترسی دارد
+        if ($viewer->id === $contentOwner->id) {
+            return true;
+        }
+
+        // اگر کاربر صاحب محتوا خصوصی باشد
+        if ($contentOwner->is_private) {
+            // فقط دنبال‌کنندگان تایید شده می‌توانند محتوا را ببینند
+            return $this->isApprovedFollower($viewer, $contentOwner);
+        }
+
+        // اگر کاربر صاحب محتوا عمومی باشد، همه می‌توانند محتوا را ببینند
+        return true;
+    }
 
     /**
-     * تعیین اینکه آیا کاربر می‌تواند پست ایجاد کند
+     * بررسی اینکه آیا یک کاربر، دنبال‌کننده تایید شده کاربر دیگر است یا نه
+     */
+    protected function isApprovedFollower(User $follower, User $following): bool
+    {
+        return $following->followers()
+            ->where('follower_id', $follower->id)
+            ->whereNotNull('approved_at')
+            ->exists();
+    }
+
+    /**
+     * تعیین اینکه آیا کاربر می‌تواند پست جدید ایجاد کند
+     * کاربران مسدود شده نمی‌توانند پست ایجاد کنند
      */
     public function create(User $user): bool
     {
-        // کاربران مسدود شده نمی‌توانند پست ایجاد کنند
-        if ($user->is_banned) {
-            return false;
-        }
-
-        // کاربران زیر سن ممکن است محدودیت داشته باشند
-        if ($user->is_underage) {
-            // اینجا می‌توانید منطق بررسی کنترل والدین را اضافه کنید
-            return true; // به طور موقت true می‌گذاریم
-        }
-
-        return true;
+        return !$user->is_banned;
     }
 
     /**
-     * تعیین اینکه آیا کاربر می‌تواند پست را آپدیت کند
+     * تعیین اینکه آیا کاربر می‌تواند پست را ویرایش کند
+     * فقط نویسنده پست می‌تواند آن را ویرایش کند و پست نباید حذف شده باشد
      */
     public function update(User $user, Post $post): bool
     {
@@ -78,29 +104,30 @@ class PostPolicy
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست را حذف کند
+     * نویسنده پست یا ادمین می‌توانند پست را حذف کنند
      */
     public function delete(User $user, Post $post): bool
     {
-        // نویسنده می‌تواند حذف کند یا ادمین
-        return $user->id === $post->user_id || $this->managePosts($user);
+        return $user->id === $post->user_id || $user->isAdmin();
     }
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست را بازنشر کند
+     * کاربر نمی‌تواند پست خودش را بازنشر کند
+     * کاربران مسدود شده نمی‌توانند بازنشر کنند
+     * کاربران زیر سن نمی‌توانند محتوای حساس را بازنشر کنند
+     * کاربر باید بتواند پست را ببیند تا بتواند آن را بازنشر کند
      */
     public function repost(User $user, Post $post): bool
     {
-        // کاربر نمی‌تواند پست خودش را بازنشر کند
         if ($user->id === $post->user_id) {
             return false;
         }
 
-        // کاربران مسدود شده نمی‌توانند بازنشر کنند
         if ($user->is_banned) {
             return false;
         }
 
-        // بررسی محدودیت‌های سنی برای محتوای حساس
         if ($post->is_sensitive && $user->is_underage) {
             return false;
         }
@@ -110,64 +137,67 @@ class PostPolicy
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست را لایک کند
+     * کاربر نمی‌تواند پست خودش را لایک کند
+     * کاربران مسدود شده نمی‌توانند لایک کنند
+     * کاربران زیر سن نمی‌توانند محتوای حساس را لایک کنند
+     * کاربر باید بتواند پست را ببیند تا بتواند آن را لایک کند
      */
     public function like(User $user, Post $post): bool
     {
-        // کاربران مسدود شده نمی‌توانند لایک کنند
         if ($user->is_banned) {
             return false;
         }
 
-        // **مهمه: کاربر نمی‌تواند پست خودش را لایک کند**
         if ($user->id === $post->user_id) {
             return false;
         }
 
-        // بررسی محدودیت‌های سنی برای محتوای حساس
         if ($post->is_sensitive && $user->is_underage) {
             return false;
         }
 
-        // در نهایت، کاربر باید بتواند پست را ببیند تا بتواند آن را لایک کند
         return $this->view($user, $post);
     }
 
+
     /**
      * تعیین اینکه آیا کاربر می‌تواند روی پست کامنت بگذارد
+     * اگر کامنت‌ها غیرفعال شده باشند، کاربران عادی نمی‌توانند کامنت بگذارند
+     * اما صاحب پست و ادمین همچنان می‌توانند کامنت بگذارند
+     * کاربران مسدود شده تحت هیچ شرایطی نمی‌توانند کامنت بگذارند
      */
     public function comment(User $user, Post $post): bool
     {
-        // اگر کامنت‌ها بسته شده‌اند
-        if ($post->comments_disabled ?? false) {
-            return false;
-        }
-
-        // کاربران مسدود شده نمی‌توانند کامنت بگذارند
+        // 1. کاربران مسدود شده نمی‌توانند کامنت بگذارند (حتی روی پست خودشان)
         if ($user->is_banned) {
             return false;
         }
 
+        // 2. بررسی غیرفعال بودن کامنت‌ها
+        if ($post->comments_disabled) {
+            // اگر کامنت‌ها غیرفعال باشد، فقط صاحب پست یا ادمین می‌توانند کامنت بگذارند
+            return ($user->id === $post->user_id || $user->isAdmin()) && $this->view($user, $post);
+        }
+
+        // 3. اگر کامنت‌ها فعال باشد، کاربر باید بتواند پست را ببیند تا بتواند کامنت بگذارد
         return $this->view($user, $post);
     }
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند پست‌ها را مدیریت کند (ادمین)
+     * این متد برای دسترسی‌های سطح ادمین استفاده می‌شود
      */
     public function managePosts(User $user): bool
     {
-        return $user->isAdmin(); // استفاده از متد isAdmin که به مدل User اضافه کردیم
+        return $user->isAdmin();
     }
 
     /**
      * تعیین اینکه آیا کاربر می‌تواند محتوای حساس ایجاد کند
+     * کاربران زیر سن نمی‌توانند محتوای حساس ایجاد کنند
      */
     public function createSensitiveContent(User $user): bool
     {
-        // کاربران زیر سن نمی‌توانند محتوای حساس ایجاد کنند
-        if ($user->is_underage) {
-            return false;
-        }
-
-        return true;
+        return !$user->is_underage;
     }
 }

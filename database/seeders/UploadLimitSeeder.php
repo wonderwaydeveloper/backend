@@ -21,16 +21,6 @@ class UploadLimitSeeder extends Seeder
                 'max_video_size' => 10240, // 10MB
             ],
             [
-                'type' => 'article',
-                'max_files' => 10,
-                'max_file_size' => 10240, // 10MB
-                'allowed_mimes' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
-                'max_total_size' => 51200, // 50MB
-                'is_video_allowed' => false,
-                'max_video_duration' => 0,
-                'max_video_size' => 0,
-            ],
-            [
                 'type' => 'message',
                 'max_files' => 5,
                 'max_file_size' => 10240, // 10MB

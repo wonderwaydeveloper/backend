@@ -72,9 +72,8 @@ class BookmarkService
      */
     private function getModelClass(string $type): string
     {
-        return match($type) {
+        return match ($type) {
             'post' => \App\Models\Post::class,
-            'article' => \App\Models\Article::class,
             default => throw new \Exception('Invalid bookmarkable type'),
         };
     }
@@ -100,9 +99,6 @@ class BookmarkService
         return [
             'posts' => Bookmark::where('user_id', $user->id)
                 ->where('bookmarkable_type', \App\Models\Post::class)
-                ->count(),
-            'articles' => Bookmark::where('user_id', $user->id)
-                ->where('bookmarkable_type', \App\Models\Article::class)
                 ->count(),
             'total' => Bookmark::where('user_id', $user->id)->count(),
         ];

@@ -11,6 +11,7 @@ use App\Models\UserSecurityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Mockery;
+use PHPUnit\Framework\Attributes\Test;
 
 class AuthServiceTest extends TestCase
 {
@@ -33,7 +34,7 @@ class AuthServiceTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_registers_user_successfully()
     {
         $userData = [
@@ -58,7 +59,7 @@ class AuthServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_marks_user_as_underage_if_under_18()
     {
         $userData = [
@@ -74,7 +75,7 @@ class AuthServiceTest extends TestCase
         $this->assertTrue($user->fresh()->is_underage);
     }
 
-    /** @test */
+    #[Test]
     public function it_logs_in_user_successfully()
     {
         $user = User::factory()->create([
@@ -97,7 +98,7 @@ class AuthServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_invalid_credentials()
     {
         $this->expectException(\Exception::class);
@@ -111,7 +112,7 @@ class AuthServiceTest extends TestCase
         $this->authService->loginUser('test@example.com', 'wrongpassword');
     }
 
-    /** @test */
+    #[Test]
     public function it_throws_exception_for_banned_user()
     {
         $this->expectException(\Exception::class);
@@ -126,7 +127,7 @@ class AuthServiceTest extends TestCase
         $this->authService->loginUser('banned@example.com', 'password123');
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_unique_username()
     {
         // کاربرانی با نام‌های کاربری که تابع قرار است با آن‌ها تداخل پیدا کند، ایجاد می‌کنیم

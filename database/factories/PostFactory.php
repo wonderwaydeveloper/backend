@@ -19,7 +19,8 @@ class PostFactory extends Factory
             'is_sensitive' => fake()->boolean(10),
             'is_edited' => fake()->boolean(20),
             'is_featured' => fake()->boolean(5),
-            'is_private' => fake()->boolean(10), // این ستون را اضافه کنید
+            'is_private' => false, // Default to public
+            'comments_disabled' => false,
             'published_at' => now(),
             'like_count' => 0,
             'reply_count' => 0,
@@ -30,21 +31,21 @@ class PostFactory extends Factory
 
     public function sensitive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'is_sensitive' => true,
         ]);
     }
 
     public function edited(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'is_edited' => true,
         ]);
     }
 
     public function scheduled(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'scheduled_at' => fake()->dateTimeBetween('+1 day', '+1 week'),
             'published_at' => null,
         ]);
@@ -52,8 +53,15 @@ class PostFactory extends Factory
 
     public function private(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'is_private' => true,
+        ]);
+    }
+
+    public function withDisabledComments(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'comments_disabled' => true,
         ]);
     }
 }

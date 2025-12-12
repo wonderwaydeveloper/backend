@@ -5,16 +5,16 @@ namespace Tests\Unit;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\Follow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\Test;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_be_created()
     {
         $user = User::factory()->create([
@@ -28,7 +28,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_has_hashed_password()
     {
         $user = User::factory()->create([
@@ -39,7 +39,7 @@ class UserTest extends TestCase
         $this->assertNotEquals('secret123', $user->password);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_have_posts()
     {
         $user = User::factory()->create();
@@ -49,17 +49,7 @@ class UserTest extends TestCase
         $this->assertEquals($post->id, $user->posts->first()->id);
     }
 
-    /** @test */
-    public function user_can_have_articles()
-    {
-        $user = User::factory()->create();
-        $article = Article::factory()->create(['user_id' => $user->id]);
-
-        $this->assertInstanceOf(Article::class, $user->articles->first());
-        $this->assertEquals($article->id, $user->articles->first()->id);
-    }
-
-    /** @test */
+    #[Test]
     public function user_can_follow_other_users()
     {
         $user1 = User::factory()->create();
@@ -75,7 +65,7 @@ class UserTest extends TestCase
         $this->assertTrue($user2->isFollowedBy($user1));
     }
 
-    /** @test */
+    #[Test]
     public function user_can_check_if_private_account_can_be_followed()
     {
         $user1 = User::factory()->create(['is_private' => true]);
@@ -95,7 +85,7 @@ class UserTest extends TestCase
         $this->assertTrue($user2->canFollow($user1));
     }
 
-    /** @test */
+    #[Test]
     public function user_age_is_calculated_correctly()
     {
         $birthDate = now()->subYears(25)->subMonths(6);
@@ -106,7 +96,7 @@ class UserTest extends TestCase
         $this->assertEquals(25, $user->age);
     }
 
-    /** @test */
+    #[Test]
     public function user_marked_as_underage_if_under_18()
     {
         $birthDate = now()->subYears(16);
@@ -117,7 +107,7 @@ class UserTest extends TestCase
         $this->assertTrue($user->is_underage);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_enable_two_factor()
     {
         $user = User::factory()->create();
@@ -127,7 +117,7 @@ class UserTest extends TestCase
         $this->assertNotNull($user->fresh()->two_factor_secret);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_disable_two_factor()
     {
         $user = User::factory()->create();

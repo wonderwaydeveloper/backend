@@ -7,12 +7,13 @@ use App\Models\User;
 use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
 
 class FeedIntegrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function feed_is_generated_correctly()
     {
         $user = User::factory()->create();

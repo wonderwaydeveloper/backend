@@ -35,13 +35,6 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Services\NotificationService::class)
             );
         });
-        
-        // ثبت ArticleService با NotificationService
-        $this->app->singleton(\App\Services\ArticleService::class, function ($app) {
-            return new \App\Services\ArticleService(
-                $app->make(\App\Services\NotificationService::class)
-            );
-        });
 
         // سایر سرویس‌ها
         $this->app->singleton(\App\Services\AuthService::class);

@@ -208,7 +208,6 @@ class CommentService
     {
         return match ($type) {
             'post' => \App\Models\Post::class,
-            'article' => \App\Models\Article::class,
             default => throw new \Exception('Invalid commentable type'),
         };
     }

@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\Comment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -49,33 +48,6 @@ class CommentTest extends TestCase
             'commentable_id' => $post->id,
             'commentable_type' => Post::class,
             'content' => 'This is a comment on post.',
-        ]);
-    }
-
-    #[Test]
-    public function user_can_comment_on_article()
-    {
-        $user = User::factory()->create();
-        $articleOwner = User::factory()->create(['is_private' => false]);
-        $article = Article::factory()->create([
-            'user_id' => $articleOwner->id,
-            'status' => 'published'
-        ]);
-        
-        Sanctum::actingAs($user);
-
-        $response = $this->postJson('/api/comments', [
-            'content' => 'Great article!',
-            'commentable_type' => 'article',
-            'commentable_id' => $article->id,
-        ]);
-
-        $response->assertStatus(201);
-
-        $this->assertDatabaseHas('comments', [
-            'user_id' => $user->id,
-            'commentable_id' => $article->id,
-            'commentable_type' => Article::class,
         ]);
     }
 

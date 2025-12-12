@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\Comment;
 use App\Models\Follow;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,26 +62,6 @@ class DatabaseTest extends TestCase
         $this->assertSoftDeleted('posts', ['id' => $post->id]);
     }
 
-    #[Test]
-    #[Group('database')]
-    public function articles_table_has_correct_structure()
-    {
-        $user = User::factory()->create();
-        $article = Article::factory()->create([
-            'user_id' => $user->id,
-            'title' => 'Test Article',
-            'slug' => 'test-article',
-        ]);
-
-        $this->assertDatabaseHas('articles', [
-            'user_id' => $user->id,
-            'title' => 'Test Article',
-            'slug' => 'test-article',
-        ]);
-
-        // Check JSON fields
-        $this->assertIsArray($article->tags);
-    }
 
     #[Test]
     #[Group('database')]
@@ -120,26 +99,18 @@ class DatabaseTest extends TestCase
     {
         $user = User::factory()->create();
         $post = Post::factory()->create(['user_id' => $user->id]);
-        $article = Article::factory()->create(['user_id' => $user->id]);
-
-        // Create comments on both post and article
+      
+        // Create comments on post 
         $postComment = Comment::factory()->create([
             'user_id' => $user->id,
             'commentable_id' => $post->id,
             'commentable_type' => Post::class,
         ]);
 
-        $articleComment = Comment::factory()->create([
-            'user_id' => $user->id,
-            'commentable_id' => $article->id,
-            'commentable_type' => Article::class,
-        ]);
-
         // Verify relationships
         $this->assertEquals($post->id, $postComment->commentable->id);
-        $this->assertEquals($article->id, $articleComment->commentable->id);
         $this->assertInstanceOf(Post::class, $postComment->commentable);
-        $this->assertInstanceOf(Article::class, $articleComment->commentable);
+     
     }
 
     #[Test]

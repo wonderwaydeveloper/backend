@@ -154,29 +154,6 @@ class CommentPolicy
             return true;
         }
 
-        // بررسی دسترسی به مقالات
-        if ($model instanceof \App\Models\Article) {
-            // اگر نویسنده مسدود شده است، فقط ادمین می‌تواند مقاله را ببیند
-            if ($model->user->is_banned) {
-                return $this->manageComments($user);
-            }
-
-            // اگر مقاله خصوصی است، فقط نویسنده یا کاربرانی که دنبال می‌کنند می‌توانند ببینند
-            if ($model->user->is_private) {
-                // نویسنده همیشه می‌تواند مقاله خودش را ببیند
-                if ($model->user_id === $user->id) {
-                    return true;
-                }
-
-                // بررسی اینکه آیا کاربر از دنبال‌کنندگان تایید شده است
-                return $model->user->followers()
-                    ->where('follower_id', $user->id)
-                    ->whereNotNull('approved_at')
-                    ->exists();
-            }
-            return true;
-        }
-
         return true; // به طور پیش‌فرض اجازه دسترسی می‌دهیم
     }
 }

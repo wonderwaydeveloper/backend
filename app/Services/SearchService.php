@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -41,11 +40,6 @@ class SearchService
         // جستجو در پست‌ها - اصلاح شرط
         if (!isset($filters['exclude_posts']) || !$filters['exclude_posts']) {
             $results['posts'] = $this->searchPosts($query, $user, $filters);
-        }
-
-        // جستجو در مقالات - اصلاح شرط
-        if (!isset($filters['exclude_articles']) || !$filters['exclude_articles']) {
-            $results['articles'] = $this->searchArticles($query, $user, $filters);
         }
 
         // کش کردن نتایج
@@ -116,37 +110,6 @@ class SearchService
         return $searchQuery->paginate($filters['per_page'] ?? 15);
     }
 
-    /**
-     * جستجو در مقالات
-     */
-    public function searchArticles(string $query, ?User $user = null, array $filters = []): LengthAwarePaginator
-    {
-        $searchQuery = Article::with(['user', 'media'])
-            ->published()
-            ->where(function ($q) use ($query) {
-                $q->where('title', 'like', "%{$query}%")
-                    ->orWhere('content', 'like', "%{$query}%")
-                    ->orWhere('excerpt', 'like', "%{$query}%")
-                    ->orWhereHas('user', function ($userQuery) use ($query) {
-                        $userQuery->where('name', 'like', "%{$query}%")
-                            ->orWhere('username', 'like', "%{$query}%");
-                    });
-            });
-
-        // فیلتر بر اساس تگ
-        if (isset($filters['tag'])) {
-            $searchQuery->whereJsonContains('tags', $filters['tag']);
-        }
-
-        // فیلتر مقالات تأیید شده
-        if (isset($filters['approved']) && $filters['approved']) {
-            $searchQuery->where('is_approved', true);
-        }
-
-        $searchQuery->orderBy('created_at', 'desc');
-
-        return $searchQuery->paginate($filters['per_page'] ?? 10);
-    }
 
     /**
      * جستجوی پیشرفته با فیلترهای بیشتر
@@ -161,10 +124,6 @@ class SearchService
 
         if (isset($criteria['posts'])) {
             $results['posts'] = $this->advancedPostSearch($criteria['posts'], $user);
-        }
-
-        if (isset($criteria['articles'])) {
-            $results['articles'] = $this->advancedArticleSearch($criteria['articles'], $user);
         }
 
         return $results;
@@ -235,42 +194,5 @@ class SearchService
 
         return $query->orderBy('created_at', 'desc')
             ->paginate($criteria['per_page'] ?? 15);
-    }
-
-    /**
-     * جستجوی پیشرفته مقالات
-     */
-    private function advancedArticleSearch(array $criteria, ?User $user): LengthAwarePaginator
-    {
-        $query = Article::with(['user', 'media'])
-            ->published();
-
-        if (isset($criteria['query'])) {
-            $query->where(function ($q) use ($criteria) {
-                $q->where('title', 'like', "%{$criteria['query']}%")
-                    ->orWhere('content', 'like', "%{$criteria['query']}%");
-            });
-        }
-
-        if (isset($criteria['tags'])) {
-            foreach ($criteria['tags'] as $tag) {
-                $query->whereJsonContains('tags', $tag);
-            }
-        }
-
-        if (isset($criteria['approved']) && $criteria['approved']) {
-            $query->where('is_approved', true);
-        }
-
-        if (isset($criteria['featured']) && $criteria['featured']) {
-            $query->where('is_featured', true);
-        }
-
-        if (isset($criteria['min_views'])) {
-            $query->where('view_count', '>=', $criteria['min_views']);
-        }
-
-        return $query->orderBy('created_at', 'desc')
-            ->paginate($criteria['per_page'] ?? 10);
     }
 }

@@ -27,7 +27,7 @@ class CommentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'content' => 'required|string|max:1000',
-            'commentable_type' => 'required|in:post,article',
+            'commentable_type' => 'required|in:post',
             'commentable_id' => 'required|integer',
             'parent_id' => 'sometimes|exists:comments,id',
             'media' => 'sometimes|file|image|max:2048',
@@ -189,7 +189,7 @@ class CommentController extends Controller
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'commentable_type' => 'required|in:post,article',
+            'commentable_type' => 'required|in:post',
             'commentable_id' => 'required|integer',
         ]);
 

@@ -19,16 +19,18 @@ class Post extends Model
         'is_sensitive',
         'is_edited',
         'is_featured',
-        'is_private', // این ستون را اضافه کنید
+        'is_private', 
         'scheduled_at',
         'published_at',
+        'comments_disabled',
     ];
 
     protected $casts = [
         'is_sensitive' => 'boolean',
         'is_edited' => 'boolean',
         'is_featured' => 'boolean',
-        'is_private' => 'boolean', // این ستون را اضافه کنید
+        'is_private' => 'boolean', 
+        'comments_disabled'=> 'boolean',
         'scheduled_at' => 'datetime',
         'published_at' => 'datetime',
         'like_count' => 'integer',
@@ -44,7 +46,7 @@ class Post extends Model
      */
     public function user()
     {
-        return $this->belongsTo(User::class)->select(['id', 'name', 'username', 'avatar', 'is_private']);
+        return $this->belongsTo(User::class);
     }
 
     public function media()

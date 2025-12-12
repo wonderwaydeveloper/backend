@@ -7,7 +7,6 @@ use App\Models\PlatformSetting;
 use App\Models\UploadLimit;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Services\AdminService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -224,24 +223,6 @@ class AdminController extends Controller
             return GenericResource::success([
                 'featured' => true,
             ], 'Post featured successfully');
-        } catch (\Exception $e) {
-            return GenericResource::error($e->getMessage(), 400);
-        }
-    }
-
-    /**
-     * ویژه کردن مقاله
-     */
-    public function featureArticle(Request $request, Article $article)
-    {
-        try {
-            $this->authorize('manageArticles', Article::class);
-
-            $this->adminService->featureArticle($article);
-
-            return GenericResource::success([
-                'featured' => true,
-            ], 'Article featured successfully');
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 400);
         }

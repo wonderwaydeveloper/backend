@@ -5,16 +5,16 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\Bookmark;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
 
 class BookmarkTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_bookmarks()
     {
         $user = User::factory()->create();
@@ -29,16 +29,6 @@ class BookmarkTest extends TestCase
             ]);
         }
 
-        // Bookmark some articles
-        $articles = Article::factory()->count(2)->create();
-        foreach ($articles as $article) {
-            Bookmark::create([
-                'user_id' => $user->id,
-                'bookmarkable_id' => $article->id,
-                'bookmarkable_type' => Article::class,
-            ]);
-        }
-
         Sanctum::actingAs($user);
 
         $response = $this->getJson('/api/bookmarks');
@@ -47,7 +37,7 @@ class BookmarkTest extends TestCase
             ->assertJsonCount(5, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_filter_bookmarks_by_type()
     {
         $user = User::factory()->create();
@@ -62,16 +52,6 @@ class BookmarkTest extends TestCase
             ]);
         }
 
-        // Bookmark articles
-        $articles = Article::factory()->count(2)->create();
-        foreach ($articles as $article) {
-            Bookmark::create([
-                'user_id' => $user->id,
-                'bookmarkable_id' => $article->id,
-                'bookmarkable_type' => Article::class,
-            ]);
-        }
-
         Sanctum::actingAs($user);
 
         // Filter by posts only
@@ -80,14 +60,9 @@ class BookmarkTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonCount(3, 'data');
 
-        // Filter by articles only
-        $response = $this->getJson('/api/bookmarks?type=article');
-
-        $response->assertStatus(200)
-            ->assertJsonCount(2, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_remove_bookmark()
     {
         $user = User::factory()->create();
@@ -111,7 +86,7 @@ class BookmarkTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_remove_other_users_bookmark()
     {
         $user1 = User::factory()->create();
@@ -131,7 +106,7 @@ class BookmarkTest extends TestCase
         $response->assertStatus(404); // Bookmark not found for this user
     }
 
-    /** @test */
+    #[Test]
     public function bookmarking_twice_does_not_create_duplicate()
     {
         $user = User::factory()->create();
@@ -163,7 +138,7 @@ class BookmarkTest extends TestCase
         $this->assertEquals(1, $bookmarkCount);
     }
 
-    /** @test */
+    #[Test]
     public function bookmarked_items_have_bookmark_flag_in_response()
     {
         $user = User::factory()->create();
@@ -191,7 +166,7 @@ class BookmarkTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function bookmark_count_is_accurate()
     {
         $user = User::factory()->create();

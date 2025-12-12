@@ -9,12 +9,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\Test;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_view_own_profile()
     {
         $user = User::factory()->create();
@@ -37,7 +38,7 @@ class UserTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_update_profile()
     {
         $user = User::factory()->create();
@@ -65,7 +66,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_upload_avatar()
     {
         Storage::fake('public');
@@ -88,7 +89,7 @@ class UserTest extends TestCase
         Storage::disk('public')->assertExists($user->fresh()->avatar);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_follow_another_user()
     {
         $user1 = User::factory()->create(['is_private' => false]);
@@ -109,7 +110,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_follow_themselves()
     {
         $user = User::factory()->create();
@@ -120,7 +121,7 @@ class UserTest extends TestCase
         $response->assertStatus(400);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_unfollow_another_user()
     {
         $user1 = User::factory()->create();
@@ -145,7 +146,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_view_followers()
     {
         $user = User::factory()->create();
@@ -167,7 +168,7 @@ class UserTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_view_following()
     {
         $user = User::factory()->create();
@@ -189,7 +190,7 @@ class UserTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function private_user_requires_approval_for_follow_requests()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -211,7 +212,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function private_user_can_see_follow_requests()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -233,7 +234,7 @@ class UserTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function private_user_can_accept_follow_request()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -259,7 +260,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function private_user_can_reject_follow_request()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -284,7 +285,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_search_for_other_users()
     {
         User::factory()->create(['name' => 'John Doe', 'username' => 'johndoe']);
@@ -300,7 +301,7 @@ class UserTest extends TestCase
             ->assertJsonCount(2, 'data'); // John Doe and Bob Johnson
     }
 
-    /** @test */
+    #[Test]
     public function user_cannot_view_private_profile_without_following()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -312,7 +313,7 @@ class UserTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_view_public_profile()
     {
         $publicUser = User::factory()->create(['is_private' => false]);
@@ -328,7 +329,7 @@ class UserTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function private_user_can_accept_follow_request_via_endpoint()
     {
         $privateUser = User::factory()->create(['is_private' => true]);
@@ -354,7 +355,7 @@ class UserTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function private_user_can_reject_follow_request_via_endpoint()
     {
         $privateUser = User::factory()->create(['is_private' => true]);

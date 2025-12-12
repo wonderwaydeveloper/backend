@@ -25,11 +25,6 @@ abstract class TestCase extends BaseTestCase
         return \App\Models\Post::factory()->create($attributes);
     }
 
-    protected function createArticle(array $attributes = []): \App\Models\Article
-    {
-        return \App\Models\Article::factory()->create($attributes);
-    }
-
     protected function actingAsUser(?User $user = null): self
     {
         $user = $user ?: $this->createUser();

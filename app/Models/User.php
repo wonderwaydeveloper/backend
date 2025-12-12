@@ -85,11 +85,6 @@ class User extends Authenticatable
         return $this->hasMany(Post::class);
     }
 
-    public function articles()
-    {
-        return $this->hasMany(Article::class);
-    }
-
     public function comments()
     {
         return $this->hasMany(Comment::class);
@@ -227,12 +222,12 @@ class User extends Authenticatable
         return $age < 18;
     }
 
-
+    /**
+     * Check if user is an admin
+     */
     public function isAdmin(): bool
     {
-        // برای تست‌ها، هر کاربری که username 'admin' داشته باشد ادمین است
-        return $this->username === 'admin' || $this->hasRole('admin'); // اگر از spatie/laravel-permission استفاده می‌کنید
+        return  $this->username === 'admin';
     }
-
 
 }

@@ -13,7 +13,6 @@ class DatabaseSeeder extends Seeder
             UploadLimitSeeder::class,
             UserSeeder::class,
             PostSeeder::class,
-            ArticleSeeder::class,
             InteractionSeeder::class,
         ]);
     }

@@ -50,7 +50,6 @@ class NewCommentNotification extends Notification implements ShouldQueue
     {
         return match (class_basename($this->commentable)) {
             'Post' => url('/posts/' . $this->commentable->id),
-            'Article' => url('/articles/' . $this->commentable->slug),
             default => url('/'),
         };
     }

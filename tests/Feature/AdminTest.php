@@ -5,11 +5,11 @@ namespace Tests\Feature;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use App\Models\PlatformSetting;
 use App\Models\UploadLimit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
 
 class AdminTest extends TestCase
 {
@@ -20,7 +20,7 @@ class AdminTest extends TestCase
         return User::factory()->create(['username' => 'admin']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_platform_stats()
     {
         $admin = $this->createAdminUser();
@@ -29,7 +29,6 @@ class AdminTest extends TestCase
         // Create test data
         User::factory()->count(5)->create();
         Post::factory()->count(10)->create();
-        Article::factory()->count(3)->create();
 
         $response = $this->getJson('/api/admin/stats');
 
@@ -46,8 +45,6 @@ class AdminTest extends TestCase
                     'content' => [
                         'posts_total',
                         'posts_published',
-                        'articles_total',
-                        'articles_published',
                     ],
                     'security' => ['recent_events'],
                     'system' => ['phone_auth_enabled', 'social_auth_enabled'],
@@ -55,7 +52,7 @@ class AdminTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_admin_cannot_view_platform_stats()
     {
         $user = User::factory()->create();
@@ -66,7 +63,7 @@ class AdminTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_platform_settings()
     {
         $admin = $this->createAdminUser();
@@ -100,7 +97,7 @@ class AdminTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_platform_settings()
     {
         $admin = $this->createAdminUser();
@@ -121,7 +118,7 @@ class AdminTest extends TestCase
         $this->assertEquals(100, PlatformSetting::getValue('max_posts_per_day'));
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_upload_limits()
     {
         $admin = $this->createAdminUser();
@@ -139,7 +136,7 @@ class AdminTest extends TestCase
             ->assertJsonCount(1, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_upload_limits()
     {
         $admin = $this->createAdminUser();
@@ -168,7 +165,7 @@ class AdminTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_toggle_phone_authentication()
     {
         $admin = $this->createAdminUser();
@@ -192,7 +189,7 @@ class AdminTest extends TestCase
         $this->assertFalse(PlatformSetting::getValue('phone_auth_enabled'));
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_underage_users()
     {
         $admin = $this->createAdminUser();
@@ -216,7 +213,7 @@ class AdminTest extends TestCase
         $this->assertCount(3, $responseData['data']['users']['data']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_ban_user()
     {
         $admin = $this->createAdminUser();
@@ -232,7 +229,7 @@ class AdminTest extends TestCase
         $this->assertTrue($user->refresh()->is_banned);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_unban_user()
     {
         $admin = $this->createAdminUser();
@@ -248,7 +245,7 @@ class AdminTest extends TestCase
         $this->assertFalse($user->refresh()->is_banned);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_feature_post()
     {
         $admin = $this->createAdminUser();
@@ -263,21 +260,5 @@ class AdminTest extends TestCase
 
         // Note: The actual implementation of featuring posts might need to be added
         // This test assumes there's a 'is_featured' column or similar
-    }
-
-    /** @test */
-    public function admin_can_feature_article()
-    {
-        $admin = $this->createAdminUser();
-        Sanctum::actingAs($admin);
-        $article = Article::factory()->create();
-
-        $response = $this->postJson("/api/admin/articles/{$article->id}/feature");
-
-        // **اصلاح مهم:** استفاده از assertJsonPath
-        $response->assertStatus(200)
-            ->assertJsonPath('meta.message', 'Article featured successfully');
-
-        $this->assertTrue($article->fresh()->is_featured);
     }
 }

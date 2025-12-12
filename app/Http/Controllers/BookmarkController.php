@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\GenericResource;
 use App\Http\Resources\PostResource;
-use App\Http\Resources\ArticleResource;
 use App\Services\BookmarkService;
 use Illuminate\Http\Request;
 
@@ -26,8 +25,6 @@ class BookmarkController extends Controller
                 $bookmarkable = $bookmark->bookmarkable;
                 if ($bookmarkable instanceof \App\Models\Post) {
                     return new PostResource($bookmarkable->load('user', 'media'));
-                } elseif ($bookmarkable instanceof \App\Models\Article) {
-                    return new ArticleResource($bookmarkable->load('user', 'media'));
                 }
                 return $bookmarkable;
             });

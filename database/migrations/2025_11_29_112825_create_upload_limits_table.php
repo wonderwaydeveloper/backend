@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('upload_limits', function (Blueprint $table) {
             $table->id();
-            $table->string('type'); // post, article, message, comment
+            $table->string('type'); // post, message, comment
             $table->integer('max_files')->default(5);
             $table->integer('max_file_size')->default(10240); // KB
             $table->json('allowed_mimes')->nullable(); // ['jpg', 'png', 'gif']

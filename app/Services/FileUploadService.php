@@ -174,7 +174,6 @@ class FileUploadService
         // در اینجا می‌توانید محدودیت‌ها از دیتابیس بخوانید
         $limits = [
             'post' => ['max_files' => 5, 'max_size' => 10240], // 10MB
-            'article' => ['max_files' => 10, 'max_size' => 20480], // 20MB
             'message' => ['max_files' => 3, 'max_size' => 5120], // 5MB
         ];
 

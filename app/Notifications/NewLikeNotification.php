@@ -50,7 +50,6 @@ class NewLikeNotification extends Notification implements ShouldQueue
     {
         return match (class_basename($this->likeable)) {
             'Post' => url('/posts/' . $this->likeable->id),
-            'Article' => url('/articles/' . $this->likeable->slug),
             default => url('/'),
         };
     }

@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 
 class UserFactory extends Factory
 {
+
     public function definition(): array
     {
         return [
@@ -30,7 +31,17 @@ class UserFactory extends Factory
             'is_banned' => false,
             'two_factor_enabled' => false,
             'remember_token' => Str::random(10),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
+    }
+
+    // اضافه کردن متد admin
+    public function admin(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'username' => 'admin',
+        ]);
     }
 
     public function unverified(): static
@@ -58,6 +69,27 @@ class UserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'birth_date' => $birthDate,
             'is_underage' => false,
+        ]);
+    }
+
+    public function banned(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_banned' => true,
+        ]);
+    }
+
+    public function private(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_private' => true,
+        ]);
+    }
+
+    public function verified(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_verified' => true,
         ]);
     }
 }

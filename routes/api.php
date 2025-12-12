@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\CommentController;
@@ -65,8 +64,6 @@ Route::prefix('auth')->group(function () {
 // Public Content Routes
 Route::get('posts', [PostController::class, 'index']);
 Route::get('posts/{post}', [PostController::class, 'show']);
-Route::get('articles', [ArticleController::class, 'index']);
-Route::get('articles/{article}', [ArticleController::class, 'show']);
 
 Route::get('users/search', [UserController::class, 'search']);
 Route::get('users/{user}', [UserController::class, 'show'])->where('user', '[0-9]+');
@@ -176,26 +173,6 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
     });
 
     // ====================
-    // ARTICLE MANAGEMENT
-    // ====================
-    Route::prefix('articles')->group(function () {
-        Route::post('/', [ArticleController::class, 'store']);
-        Route::put('{article}', [ArticleController::class, 'update'])->middleware('can:update,article');
-        Route::delete('{article}', [ArticleController::class, 'destroy'])->middleware('can:delete,article');
-
-        // Article Interactions
-        Route::post('{article}/like', [ArticleController::class, 'like']);
-        Route::post('{article}/bookmark', [ArticleController::class, 'bookmark']);
-
-        // Publishing
-        Route::post('{article}/publish', [ArticleController::class, 'publish'])->middleware('can:publish,article');
-        Route::post('{article}/approve', [ArticleController::class, 'approve'])->middleware('can:approve,article');
-
-        // User-specific articles
-        Route::get('user/{userId}', [ArticleController::class, 'userArticles'])->where('userId', '[0-9]+');
-    });
-
-    // ====================
     // COMMENT MANAGEMENT
     // ====================
     Route::prefix('comments')->group(function () {
@@ -271,7 +248,6 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::post('users/{user}/ban', [AdminController::class, 'banUser'])->where('user', '[0-9]+');
         Route::post('users/{user}/unban', [AdminController::class, 'unbanUser'])->where('user', '[0-9]+');
         Route::post('posts/{post}/feature', [AdminController::class, 'featurePost']);
-        Route::post('articles/{article}/feature', [AdminController::class, 'featureArticle']);
     });
 
     // ====================
@@ -321,7 +297,6 @@ Route::fallback(function () {
             'POST /auth/register',
             'POST /auth/login',
             'GET /posts',
-            'GET /articles',
             'GET /search'
         ]
     ], 404);

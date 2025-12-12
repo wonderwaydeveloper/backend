@@ -7,7 +7,6 @@ use App\Models\UploadLimit;
 use App\Models\User;
 use App\Models\UserSecurityLog;
 use App\Models\Post;
-use App\Models\Article;
 use Illuminate\Support\Facades\DB;
 
 class AdminService
@@ -26,10 +25,6 @@ class AdminService
         $publishedPosts = Post::whereNotNull('published_at')->count();
         $sensitivePosts = Post::where('is_sensitive', true)->count();
 
-        $totalArticles = Article::count();
-        $publishedArticles = Article::whereNotNull('published_at')->count();
-        $approvedArticles = Article::where('is_approved', true)->count();
-
         $todayRegistrations = User::whereDate('created_at', today())->count();
         $todayPosts = Post::whereDate('created_at', today())->count();
 
@@ -47,8 +42,6 @@ class AdminService
                 'posts_total' => $totalPosts,
                 'posts_published' => $publishedPosts,
                 'sensitive_posts' => $sensitivePosts,
-                'articles_total' => $totalArticles,
-                'articles_published' => $publishedArticles,
                 'today_posts' => $todayPosts,
             ],
             'security' => [
@@ -248,13 +241,5 @@ class AdminService
     public function featurePost(Post $post): void
     {
         $post->update(['is_featured' => true]);
-    }
-
-    /**
-     * ویژه کردن مقاله
-     */
-    public function featureArticle(Article $article): void
-    {
-        $article->update(['is_featured' => true]);
     }
 }

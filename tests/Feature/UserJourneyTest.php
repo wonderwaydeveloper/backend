@@ -5,15 +5,15 @@ namespace Tests\Feature\Integration;
 use Tests\TestCase;
 use App\Models\User;
 use App\Models\Post;
-use App\Models\Article;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
 
 class UserJourneyTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function complete_user_journey()
     {
         $this->withoutMiddleware([\App\Http\Middleware\TrackOnlineUser::class]);
@@ -77,22 +77,6 @@ class UserJourneyTest extends TestCase
             'commentable_id' => $post['id'],
         ])->assertStatus(201);
 
-        // کاربر اول مقاله می‌سازد
-        Sanctum::actingAs($user);
-        $articleResponse = $this->postJson('/api/articles', [
-            'title' => 'Test Article',
-            'content' => 'Lorem ipsum',
-            'excerpt' => 'short',
-            'tags' => ['integration'],
-            'status' => 'published',
-        ])->assertStatus(201);
-
-        $article = $articleResponse->json()['data'];
-
-        // کاربر دوم مقاله را بوکمارک می‌کند
-        Sanctum::actingAs($user2);
-        $this->postJson("/api/articles/{$article['id']}/bookmark")->assertStatus(200);
-
         // Assertions نهایی
         $this->assertDatabaseHas('posts', ['id' => $post['id']]);
         $this->assertDatabaseHas('likes', [
@@ -105,15 +89,9 @@ class UserJourneyTest extends TestCase
             'commentable_id' => $post['id'],
             'commentable_type' => Post::class
         ]);
-        $this->assertDatabaseHas('articles', ['id' => $article['id']]);
-        $this->assertDatabaseHas('bookmarks', [
-            'user_id' => $user2->id,
-            'bookmarkable_id' => $article['id'],
-            'bookmarkable_type' => Article::class
-        ]);
     }
 
-    /** @test */
+    #[Test]
     public function simple_auth_issue()
     {
         $user1 = User::factory()->create(['email' => 'user1@test.com']);

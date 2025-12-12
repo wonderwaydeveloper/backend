@@ -8,12 +8,13 @@ use App\Models\ParentalControl;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Carbon\Carbon;
+use PHPUnit\Framework\Attributes\Test;
 
 class ParentalControlTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function parent_can_create_parental_control_for_child()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -48,7 +49,7 @@ class ParentalControlTest extends TestCase
         $this->assertEquals($parent->id, $child->fresh()->parent_id);
     }
 
-    /** @test */
+    #[Test]
     public function cannot_create_parental_control_for_non_underage_user()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -67,7 +68,7 @@ class ParentalControlTest extends TestCase
             ->assertJsonPath('data.message', 'User is not underage');
     }
 
-    /** @test */
+    #[Test]
     public function parent_can_update_parental_control()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -104,7 +105,7 @@ class ParentalControlTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function parent_can_view_parental_controls()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -127,7 +128,7 @@ class ParentalControlTest extends TestCase
             ->assertJsonCount(3, 'data');
     }
 
-    /** @test */
+    #[Test]
     public function parent_can_delete_parental_control()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -153,7 +154,7 @@ class ParentalControlTest extends TestCase
         $this->assertNull($child->fresh()->parent_id);
     }
 
-    /** @test */
+    #[Test]
     public function parent_can_view_child_usage_report()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -180,7 +181,7 @@ class ParentalControlTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function non_parent_cannot_manage_parental_controls()
     {
         $user = User::factory()->create(['parent_id' => null]);
@@ -213,7 +214,7 @@ class ParentalControlTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function child_cannot_access_parental_controls()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -231,7 +232,7 @@ class ParentalControlTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function parental_control_restricts_child_access_based_on_time()
     {
         $parent = User::factory()->create(['parent_id' => null]);
@@ -257,7 +258,7 @@ class ParentalControlTest extends TestCase
         Carbon::setTestNow();
     }
 
-    /** @test */
+    #[Test]
     public function child_cannot_access_restricted_features()
     {
         $parent = User::factory()->create(['parent_id' => null]);

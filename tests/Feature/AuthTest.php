@@ -9,12 +9,13 @@ use App\Models\PhoneVerification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\Test;
 
 class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function user_can_register_with_email()
     {
 
@@ -48,7 +49,7 @@ class AuthTest extends TestCase
 
 
 
-    /** @test */
+    #[Test]
     public function registration_requires_valid_data()
     {
 
@@ -65,7 +66,7 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['name', 'username', 'email', 'password', 'birth_date']);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_login_with_email()
     {
         $user = User::factory()->create([
@@ -87,7 +88,7 @@ class AuthTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function login_fails_with_invalid_credentials()
     {
         $response = $this->postJson('/api/auth/login', [
@@ -99,7 +100,7 @@ class AuthTest extends TestCase
             ->assertJsonPath('meta.message', 'Invalid credentials');
     }
 
-    /** @test */
+    #[Test]
     public function user_can_logout()
     {
         $user = User::factory()->create();
@@ -113,7 +114,7 @@ class AuthTest extends TestCase
         $this->assertCount(0, $user->tokens);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_request_email_verification()
     {
         $user = User::factory()->create([
@@ -134,7 +135,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_verify_email()
     {
         $user = User::factory()->create([
@@ -161,7 +162,7 @@ class AuthTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    /** @test */
+    #[Test]
     public function user_can_request_password_reset()
     {
         $user = User::factory()->create([
@@ -181,7 +182,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function authenticated_user_can_get_current_user_info()
     {
         $user = User::factory()->create();
@@ -206,7 +207,7 @@ class AuthTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function phone_verification_can_be_sent()
     {
         $response = $this->postJson('/api/auth/phone/send-verification', [
@@ -224,7 +225,7 @@ class AuthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function two_factor_authentication_can_be_enabled()
     {
         $user = User::factory()->create();
@@ -244,7 +245,7 @@ class AuthTest extends TestCase
         $this->assertTrue($user->fresh()->two_factor_enabled);
     }
 
-    /** @test */
+    #[Test]
     public function two_factor_authentication_can_be_disabled()
     {
         $user = User::factory()->create([

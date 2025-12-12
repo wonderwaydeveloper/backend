@@ -8,10 +8,11 @@ use App\Models\Post;
 use App\Notifications\NewLikeNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\Test;
 
 class MailNotificationsTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function like_notification_sends_email()
     {
         Notification::fake();
