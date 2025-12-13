@@ -40,7 +40,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Services\AuthService::class);
         $this->app->singleton(\App\Services\EmailVerificationService::class);
         $this->app->singleton(\App\Services\PhoneVerificationService::class);
-        $this->app->singleton(\App\Services\TwoFactorService::class);
         $this->app->singleton(\App\Services\ParentalControlService::class);
         $this->app->singleton(\App\Services\PrivateMessageService::class);
         $this->app->singleton(\App\Services\BookmarkService::class);
