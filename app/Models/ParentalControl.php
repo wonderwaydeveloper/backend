@@ -23,8 +23,8 @@ class ParentalControl extends Model
     protected $casts = [
         'restrictions' => 'array',
         'allowed_features' => 'array',
-        'daily_limit_start' => 'datetime',
-        'daily_limit_end' => 'datetime',
+        'daily_limit_start' => 'string', // تغییر از datetime به string
+        'daily_limit_end' => 'string', // تغییر از datetime به string
         'max_daily_usage' => 'integer',
         'is_active' => 'boolean',
     ];
@@ -41,20 +41,21 @@ class ParentalControl extends Model
     }
 
     // Methods
-    public function isWithinTimeLimit(): bool
+   public function isWithinTimeLimit(): bool
     {
-        if (is_null($this->daily_limit_start) || is_null($this->daily_limit_end)) {
+        if (empty($this->daily_limit_start) || empty($this->daily_limit_end)) {
             return true;
         }
 
         $now = now();
-        $start = $this->daily_limit_start->format('H:i:s');
-        $end = $this->daily_limit_end->format('H:i:s');
+        $currentTime = $now->format('H:i:s');
         
-        return $now->between(
-            now()->setTimeFromTimeString($start),
-            now()->setTimeFromTimeString($end)
-        );
+        // تبدیل string به time
+        $start = $this->daily_limit_start;
+        $end = $this->daily_limit_end;
+        
+        // اگر start و end به صورت زمان خالص هستند
+        return $currentTime >= $start && $currentTime <= $end;
     }
 
     public function getRemainingUsageToday(): int

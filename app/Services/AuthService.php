@@ -18,7 +18,7 @@ class AuthService
     ) {
     }
 
-    /**
+     /**
      * ثبت‌نام کاربر با ایمیل
      */
     public function registerUser(array $data): User
@@ -31,32 +31,36 @@ class AuthService
                 'password' => Hash::make($data['password']),
                 'birth_date' => $data['birth_date'],
                 'is_underage' => $this->calculateUnderageStatus($data['birth_date']),
+                'status' => 'pending', // وضعیت اولیه
+                'email_verified_at' => null, // هنوز تأیید نشده
             ]);
 
             // لاگ امنیتی
-            UserSecurityLog::logSecurityEvent($user, 'registration');
+            UserSecurityLog::logSecurityEvent($user, 'registration_pending');
 
             return $user;
         });
     }
 
     /**
-     * ورود کاربر با ایمیل
+     * ورود کاربر با ایمیل - فقط کاربران active می‌توانند لاگین کنند
      */
-
     public function loginUser(string $email, string $password): array
     {
-        $user = User::where('email', $email)->first();
+        $user = User::where('email', $email)
+            ->whereNotNull('email_verified_at') // فقط ایمیل‌های تأیید شده
+            ->where('status', 'active') // فقط کاربران active
+            ->first();
 
         if (!$user || !Hash::check($password, $user->password)) {
-            throw new \Exception('Invalid credentials');
+            throw new \Exception('Invalid credentials or account not verified');
         }
 
         if ($user->is_banned) {
             throw new \Exception('Account is banned');
         }
 
-        // **پاک کردن هرگونه کش قدیمی قبل از ایجاد توکن جدید**
+        // پاک کردن هرگونه کش قدیمی
         $this->clearUserOldTokensCache($user);
 
         // بررسی احراز هویت دو مرحله‌ای
@@ -84,6 +88,7 @@ class AuthService
         ];
     }
 
+
     /**
      * پاک کردن کش توکن‌های قدیمی کاربر
      */
@@ -101,8 +106,10 @@ class AuthService
             ]);
         }
     }
+
+
     /**
-     * ثبت‌نام با شماره موبایل
+     * ثبت‌نام با شماره موبایل - وضعیت active
      */
     public function registerWithPhone(array $data): User
     {
@@ -122,6 +129,7 @@ class AuthService
                 'password' => Hash::make(Str::random(16)), // رمز تصادفی
                 'birth_date' => $data['birth_date'],
                 'is_underage' => $this->calculateUnderageStatus($data['birth_date']),
+                'status' => 'active', // فعال زیرا تلفن تأیید شده
             ]);
 
             // لاگ امنیتی
@@ -131,18 +139,22 @@ class AuthService
         });
     }
 
+
     /**
-     * ورود با شماره موبایل
+     * ورود با شماره موبایل - فقط کاربران active
      */
     public function loginWithPhone(string $phone, string $code): array
     {
         // بررسی کد تأیید
         $verification = $this->phoneVerificationService->verifyCode($phone, $code);
 
-        $user = User::where('phone', $phone)->first();
+        $user = User::where('phone', $phone)
+            ->whereNotNull('phone_verified_at') // تلفن تأیید شده
+            ->where('status', 'active') // فقط کاربران active
+            ->first();
 
         if (!$user) {
-            throw new \Exception('User not found');
+            throw new \Exception('User not found or account not verified');
         }
 
         if ($user->is_banned) {
@@ -159,6 +171,7 @@ class AuthService
             'token' => $token,
         ];
     }
+
 
     /**
      * مدیریت احراز هویت اجتماعی

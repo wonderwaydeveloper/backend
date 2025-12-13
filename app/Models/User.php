@@ -8,16 +8,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Str;
 
-
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'username',
@@ -30,24 +24,21 @@ class User extends Authenticatable
         'website',
         'location',
         'birth_date',
+        'is_underage',
         'is_private',
         'is_verified',
         'is_banned',
         'two_factor_enabled',
         'two_factor_secret',
+        'two_factor_recovery_codes',
         'provider',
         'provider_id',
-        'is_underage',
         'email_verified_at',
         'phone_verified_at',
         'parent_id',
+        'status', // اضافه شد
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -55,11 +46,6 @@ class User extends Authenticatable
         'two_factor_recovery_codes',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -76,6 +62,7 @@ class User extends Authenticatable
             'followers_count' => 'integer',
             'following_count' => 'integer',
             'posts_count' => 'integer',
+            'status' => 'string', // اضافه شد
         ];
     }
 
@@ -151,12 +138,16 @@ class User extends Authenticatable
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('is_banned', false);
+        return $query->where('status', 'active')
+            ->where('is_banned', false);
     }
 
     public function scopeVerified($query)
     {
-        return $query->where('is_verified', true);
+        return $query->where(function ($q) {
+            $q->whereNotNull('email_verified_at')
+                ->orWhereNotNull('phone_verified_at');
+        });
     }
 
     public function scopeUnderage($query)
@@ -198,9 +189,8 @@ class User extends Authenticatable
     {
         $this->update([
             'two_factor_enabled' => true,
-            'two_factor_secret' => Str::random(32), // تولید یک رشته تصادفی به عنوان رمز
+            'two_factor_secret' => Str::random(32),
         ]);
-        $this->update(['two_factor_enabled' => true]);
     }
 
     public function disableTwoFactor(): void
@@ -210,6 +200,20 @@ class User extends Authenticatable
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
         ]);
+    }
+
+    public function isVerified(): bool
+    {
+        return ($this->email_verified_at || $this->phone_verified_at)
+            && $this->status === 'active'
+            && !$this->is_banned;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active'
+            && ($this->email_verified_at || $this->phone_verified_at)
+            && !$this->is_banned;
     }
 
     public static function calculateIsUnderage($birthDate): bool
@@ -222,12 +226,8 @@ class User extends Authenticatable
         return $age < 18;
     }
 
-    /**
-     * Check if user is an admin
-     */
     public function isAdmin(): bool
     {
-        return  $this->username === 'admin';
+        return $this->username === 'admin';
     }
-
 }

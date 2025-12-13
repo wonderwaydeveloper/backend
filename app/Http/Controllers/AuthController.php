@@ -33,8 +33,9 @@ class AuthController extends Controller
     ) {
     }
 
+
     /**
-     * ثبت‌نام با ایمیل
+     * ثبت‌نام با ایمیل - بدون توکن
      */
     public function register(Request $request)
     {
@@ -46,27 +47,91 @@ class AuthController extends Controller
             'birth_date' => 'required|date|before:-10 years',
         ]);
 
-        // **اصلاح نهایی:** پرتاب کردن استثنا به جای برگرداندن پاسخ دستی
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
 
         try {
+            // ایجاد کاربر با وضعیت pending
             $user = $this->authService->registerUser($request->all());
-            $token = $user->createToken('auth-token')->plainTextToken;
 
-            return new AuthResource([
-                'user' => $user,
-                'token' => $token,
-                'message' => 'User registered successfully'
-            ]);
+            // ارسال کد تأیید ایمیل (مطابق توییتر - اجباری)
+            $verification = $this->emailVerificationService->sendVerificationEmail($user);
+
+            // **تغییر مهم: هیچ توکنی ایجاد نمی‌شود**
+
+            return GenericResource::success([
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'requires_verification' => true,
+                'message' => 'Registration initiated. Please check your email for verification code to complete registration.',
+                'next_step' => [
+                    'action' => 'verify_email',
+                    'endpoint' => '/api/auth/verify-and-login',
+                    'description' => 'Verify your email to activate your account'
+                ]
+            ], 'Verification required', 202);
+
         } catch (\Exception $e) {
             return GenericResource::error($e->getMessage(), 500);
         }
     }
 
     /**
-     * ورود با ایمیل
+     * تأیید ایمیل و لاگین (مرحله دوم ثبت‌نام)
+     */
+    public function verifyEmailAndLogin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+        ]);
+
+        if ($validator->fails()) {
+            return GenericResource::error('Validation failed', 422, $validator->errors());
+        }
+
+        try {
+            // تأیید کد
+            $verified = $this->emailVerificationService->verifyEmail(
+                $request->email,
+                $request->code
+            );
+
+            if (!$verified) {
+                return GenericResource::error('Invalid or expired verification code', 400);
+            }
+
+            // پیدا کردن کاربر
+            $user = User::where('email', $request->email)->firstOrFail();
+
+            // فعال‌سازی حساب (مطابق توییتر)
+            $user->update([
+                'email_verified_at' => now(),
+                'status' => 'active'
+            ]);
+
+            // **اینجا اولین توکن ایجاد می‌شود**
+            $token = $user->createToken('auth-token')->plainTextToken;
+
+            // لاگ امنیتی
+            UserSecurityLog::logSecurityEvent($user, 'registration_completed');
+
+            return new AuthResource([
+                'user' => $user,
+                'token' => $token,
+                'message' => 'Account activated successfully! Welcome.'
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return GenericResource::error('User not found', 404);
+        } catch (\Exception $e) {
+            return GenericResource::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * ورود با ایمیل - فقط برای کاربران تأیید شده
      */
     public function login(Request $request)
     {
@@ -75,7 +140,6 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        // **اصلاح نهایی:** پرتاب کردن استثنا به جای برگرداندن پاسخ دستی
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }

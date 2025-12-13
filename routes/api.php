@@ -11,22 +11,11 @@ use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
-
 // =============================================
-// PUBLIC ROUTES
+// PUBLIC ROUTES (بدون احراز هویت)
 // =============================================
 
-// Health Check
+// Health Check فقط
 Route::get('/health', function () {
     return response()->json([
         'status' => 'OK',
@@ -36,10 +25,13 @@ Route::get('/health', function () {
     ]);
 });
 
-// Authentication Routes
+// =============================================
+// AUTH ROUTES (فقط ثبت‌نام و تأیید)
+// =============================================
 Route::prefix('auth')->group(function () {
     // Email Authentication
     Route::post('register', [AuthController::class, 'register']);
+    Route::post('verify-and-login', [AuthController::class, 'verifyEmailAndLogin']); // اضافه شد
     Route::post('login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     // Phone Authentication
@@ -61,49 +53,10 @@ Route::prefix('auth')->group(function () {
         ->where('provider', 'google|facebook|github');
 });
 
-// Public Content Routes
-Route::get('posts', [PostController::class, 'index']);
-Route::get('posts/{post}', [PostController::class, 'show']);
-
-Route::get('users/search', [UserController::class, 'search']);
-Route::get('users/{user}', [UserController::class, 'show'])->where('user', '[0-9]+');
-
-// Global Search
-Route::get('search', function (Request $request) {
-    $searchService = app(\App\Services\SearchService::class);
-    $query = $request->get('q', '');
-    $filters = $request->all();
-
-    if (empty($query)) {
-        return response()->json([
-            'message' => 'Search query is required',
-            'error' => 'validation_error'
-        ], 400);
-    }
-
-    try {
-        $user = $request->user();
-        $results = $searchService->globalSearch($query, $user, $filters);
-
-        return response()->json([
-            'data' => $results,
-            'message' => 'Search completed successfully',
-            'query' => $query,
-            'results_count' => array_sum(array_map('count', $results))
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => $e->getMessage(),
-            'error' => 'search_error'
-        ], 500);
-    }
-});
-
 // =============================================
-// PROTECTED ROUTES (Require Authentication)
+// PROTECTED ROUTES (نیاز به تأیید ایمیل/تلفن)
 // =============================================
-
-Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
+Route::middleware(['auth:sanctum', 'verified.email', 'track.online'])->group(function () {
 
     // ====================
     // AUTH MANAGEMENT
@@ -115,13 +68,11 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
         Route::post('two-factor/disable', [AuthController::class, 'disableTwoFactor']);
         Route::post('two-factor/verify', [AuthController::class, 'verifyTwoFactor']);
 
-        // ====================
-        // SESSION MANAGEMENT (NEW)
-        // ====================
-        Route::get('sessions', [AuthController::class, 'activeSessions']); // مشاهده session‌های فعال
-        Route::delete('sessions/{tokenId}', [AuthController::class, 'revokeSession'])->where('tokenId', '[0-9]+'); // حذف session خاص
-        Route::delete('sessions/others', [AuthController::class, 'revokeOtherSessions']); // حذف همه session‌ها به جز جاری
-        Route::post('logout-all', [AuthController::class, 'logoutFromAllDevices']); // لاگ‌اوت از همه دستگاه‌ها
+        // SESSION MANAGEMENT
+        Route::get('sessions', [AuthController::class, 'activeSessions']);
+        Route::delete('sessions/{tokenId}', [AuthController::class, 'revokeSession'])->where('tokenId', '[0-9]+');
+        Route::delete('sessions/others', [AuthController::class, 'revokeOtherSessions']);
+        Route::post('logout-all', [AuthController::class, 'logoutFromAllDevices']);
         Route::post('logout/{tokenId}', [AuthController::class, 'logoutFromSpecificDevice'])->where('tokenId', '[0-9]+');
     });
 
@@ -149,12 +100,18 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
 
         Route::post('{follower}/accept-follow-request', [UserController::class, 'acceptFollowRequest'])->where('follower', '[0-9]+');
         Route::post('{follower}/reject-follow-request', [UserController::class, 'rejectFollowRequest'])->where('follower', '[0-9]+');
+
+        // Search (now requires authentication)
+        Route::get('search', [UserController::class, 'search']);
     });
 
     // ====================
     // POST MANAGEMENT
     // ====================
     Route::prefix('posts')->group(function () {
+        // مشاهده پست‌ها (اکنون نیاز به احراز هویت دارد)
+        Route::get('/', [PostController::class, 'index']);
+        Route::get('{post}', [PostController::class, 'show']);
 
         Route::post('/', [PostController::class, 'store']);
         Route::put('{post}', [PostController::class, 'update'])->middleware('can:update,post');
@@ -282,12 +239,42 @@ Route::middleware(['auth:sanctum', 'track.online'])->group(function () {
             'message' => 'All notifications marked as read'
         ]);
     });
+
+    // Global Search (now requires authentication)
+    Route::get('search', function (Request $request) {
+        $searchService = app(\App\Services\SearchService::class);
+        $query = $request->get('q', '');
+        $filters = $request->all();
+
+        if (empty($query)) {
+            return response()->json([
+                'message' => 'Search query is required',
+                'error' => 'validation_error'
+            ], 400);
+        }
+
+        try {
+            $user = $request->user();
+            $results = $searchService->globalSearch($query, $user, $filters);
+
+            return response()->json([
+                'data' => $results,
+                'message' => 'Search completed successfully',
+                'query' => $query,
+                'results_count' => array_sum(array_map('count', $results))
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'search_error'
+            ], 500);
+        }
+    });
 });
 
 // =============================================
 // FALLBACK ROUTE
 // =============================================
-
 Route::fallback(function () {
     return response()->json([
         'message' => 'Endpoint not found. Please check the API documentation.',
@@ -295,9 +282,8 @@ Route::fallback(function () {
         'available_endpoints' => [
             'GET /health',
             'POST /auth/register',
-            'POST /auth/login',
-            'GET /posts',
-            'GET /search'
+            'POST /auth/verify-and-login',
+            'POST /auth/login'
         ]
     ], 404);
 });

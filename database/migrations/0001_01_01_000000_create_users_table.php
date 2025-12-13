@@ -25,6 +25,7 @@ return new class extends Migration {
             $table->boolean('is_private')->default(false);
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_banned')->default(false);
+            $table->string('status')->default('pending');
             $table->boolean('two_factor_enabled')->default(false);
             $table->text('two_factor_secret')->nullable();
             $table->text('two_factor_recovery_codes')->nullable();
@@ -42,6 +43,8 @@ return new class extends Migration {
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+
+            $table->index(['status', 'email_verified_at', 'phone_verified_at']);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

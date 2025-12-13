@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'track.online' => \App\Http\Middleware\TrackOnlineUser::class,
             'custom.throttle' => \App\Http\Middleware\CustomThrottleRequests::class,
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'verified.email' => \App\Http\Middleware\RequireVerifiedEmail::class,
         ]);
     
         // اضافه کردن middleware rate limiter برای API
