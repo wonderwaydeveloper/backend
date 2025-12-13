@@ -4,15 +4,14 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         Schema::create('message_media', function (Blueprint $table) {
-             $table->id();
+            $table->id();
             $table->foreignId('message_id')->constrained('private_messages')->onDelete('cascade');
             $table->string('file_path');
             $table->string('file_name');
@@ -23,7 +22,7 @@ return new class extends Migration
             $table->string('thumbnail')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamps();
-            
+
         });
     }
 
