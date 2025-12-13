@@ -28,9 +28,6 @@ class User extends Authenticatable
         'is_private',
         'is_verified',
         'is_banned',
-        'two_factor_enabled',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
         'provider',
         'provider_id',
         'email_verified_at',
@@ -42,8 +39,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
     ];
 
     protected function casts(): array
@@ -57,7 +52,6 @@ class User extends Authenticatable
             'is_private' => 'boolean',
             'is_verified' => 'boolean',
             'is_banned' => 'boolean',
-            'two_factor_enabled' => 'boolean',
             'last_login_at' => 'datetime',
             'followers_count' => 'integer',
             'following_count' => 'integer',
@@ -185,22 +179,6 @@ class User extends Authenticatable
         $this->update(['is_underage' => true]);
     }
 
-    public function enableTwoFactor(): void
-    {
-        $this->update([
-            'two_factor_enabled' => true,
-            'two_factor_secret' => Str::random(32),
-        ]);
-    }
-
-    public function disableTwoFactor(): void
-    {
-        $this->update([
-            'two_factor_enabled' => false,
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
-        ]);
-    }
 
     public function isVerified(): bool
     {

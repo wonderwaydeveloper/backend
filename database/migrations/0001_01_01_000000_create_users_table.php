@@ -26,9 +26,6 @@ return new class extends Migration {
             $table->boolean('is_verified')->default(false);
             $table->boolean('is_banned')->default(false);
             $table->string('status')->default('pending');
-            $table->boolean('two_factor_enabled')->default(false);
-            $table->text('two_factor_secret')->nullable();
-            $table->text('two_factor_recovery_codes')->nullable();
             $table->integer('followers_count')->default(0);
             $table->integer('following_count')->default(0);
             $table->integer('posts_count')->default(0);

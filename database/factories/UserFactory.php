@@ -29,7 +29,6 @@ class UserFactory extends Factory
             'is_private' => fake()->boolean(20),
             'is_verified' => fake()->boolean(10),
             'is_banned' => false,
-            'two_factor_enabled' => false,
             'remember_token' => Str::random(10),
             'created_at' => now(),
             'updated_at' => now(),

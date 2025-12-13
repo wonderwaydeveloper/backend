@@ -13,8 +13,7 @@ use Illuminate\Support\Str;
 class AuthService
 {
     public function __construct(
-        private PhoneVerificationService $phoneVerificationService,
-        private TwoFactorService $twoFactorService
+        private PhoneVerificationService $phoneVerificationService
     ) {
     }
 
@@ -42,14 +41,15 @@ class AuthService
         });
     }
 
-    /**
+
+     /**
      * ورود کاربر با ایمیل - فقط کاربران active می‌توانند لاگین کنند
      */
     public function loginUser(string $email, string $password): array
     {
         $user = User::where('email', $email)
-            ->whereNotNull('email_verified_at') // فقط ایمیل‌های تأیید شده
-            ->where('status', 'active') // فقط کاربران active
+            ->whereNotNull('email_verified_at')
+            ->where('status', 'active')
             ->first();
 
         if (!$user || !Hash::check($password, $user->password)) {
@@ -63,28 +63,23 @@ class AuthService
         // پاک کردن هرگونه کش قدیمی
         $this->clearUserOldTokensCache($user);
 
-        // بررسی احراز هویت دو مرحله‌ای
-        $twoFactorRequired = $user->two_factor_enabled;
+        // ایجاد توکن
+        $token = $user->createToken('auth-token');
 
-        if (!$twoFactorRequired) {
-            $token = $user->createToken('auth-token');
+        // ذخیره اطلاعات session
+        $token->accessToken->update([
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
 
-            // ذخیره اطلاعات session
-            $token->accessToken->update([
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-
-            $tokenPlainText = $token->plainTextToken;
-            $this->updateLastLogin($user);
-        }
+        $tokenPlainText = $token->plainTextToken;
+        $this->updateLastLogin($user);
 
         UserSecurityLog::logSecurityEvent($user, 'login');
 
         return [
             'user' => $user,
-            'token' => $tokenPlainText ?? null,
-            'two_factor_required' => $twoFactorRequired,
+            'token' => $tokenPlainText,
         ];
     }
 

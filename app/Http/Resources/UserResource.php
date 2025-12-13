@@ -55,11 +55,6 @@ class UserResource extends JsonResource
             'followers' => UserResource::collection($this->whenLoaded('followers')),
             'following' => UserResource::collection($this->whenLoaded('following')),
             
-            // اطلاعات امنیتی (فقط برای کاربر خودش)
-            'two_factor_enabled' => $this->when(
-                $request->user() && $request->user()->id === $this->id,
-                $this->two_factor_enabled
-            ),
             'last_login_at' => $this->when(
                 $request->user() && $request->user()->id === $this->id,
                 $this->last_login_at?->toISOString()

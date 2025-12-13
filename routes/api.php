@@ -64,10 +64,7 @@ Route::middleware(['auth:sanctum', 'verified.email', 'track.online'])->group(fun
     Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
-        Route::post('two-factor/enable', [AuthController::class, 'enableTwoFactor']);
-        Route::post('two-factor/disable', [AuthController::class, 'disableTwoFactor']);
-        Route::post('two-factor/verify', [AuthController::class, 'verifyTwoFactor']);
-
+        
         // SESSION MANAGEMENT
         Route::get('sessions', [AuthController::class, 'activeSessions']);
         Route::delete('sessions/{tokenId}', [AuthController::class, 'revokeSession'])->where('tokenId', '[0-9]+');

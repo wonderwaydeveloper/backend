@@ -28,11 +28,6 @@ class AuthResource extends JsonResource
             $data['access_token'] = $this['token'];
         }
 
-        // فقط در صورتی که احراز هویت دو مرحله‌ای لازم بود، آن را اضافه کن
-        if (isset($this['two_factor_required'])) {
-            $data['two_factor_required'] = $this['two_factor_required'];
-        }
-
         return $data;
     }
 

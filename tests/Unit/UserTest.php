@@ -107,15 +107,6 @@ class UserTest extends TestCase
         $this->assertTrue($user->is_underage);
     }
 
-    #[Test]
-    public function user_can_enable_two_factor()
-    {
-        $user = User::factory()->create();
-        $user->enableTwoFactor();
-
-        $this->assertTrue($user->fresh()->two_factor_enabled);
-        $this->assertNotNull($user->fresh()->two_factor_secret);
-    }
 
     #[Test]
     public function user_can_disable_two_factor()

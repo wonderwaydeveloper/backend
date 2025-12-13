@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\AuthResource;
 use App\Http\Resources\GenericResource;
-use App\Http\Resources\TwoFactorResource;
 use App\Models\PhoneVerification;
 use App\Models\SocialAccount;
 use App\Models\User;
@@ -28,7 +27,6 @@ class AuthController extends Controller
     public function __construct(
         private AuthService $authService,
         private PhoneVerificationService $phoneVerificationService,
-        private TwoFactorService $twoFactorService,
         private EmailVerificationService $emailVerificationService
     ) {
     }
@@ -130,7 +128,7 @@ class AuthController extends Controller
         }
     }
 
-    /**
+  /**
      * ورود با ایمیل - فقط برای کاربران تأیید شده
      */
     public function login(Request $request)
@@ -147,14 +145,6 @@ class AuthController extends Controller
         try {
             $result = $this->authService->loginUser($request->email, $request->password);
 
-            if ($result['two_factor_required']) {
-                return new AuthResource([
-                    'user' => $result['user'],
-                    'two_factor_required' => true,
-                    'message' => 'Two-factor authentication required'
-                ]);
-            }
-
             return new AuthResource([
                 'user' => $result['user'],
                 'token' => $result['token'],
@@ -164,7 +154,6 @@ class AuthController extends Controller
             return GenericResource::error($e->getMessage(), 401);
         }
     }
-
 
     /**
      * ارسال کد تأیید برای شماره موبایل
@@ -282,70 +271,6 @@ class AuthController extends Controller
         }
     }
 
-    /**
-     * فعال‌سازی احراز هویت دو مرحله‌ای
-     */
-    public function enableTwoFactor(Request $request)
-    {
-        try {
-            $result = $this->twoFactorService->enableTwoFactor($request->user());
-
-            return new TwoFactorResource([
-                'enabled' => true,
-                'qr_code' => $result['qr_code'],
-                'recovery_codes' => $result['recovery_codes'],
-                'message' => 'Two-factor authentication enabled successfully'
-            ]);
-        } catch (\Exception $e) {
-            return GenericResource::error($e->getMessage(), 400);
-        }
-    }
-
-    /**
-     * غیرفعال‌سازی احراز هویت دو مرحله‌ای
-     */
-    public function disableTwoFactor(Request $request)
-    {
-        try {
-            $this->twoFactorService->disableTwoFactor($request->user());
-
-            return new TwoFactorResource([
-                'enabled' => false,
-                'message' => 'Two-factor authentication disabled successfully'
-            ]);
-        } catch (\Exception $e) {
-            return GenericResource::error($e->getMessage(), 400);
-        }
-    }
-
-    /**
-     * تأیید کد احراز هویت دو مرحله‌ای
-     */
-    public function verifyTwoFactor(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'code' => 'required|string',
-        ]);
-
-        if ($validator->fails()) {
-            return GenericResource::error('Validation failed', 422, $validator->errors());
-        }
-
-        try {
-            $token = $this->twoFactorService->verifyTwoFactorCode(
-                $request->user(),
-                $request->code
-            );
-
-            return new AuthResource([
-                'user' => $request->user(),
-                'token' => $token,
-                'message' => 'Two-factor authentication verified successfully'
-            ]);
-        } catch (\Exception $e) {
-            return GenericResource::error($e->getMessage(), 401);
-        }
-    }
 
     /**
      * خروج کاربر (فقط توکن جاری)
