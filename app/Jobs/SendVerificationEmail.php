@@ -19,7 +19,8 @@ class SendVerificationEmail implements ShouldQueue
         public string $email,
         public string $code,
         public string $type, // 'verification' or 'password_reset'
-        public string $name = ''
+        public string $name = '',
+        public int $expiresIn = 30 // اضافه شد
     ) {}
 
     public function handle(): void
@@ -27,16 +28,24 @@ class SendVerificationEmail implements ShouldQueue
         try {
             if ($this->type === 'verification') {
                 Mail::to($this->email)->send(
-                    new EmailVerificationMail($this->code, $this->name)
+                    new EmailVerificationMail($this->code, $this->name, $this->expiresIn)
                 );
             } elseif ($this->type === 'password_reset') {
                 Mail::to($this->email)->send(
-                    new PasswordResetMail($this->code, $this->name)
+                    new PasswordResetMail($this->code, $this->name, $this->expiresIn)
                 );
             }
+            
+            \Log::info('Email sent successfully', [
+                'email' => $this->email,
+                'type' => $this->type,
+                'expires_in' => $this->expiresIn
+            ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to send verification email: ' . $e->getMessage());
-            // می‌توانید در اینجا notification برای ادمین ارسال کنید
+            \Log::error('Failed to send verification email: ' . $e->getMessage(), [
+                'email' => $this->email,
+                'type' => $this->type
+            ]);
         }
     }
 

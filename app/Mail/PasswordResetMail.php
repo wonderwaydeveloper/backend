@@ -43,7 +43,7 @@ class PasswordResetMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Password Reset Code',
+            subject: 'Reset Your Password - ' . config('app.name'),
         );
     }
 
@@ -60,6 +60,11 @@ class PasswordResetMail extends Mailable
                 'expiresIn' => $this->expiresIn,
                 'currentYear' => date('Y'),
                 'appName' => config('app.name', 'Wonder Way Pictures'),
+                'appUrl' => config('app.url', 'http://localhost:8000'),
+                'frontendUrl' => config('frontend.url'),
+                'resetPasswordUrl' => config('frontend.url') . config('frontend.reset_password_path'),
+                'securityCenterUrl' => config('frontend.url') . config('frontend.security_center_path'),
+                'helpCenterUrl' => config('frontend.url') . config('frontend.help_center_path'),
             ],
         );
     }

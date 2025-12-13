@@ -43,7 +43,7 @@ class EmailVerificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Email Verification Code',
+            subject: 'Verify Your Email Address - ' . config('app.name'),
         );
     }
 
@@ -60,6 +60,12 @@ class EmailVerificationMail extends Mailable
                 'expiresIn' => $this->expiresIn,
                 'currentYear' => date('Y'),
                 'appName' => config('app.name', 'Wonder Way Pictures'),
+                'appUrl' => config('app.url', 'http://localhost:8000'),
+                'frontendUrl' => config('frontend.url'),
+                'verifyEmailUrl' => config('frontend.url') . config('frontend.verify_email_path'),
+                'helpCenterUrl' => config('frontend.url') . config('frontend.help_center_path'),
+                'privacyPolicyUrl' => config('frontend.url') . config('frontend.privacy_policy_path'),
+                'termsUrl' => config('frontend.url') . config('frontend.terms_path'),
             ],
         );
     }

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 class EmailVerificationService
 {
+
     /**
      * ارسال کد تأیید ایمیل
      */
@@ -21,12 +22,16 @@ class EmailVerificationService
                 'verification'
             );
 
+            // محاسبه زمان انقضا به دقیقه
+            $expiresIn = now()->diffInMinutes($verification->expires_at);
+
             // ارسال ایمیل از طریق queue
             SendVerificationEmail::dispatch(
                 $user->email,
                 $verification->code,
                 'verification',
-                $user->name
+                $user->name,
+                $expiresIn // ارسال زمان انقضا
             );
 
             return $verification;
@@ -50,12 +55,16 @@ class EmailVerificationService
                 'password_reset'
             );
 
+            // محاسبه زمان انقضا به دقیقه
+            $expiresIn = now()->diffInMinutes($verification->expires_at);
+
             // ارسال ایمیل از طریق queue
             SendVerificationEmail::dispatch(
                 $user->email,
                 $verification->code,
                 'password_reset',
-                $user->name
+                $user->name,
+                $expiresIn // ارسال زمان انقضا
             );
 
             return $verification;
@@ -129,7 +138,7 @@ class EmailVerificationService
 
         return DB::transaction(function () use ($verification, $newPassword) {
             $user = User::where('email', $verification->email)->first();
-            
+
             if (!$user) {
                 throw new \Exception('User not found');
             }
