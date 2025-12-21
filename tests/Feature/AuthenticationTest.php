@@ -12,7 +12,10 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_register()
     {
-        $response = $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class)
+        $response = $this->withoutMiddleware([
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \App\Http\Middleware\AdvancedRateLimit::class
+            ])
             ->postJson('/api/register', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
@@ -29,7 +32,10 @@ class AuthenticationTest extends TestCase
     {
         User::factory()->create(['email' => 'test@example.com']);
 
-        $response = $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class)
+        $response = $this->withoutMiddleware([
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \App\Http\Middleware\AdvancedRateLimit::class
+            ])
             ->postJson('/api/register', [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
@@ -49,7 +55,10 @@ class AuthenticationTest extends TestCase
             'password' => bcrypt('password123')
         ]);
 
-        $response = $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class)
+        $response = $this->withoutMiddleware([
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \App\Http\Middleware\AdvancedRateLimit::class
+            ])
             ->postJson('/api/login', [
                 'email' => 'test@example.com',
                 'password' => 'password123',
@@ -61,7 +70,10 @@ class AuthenticationTest extends TestCase
 
     public function test_user_cannot_login_with_invalid_credentials()
     {
-        $response = $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class)
+        $response = $this->withoutMiddleware([
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \App\Http\Middleware\AdvancedRateLimit::class
+            ])
             ->postJson('/api/login', [
                 'email' => 'nonexistent@example.com',
                 'password' => 'wrongpassword',

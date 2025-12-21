@@ -71,9 +71,13 @@ class LiveStreamController extends Controller
     {
         $this->authorize('update', $stream);
 
+        $endedAt = now();
+        $duration = $stream->started_at ? $endedAt->diffInSeconds($stream->started_at) : 0;
+
         $stream->update([
             'status' => 'ended',
-            'ended_at' => now(),
+            'ended_at' => $endedAt,
+            'duration' => max(0, $duration), // Ensure duration is never negative
         ]);
 
         if (!app()->environment('testing')) {

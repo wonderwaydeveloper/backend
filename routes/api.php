@@ -8,10 +8,25 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:3,60');
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,5');
+// Public routes with security middleware
+Route::middleware(['spam.detection'])->group(function () {
+    Route::get('/posts', [PostController::class, 'index']);
+});
 
-Route::prefix('auth/phone')->group(function () {
+// Test route for security testing
+Route::post('/test', function () {
+    return response()->json(['message' => 'Test endpoint']);
+});
+
+Route::post('/register', [AuthController::class, 'register'])->middleware(['advanced.rate.limit:register,3,60']);
+Route::post('/login', [AuthController::class, 'login'])->middleware(['advanced.rate.limit:login,5,5']);
+
+// Add user route for testing
+Route::get('/user', function () {
+    return response()->json(['user' => auth()->user()]);
+})->middleware('auth:sanctum');
+
+Route::prefix('auth/phone')->middleware(['advanced.rate.limit:phone,10,5'])->group(function () {
     Route::post('/send-code', [PhoneAuthController::class, 'sendCode']);
     Route::post('/verify', [PhoneAuthController::class, 'verifyCode']);
     Route::post('/register', [PhoneAuthController::class, 'register']);
@@ -40,13 +55,13 @@ Route::prefix('auth/social')->group(function () {
     Route::get('/facebook/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleFacebookCallback']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    Route::apiResource('posts', PostController::class)->except(['update'])->middleware('throttle:10,1');
-    Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware('throttle:60,1');
-    Route::post('/posts/{post}/quote', [PostController::class, 'quote'])->middleware('throttle:10,1');
+    Route::apiResource('posts', PostController::class)->except(['update'])->middleware(['advanced.rate.limit:posts,10,1']);
+    Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware(['advanced.rate.limit:likes,60,1']);
+    Route::post('/posts/{post}/quote', [PostController::class, 'quote'])->middleware(['advanced.rate.limit:posts,10,1']);
     Route::get('/timeline', [PostController::class, 'timeline']);
     Route::get('/drafts', [PostController::class, 'drafts']);
     Route::post('/posts/{post}/publish', [PostController::class, 'publish']);
@@ -318,4 +333,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/predict', [App\Http\Controllers\Api\AutoScalingController::class, 'predict']);
         Route::post('/force-scale', [App\Http\Controllers\Api\AutoScalingController::class, 'forceScale']);
     });
+    // Include streaming routes with security middleware
+    require __DIR__.'/streaming.php';
 });

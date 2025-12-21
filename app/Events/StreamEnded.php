@@ -2,9 +2,11 @@
 
 namespace App\Events;
 
-use App\Models\LiveStream;
+use App\Models\Stream;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PresenceChannel;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -13,15 +15,32 @@ class StreamEnded implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(public LiveStream $stream)
+    public Stream $stream;
+
+    public function __construct(Stream $stream)
     {
+        $this->stream = $stream;
     }
 
     public function broadcastOn(): array
     {
         return [
-            new Channel('live-streams'),
-            new Channel('stream.' . $this->stream->id),
+            new Channel('streams'),
+            new Channel('user.' . $this->stream->user_id)
+        ];
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'stream' => [
+                'id' => $this->stream->id,
+                'title' => $this->stream->title,
+                'user' => $this->stream->user->only(['id', 'name', 'username']),
+                'status' => $this->stream->status,
+                'ended_at' => $this->stream->ended_at,
+                'duration' => $this->stream->duration
+            ]
         ];
     }
 }
