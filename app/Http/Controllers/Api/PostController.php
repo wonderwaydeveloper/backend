@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\PostInteraction;
-use App\Events\PostPublished;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
 use App\Models\Post;
+use App\Services\PostService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
+    public function __construct(
+        private PostService $postService
+    ) {}
+
     /**
      * @OA\Get(
      *     path="/api/posts",
@@ -22,25 +27,9 @@ class PostController extends Controller
      *     )
      * )
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        $cacheKey = 'posts:public:page:' . request('page', 1);
-        
-        $posts = cache()->remember($cacheKey, 600, function () {
-            return Post::published()
-                ->with([
-                    'user:id,name,username,avatar',
-                    'hashtags:id,name,slug',
-                    'poll.options',
-                    'quotedPost.user:id,name,username,avatar',
-                    'threadPosts.user:id,name,username,avatar'
-                ])
-                ->withCount('likes', 'comments', 'quotes')
-                ->whereNull('thread_id') // Only show main posts, not thread replies
-                ->latest('published_at')
-                ->paginate(config('pagination.posts', 20));
-        });
-
+        $posts = $this->postService->getPublicPosts(request('page', 1));
         return response()->json($posts);
     }
 
@@ -67,231 +56,90 @@ class PostController extends Controller
      *     )
      * )
      */
-
-    public function store(Request $request)
+    public function store(StorePostRequest $request): JsonResponse
     {
-        $request->validate([
-            'content' => 'required|string|max:280',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
-            'gif_url' => 'nullable|url',
-            'reply_settings' => 'nullable|in:everyone,following,mentioned,none',
-            'quoted_post_id' => 'nullable|exists:posts,id',
-        ]);
+        try {
+            $post = $this->postService->createPost(
+                $request->validated(),
+                $request->user(),
+                $request->file('image')
+            );
 
-        $data = [
-            'user_id' => $request->user()->id,
-            'content' => $request->content,
-            'reply_settings' => $request->input('reply_settings', 'everyone'),
-            'quoted_post_id' => $request->quoted_post_id,
-        ];
-
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('posts', 'public');
+            return response()->json($post, 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'POST_CREATION_FAILED'
+            ], 422);
         }
-
-        if ($request->gif_url) {
-            $data['gif_url'] = $request->gif_url;
-        }
-
-        $isDraft = $request->boolean('is_draft', false);
-        $data['is_draft'] = $isDraft;
-        $data['published_at'] = $isDraft ? null : now();
-
-        $post = Post::create($data);
-        
-        // Always sync hashtags and mentions immediately
-        $post->syncHashtags();
-        $mentionedUsers = $post->processMentions($post->content);
-        
-        // Send mention notifications
-        foreach ($mentionedUsers as $mentionedUser) {
-            $mentionedUser->notify(new \App\Notifications\MentionNotification(auth()->user(), $post));
-        }
-        
-        // Spam detection for published posts
-        if (!$isDraft) {
-            $spamDetection = app(\App\Services\SpamDetectionService::class);
-            $spamResult = $spamDetection->checkPost($post);
-            
-            if ($spamResult['is_spam']) {
-                // Delete the post if it's spam
-                $post->delete();
-                
-                // Determine error type based on reasons
-                $errorType = 'SPAM_DETECTED';
-                if (in_array('Too many links detected (3 links)', $spamResult['reasons'])) {
-                    $errorType = 'TOO_MANY_LINKS';
-                }
-                
-                return response()->json([
-                    'message' => 'پست شما به دلیل مشکوک بودن تأیید نشد',
-                    'error' => $errorType
-                ], 422);
-            }
-        }
-        
-        // Process post asynchronously (skip in testing)
-        if (!$isDraft && !app()->environment('testing')) {
-            dispatch(new \App\Jobs\ProcessPostJob($post))->onQueue('high');
-        }
-        
-        // Broadcast new post if published
-        if (!$isDraft) {
-            broadcast(new PostPublished($post->load('user:id,name,username,avatar')));
-        }
-        
-        $post->load('user:id,name,username,avatar', 'hashtags');
-
-        return response()->json($post, 201);
     }
 
-    public function show(Post $post)
+    public function show(Post $post): JsonResponse
     {
-        $post->load([
-            'user:id,name,username,avatar',
-            'comments.user:id,name,username,avatar',
-            'hashtags',
-            'quotedPost.user:id,name,username,avatar',
-            'threadPosts.user:id,name,username,avatar'
-        ])->loadCount('likes', 'comments', 'quotes');
-
-        // If this is a thread post, also load thread info
-        if ($post->isThread()) {
-            $post->thread_info = [
-                'is_thread' => true,
-                'is_main_thread' => $post->isMainThread(),
-                'thread_root_id' => $post->getThreadRoot()->id,
-                'total_posts' => $post->isMainThread() ? $post->threadPosts()->count() + 1 : $post->getThreadRoot()->threadPosts()->count() + 1
-            ];
-        }
-
+        $post = $this->postService->getPostWithRelations($post);
         return response()->json($post);
     }
 
-    public function destroy(Post $post)
+    public function destroy(Post $post): JsonResponse
     {
         $this->authorize('delete', $post);
-
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
-        }
-
-        $post->delete();
-
+        
+        $this->postService->deletePost($post);
+        
         return response()->json(['message' => 'Post deleted successfully']);
     }
 
-    public function like(Post $post)
+    public function like(Post $post): JsonResponse
     {
-        $user = auth()->user();
-
-        if ($post->isLikedBy($user->id)) {
-            $post->likes()->where('user_id', $user->id)->delete();
-            if ($post->likes_count > 0) {
-                $post->decrement('likes_count');
-            }
-            $liked = false;
-        } else {
-            $post->likes()->create(['user_id' => $user->id]);
-            $post->increment('likes_count');
-            $liked = true;
-
-            event(new \App\Events\PostLiked($post, $user));
-        }
-
-        // Broadcast real-time interaction
-        broadcast(new PostInteraction($post, 'like', $user, ['liked' => $liked]));
-
-        return response()->json(['liked' => $liked, 'likes_count' => $post->likes_count]);
+        $result = $this->postService->toggleLike($post, auth()->user());
+        return response()->json($result);
     }
 
-    public function timeline()
+    public function timeline(): JsonResponse
     {
-        $user = auth()->user();
-        
-        // Use optimized database service
-        $dbService = app(\App\Services\DatabaseOptimizationService::class);
-        $posts = $dbService->optimizeTimeline($user->id, 20);
-
-        return response()->json([
-            'data' => $posts,
-            'optimized' => true
-        ]);
+        $timeline = $this->postService->getUserTimeline(auth()->user());
+        return response()->json($timeline);
     }
 
-    public function drafts()
+    public function drafts(): JsonResponse
     {
-        $drafts = auth()->user()
-            ->posts()
-            ->drafts()
-            ->latest()
-            ->paginate(20);
-
+        $drafts = $this->postService->getUserDrafts(auth()->user());
         return response()->json($drafts);
     }
 
-    public function publish(Post $post)
+    public function publish(Post $post): JsonResponse
     {
         $this->authorize('delete', $post);
-
-        $post->update([
-            'is_draft' => false,
-            'published_at' => now(),
-        ]);
-
+        
+        $post = $this->postService->publishPost($post);
+        
         return response()->json(['message' => 'پست منتشر شد', 'post' => $post]);
     }
 
-    public function quote(Request $request, Post $post)
+    public function quote(Request $request, Post $post): JsonResponse
     {
-        $request->validate([
-            'content' => 'required|string|max:280',
-        ]);
-
-        $quotePost = Post::create([
-            'user_id' => $request->user()->id,
-            'content' => $request->content,
-            'quoted_post_id' => $post->id,
-            'is_draft' => false,
-            'published_at' => now(),
-        ]);
-
-        $quotePost->syncHashtags();
-        $mentionedUsers = $quotePost->processMentions($quotePost->content);
+        $request->validate(['content' => 'required|string|max:280']);
         
-        foreach ($mentionedUsers as $mentionedUser) {
-            $mentionedUser->notify(new \App\Notifications\MentionNotification(auth()->user(), $quotePost));
-        }
-
-        broadcast(new PostPublished($quotePost->load('user:id,name,username,avatar', 'quotedPost.user:id,name,username,avatar')));
-
-        $quotePost->load('user:id,name,username,avatar', 'quotedPost.user:id,name,username,avatar', 'hashtags');
-
+        $quotePost = $this->postService->createQuotePost(
+            $request->only('content'),
+            $request->user(),
+            $post
+        );
+        
         return response()->json($quotePost, 201);
     }
 
-    public function quotes(Post $post)
+    public function quotes(Post $post): JsonResponse
     {
-        $quotes = $post->quotes()
-            ->with('user:id,name,username,avatar')
-            ->withCount('likes', 'comments')
-            ->latest()
-            ->paginate(20);
-
+        $quotes = $this->postService->getPostQuotes($post);
         return response()->json($quotes);
     }
 
-    public function update(\App\Http\Requests\UpdatePostRequest $request, Post $post)
+    public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
         try {
-            $post->editPost(
-                $request->validated()['content'],
-                $request->validated()['edit_reason'] ?? null
-            );
-
-            $post->syncHashtags();
-            $post->load('user:id,name,username,avatar', 'hashtags', 'edits');
-
+            $post = $this->postService->updatePost($post, $request->validated());
+            
             return response()->json([
                 'message' => 'Post updated successfully',
                 'post' => $post
@@ -303,15 +151,12 @@ class PostController extends Controller
         }
     }
 
-    public function editHistory(Post $post)
+    public function editHistory(Post $post): JsonResponse
     {
         $this->authorize('view', $post);
         
-        $edits = $post->edits()->with('post:id,content')->get();
+        $history = $this->postService->getEditHistory($post);
         
-        return response()->json([
-            'current_content' => $post->content,
-            'edit_history' => $edits
-        ]);
+        return response()->json($history);
     }
 }
