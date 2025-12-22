@@ -22,4 +22,10 @@ interface NotificationRepositoryInterface
     public function markAllAsRead(int $userId): bool;
     
     public function getUnreadCount(int $userId): int;
+    
+    public function getRecentNotifications(int $userId, int $limit = 10): Collection;
+    
+    public function deleteOldNotifications(int $userId, int $daysOld = 30): int;
+    
+    public function getNotificationsByType(int $userId, string $type): Collection;
 }

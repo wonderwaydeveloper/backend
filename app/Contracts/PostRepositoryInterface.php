@@ -25,4 +25,8 @@ interface PostRepositoryInterface
     public function getUserDrafts(int $userId): LengthAwarePaginator;
     
     public function getPostQuotes(int $postId): LengthAwarePaginator;
+    
+    public function getUserPosts(int $userId, int $limit = 20): Collection;
+    
+    public function searchPosts(string $query, int $limit = 20): Collection;
 }

@@ -25,4 +25,12 @@ interface UserRepositoryInterface
     public function getUserPosts(int $userId): LengthAwarePaginator;
     
     public function searchUsers(string $query, int $limit = 20): Collection;
+    
+    public function getFollowers(int $userId, int $limit = 20): Collection;
+    
+    public function getFollowing(int $userId, int $limit = 20): Collection;
+    
+    public function getSuggestedUsers(int $userId, int $limit = 10): Collection;
+    
+    public function getMentionableUsers(string $query, int $limit = 10): Collection;
 }

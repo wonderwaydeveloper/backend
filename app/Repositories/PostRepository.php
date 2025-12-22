@@ -6,17 +6,26 @@ use App\Contracts\PostRepositoryInterface;
 use App\Models\Post;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class PostRepository implements PostRepositoryInterface
 {
     public function create(array $data): Post
     {
-        return Post::create($data);
+        $post = Post::create($data);
+        $this->clearUserCache($post->user_id);
+        return $post;
     }
     
     public function findById(int $id): ?Post
     {
-        return Post::find($id);
+        return Cache::remember("post:{$id}", 300, function () use ($id) {
+            return Post::with([
+                'user:id,name,username,avatar',
+                'hashtags:id,name,slug'
+            ])->find($id);
+        });
     }
     
     public function findWithRelations(int $id, array $relations = []): ?Post
@@ -27,11 +36,15 @@ class PostRepository implements PostRepositoryInterface
     public function update(Post $post, array $data): Post
     {
         $post->update($data);
+        Cache::forget("post:{$post->id}");
+        $this->clearUserCache($post->user_id);
         return $post->fresh();
     }
     
     public function delete(Post $post): bool
     {
+        Cache::forget("post:{$post->id}");
+        $this->clearUserCache($post->user_id);
         return $post->delete();
     }
     
@@ -42,10 +55,9 @@ class PostRepository implements PostRepositoryInterface
                 'user:id,name,username,avatar',
                 'hashtags:id,name,slug',
                 'poll.options',
-                'quotedPost.user:id,name,username,avatar',
-                'threadPosts.user:id,name,username,avatar'
+                'quotedPost.user:id,name,username,avatar'
             ])
-            ->withCount('likes', 'comments', 'quotes')
+            ->withCount(['likes', 'comments', 'quotes'])
             ->whereNull('thread_id')
             ->latest('published_at')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -53,21 +65,30 @@ class PostRepository implements PostRepositoryInterface
     
     public function getTimelinePosts(int $userId, int $limit = 20): Collection
     {
-        $followingIds = $this->getFollowingIds($userId);
+        $cacheKey = "timeline:{$userId}:{$limit}";
         
-        return Post::with(['user:id,name,username,avatar', 'likes:id,post_id'])
-            ->select(['id', 'user_id', 'content', 'created_at', 'likes_count', 'comments_count'])
+        return Cache::remember($cacheKey, 300, function () use ($userId, $limit) {
+            $followingIds = $this->getFollowingIds($userId);
+            
+            return Post::with([
+                'user:id,name,username,avatar',
+                'hashtags:id,name,slug'
+            ])
+            ->select(['id', 'user_id', 'content', 'created_at', 'likes_count', 'comments_count', 'image', 'gif_url'])
             ->whereIn('user_id', $followingIds)
+            ->whereNull('thread_id')
             ->published()
-            ->latest()
+            ->latest('published_at')
             ->limit($limit)
             ->get();
+        });
     }
     
     public function getUserDrafts(int $userId): LengthAwarePaginator
     {
         return Post::where('user_id', $userId)
             ->drafts()
+            ->with(['hashtags:id,name,slug'])
             ->latest()
             ->paginate(20);
     }
@@ -75,18 +96,59 @@ class PostRepository implements PostRepositoryInterface
     public function getPostQuotes(int $postId): LengthAwarePaginator
     {
         return Post::where('quoted_post_id', $postId)
-            ->with('user:id,name,username,avatar')
-            ->withCount('likes', 'comments')
+            ->with([
+                'user:id,name,username,avatar',
+                'hashtags:id,name,slug'
+            ])
+            ->withCount(['likes', 'comments'])
             ->latest()
             ->paginate(20);
     }
     
+    public function getUserPosts(int $userId, int $limit = 20): Collection
+    {
+        return Post::where('user_id', $userId)
+            ->published()
+            ->with([
+                'hashtags:id,name,slug',
+                'quotedPost.user:id,name,username,avatar'
+            ])
+            ->withCount(['likes', 'comments', 'quotes'])
+            ->whereNull('thread_id')
+            ->latest('published_at')
+            ->limit($limit)
+            ->get();
+    }
+    
+    public function searchPosts(string $query, int $limit = 20): Collection
+    {
+        return Post::published()
+            ->where('content', 'LIKE', "%{$query}%")
+            ->with([
+                'user:id,name,username,avatar',
+                'hashtags:id,name,slug'
+            ])
+            ->withCount(['likes', 'comments'])
+            ->whereNull('thread_id')
+            ->latest('published_at')
+            ->limit($limit)
+            ->get();
+    }
+    
     private function getFollowingIds(int $userId): array
     {
-        return \DB::table('follows')
-            ->where('follower_id', $userId)
-            ->pluck('following_id')
-            ->push($userId) // Include user's own posts
-            ->toArray();
+        return Cache::remember("following:{$userId}", 600, function () use ($userId) {
+            return DB::table('follows')
+                ->where('follower_id', $userId)
+                ->pluck('following_id')
+                ->push($userId)
+                ->toArray();
+        });
+    }
+    
+    private function clearUserCache(int $userId): void
+    {
+        Cache::forget("timeline:{$userId}:20");
+        Cache::forget("following:{$userId}");
     }
 }
