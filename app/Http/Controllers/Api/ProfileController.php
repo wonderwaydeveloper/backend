@@ -3,76 +3,82 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
+use App\Services\UserService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
-    public function show(User $user)
-    {
-        $user->loadCount('posts', 'followers', 'following');
+    public function __construct(
+        private UserService $userService
+    ) {}
 
-        return response()->json($user);
+    public function show(User $user): JsonResponse
+    {
+        $userProfile = $this->userService->getUserProfile($user);
+        return response()->json($userProfile);
     }
 
-    public function posts(User $user)
+    public function posts(User $user): JsonResponse
     {
-        $posts = $user->posts()
-            ->with('user:id,name,username,avatar')
-            ->withCount('likes', 'comments')
-            ->latest()
-            ->paginate(20);
-
+        $posts = $this->userService->getUserPosts($user);
         return response()->json($posts);
     }
 
-    public function update(Request $request)
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $user = $request->user();
-
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'bio' => 'sometimes|string|max:500',
-            'avatar' => 'sometimes|nullable|string|url|max:255',
-        ]);
-
-        $data = $request->only(['name', 'bio']);
+        $user = $this->userService->updateProfile(
+            $request->user(),
+            $request->validated()
+        );
         
-        if ($request->has('avatar')) {
-            $data['avatar'] = $request->avatar;
-        }
-
-        $user->update($data);
-
         return response()->json($user);
     }
 
-    public function search(Request $request)
+    public function search(Request $request): JsonResponse
     {
-        $query = $request->input('q');
-
-        $users = User::where('name', 'like', "%{$query}%")
-            ->orWhere('username', 'like', "%{$query}%")
-            ->select('id', 'name', 'username', 'avatar')
-            ->limit(20)
-            ->get();
-
+        $request->validate(['q' => 'required|string|min:2|max:50']);
+        
+        $users = $this->userService->searchUsers($request->input('q'));
+        
         return response()->json($users);
     }
 
-    public function updatePrivacy(Request $request)
+    public function updatePrivacy(Request $request): JsonResponse
     {
-        $request->validate([
-            'is_private' => 'required|boolean',
-        ]);
+        $request->validate(['is_private' => 'required|boolean']);
+        
+        $result = $this->userService->updatePrivacySettings(
+            $request->user(),
+            $request->boolean('is_private')
+        );
+        
+        return response()->json($result);
+    }
 
-        $user = $request->user();
-        $user->update(['is_private' => $request->is_private]);
+    public function block(User $user, Request $request): JsonResponse
+    {
+        $result = $this->userService->blockUser($request->user(), $user);
+        return response()->json($result);
+    }
 
-        return response()->json([
-            'message' => 'Privacy settings updated',
-            'is_private' => $user->is_private,
-        ]);
+    public function unblock(User $user, Request $request): JsonResponse
+    {
+        $result = $this->userService->unblockUser($request->user(), $user);
+        return response()->json($result);
+    }
+
+    public function mute(User $user, Request $request): JsonResponse
+    {
+        $result = $this->userService->muteUser($request->user(), $user);
+        return response()->json($result);
+    }
+
+    public function unmute(User $user, Request $request): JsonResponse
+    {
+        $result = $this->userService->unmuteUser($request->user(), $user);
+        return response()->json($result);
     }
 }

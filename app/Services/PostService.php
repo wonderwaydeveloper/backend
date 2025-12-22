@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\PostRepositoryInterface;
 use App\Events\PostInteraction;
 use App\Events\PostPublished;
 use App\Jobs\ProcessPostJob;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 class PostService
 {
     public function __construct(
+        private PostRepositoryInterface $postRepository,
         private SpamDetectionService $spamDetectionService,
         private DatabaseOptimizationService $databaseOptimizationService
     ) {}
@@ -27,19 +29,8 @@ class PostService
     {
         $cacheKey = "posts:public:page:{$page}";
         
-        return cache()->remember($cacheKey, 600, function () {
-            return Post::published()
-                ->with([
-                    'user:id,name,username,avatar',
-                    'hashtags:id,name,slug',
-                    'poll.options',
-                    'quotedPost.user:id,name,username,avatar',
-                    'threadPosts.user:id,name,username,avatar'
-                ])
-                ->withCount('likes', 'comments', 'quotes')
-                ->whereNull('thread_id')
-                ->latest('published_at')
-                ->paginate(config('pagination.posts', 20));
+        return cache()->remember($cacheKey, 600, function () use ($page) {
+            return $this->postRepository->getPublicPosts($page);
         });
     }
 
@@ -66,7 +57,7 @@ class PostService
         $postData['is_draft'] = $isDraft;
         $postData['published_at'] = $isDraft ? null : now();
 
-        $post = Post::create($postData);
+        $post = $this->postRepository->create($postData);
         
         // Process hashtags and mentions
         $this->processPostContent($post);
@@ -90,9 +81,9 @@ class PostService
     /**
      * Get post with full relations
      */
-    public function getPostWithRelations(Post $post): Post
+    public function getPostWithRelations(Post $post): array
     {
-        $post->load([
+        $post = $this->postRepository->findWithRelations($post->id, [
             'user:id,name,username,avatar',
             'comments.user:id,name,username,avatar',
             'hashtags',
@@ -100,19 +91,16 @@ class PostService
             'threadPosts.user:id,name,username,avatar'
         ])->loadCount('likes', 'comments', 'quotes');
 
-        // Add thread info if applicable
-        if ($post->isThread()) {
-            $post->thread_info = [
-                'is_thread' => true,
-                'is_main_thread' => $post->isMainThread(),
-                'thread_root_id' => $post->getThreadRoot()->id,
-                'total_posts' => $post->isMainThread() 
-                    ? $post->threadPosts()->count() + 1 
-                    : $post->getThreadRoot()->threadPosts()->count() + 1
+        $response = $post->toArray();
+
+        if ($post->threadPosts()->exists()) {
+            $response['thread_info'] = [
+                'total_posts' => $post->threadPosts->count() + 1,
+                'is_main_thread' => true
             ];
         }
 
-        return $post;
+        return $response;
     }
 
     /**
@@ -170,10 +158,7 @@ class PostService
      */
     public function getUserDrafts(User $user): LengthAwarePaginator
     {
-        return $user->posts()
-            ->drafts()
-            ->latest()
-            ->paginate(20);
+        return $this->postRepository->getUserDrafts($user->id);
     }
 
     /**
@@ -216,11 +201,7 @@ class PostService
      */
     public function getPostQuotes(Post $post): LengthAwarePaginator
     {
-        return $post->quotes()
-            ->with('user:id,name,username,avatar')
-            ->withCount('likes', 'comments')
-            ->latest()
-            ->paginate(20);
+        return $this->postRepository->getPostQuotes($post->id);
     }
 
     /**
