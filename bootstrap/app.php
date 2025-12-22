@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'advanced.rate.limit' => \App\Http\Middleware\AdvancedRateLimit::class,
             'spam.detection' => \App\Http\Middleware\SpamDetectionMiddleware::class,
             'set.locale' => \App\Http\Middleware\SetLocale::class,
+            'api.version' => \App\Http\Middleware\ApiVersioning::class,
         ]);
 
         $middleware->throttleApi('60,1');

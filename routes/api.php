@@ -65,6 +65,29 @@ Route::prefix('auth/social')->group(function () {
     Route::get('/facebook/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleFacebookCallback']);
 });
 
+// API v1 Routes (Current) - Include versioned routes
+Route::prefix('v1')->middleware(['api.version:v1'])->group(function () {
+    // Public routes with security middleware
+    Route::middleware(['spam.detection'])->group(function () {
+        Route::get('/posts', [PostController::class, 'index']);
+    });
+    
+    Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
+        Route::apiResource('posts', PostController::class)->middleware(['advanced.rate.limit:posts,10,1']);
+        Route::get('/timeline', [PostController::class, 'timeline']);
+    });
+});
+
+// GraphQL Endpoint
+Route::post('/graphql', [App\Http\Controllers\Api\GraphQLController::class, 'query'])
+    ->middleware(['auth:sanctum']);
+
+// API v2 Enhanced Routes
+Route::prefix('v2')->middleware(['api.version:v2', 'auth:sanctum'])->group(function () {
+    Route::get('/search/posts', [App\Http\Controllers\Api\V2\SearchController::class, 'posts']);
+    Route::get('/search/users', [App\Http\Controllers\Api\V2\SearchController::class, 'users']);
+});
+
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);

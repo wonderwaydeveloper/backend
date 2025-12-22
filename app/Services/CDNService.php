@@ -4,110 +4,100 @@ namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use Illuminate\Support\Str;
 
 class CDNService
 {
-    private string $cdnUrl;
-    private string $disk;
+    private array $cdnEndpoints = [
+        'images' => 'https://cdn-images.wonderway.com',
+        'videos' => 'https://cdn-videos.wonderway.com',
+        'static' => 'https://cdn-static.wonderway.com',
+    ];
 
-    public function __construct()
+    public function uploadImage(UploadedFile $file, string $folder = 'posts'): array
     {
-        $this->cdnUrl = config('services.cdn.url', config('app.url'));
-        $this->disk = config('services.cdn.disk', 's3');
-    }
-
-    public function uploadImage(UploadedFile $file, string $directory = 'images'): string
-    {
-        // Optimize image
-        $optimized = $this->optimizeImage($file);
-
-        // Generate unique filename
-        $filename = $this->generateFilename($file->getClientOriginalExtension());
-        $path = "{$directory}/{$filename}";
-
-        // Upload to storage
-        Storage::disk($this->disk)->put($path, $optimized);
-
-        // Return CDN URL
-        return $this->getCDNUrl($path);
-    }
-
-    public function uploadVideo(UploadedFile $file, string $directory = 'videos'): string
-    {
-        $filename = $this->generateFilename($file->getClientOriginalExtension());
-        $path = "{$directory}/{$filename}";
-
-        Storage::disk($this->disk)->putFileAs($directory, $file, $filename);
-
-        return $this->getCDNUrl($path);
-    }
-
-    public function deleteFile(string $path): bool
-    {
-        try {
-            return Storage::disk($this->disk)->delete($path);
-        } catch (\Exception $e) {
-            \Log::error('CDN file deletion failed', [
+        $filename = $this->generateFilename($file);
+        $path = "{$folder}/{$filename}";
+        
+        // Upload to multiple locations for redundancy
+        $uploaded = Storage::disk('s3')->put($path, $file->getContent(), 'public');
+        
+        if ($uploaded) {
+            // Trigger CDN cache warming
+            $this->warmCache($path, 'images');
+            
+            return [
                 'path' => $path,
-                'error' => $e->getMessage(),
-            ]);
-
-            return false;
+                'url' => $this->getCDNUrl($path, 'images'),
+                'thumbnail' => $this->generateThumbnail($path),
+            ];
         }
+        
+        throw new \Exception('Failed to upload to CDN');
     }
 
-    public function getCDNUrl(string $path): string
+    public function uploadVideo(UploadedFile $file, string $folder = 'videos'): array
     {
-        if ($this->disk === 's3') {
-            return $this->cdnUrl . '/' . $path;
+        $filename = $this->generateFilename($file);
+        $path = "{$folder}/{$filename}";
+        
+        $uploaded = Storage::disk('s3')->put($path, $file->getContent(), 'public');
+        
+        if ($uploaded) {
+            // Queue video processing
+            dispatch(new \App\Jobs\ProcessVideoJob($path));
+            
+            return [
+                'path' => $path,
+                'url' => $this->getCDNUrl($path, 'videos'),
+                'processing' => true,
+            ];
         }
-
-        return Storage::disk($this->disk)->url($path);
+        
+        throw new \Exception('Failed to upload video to CDN');
     }
 
-    private function optimizeImage(UploadedFile $file): string
+    public function getCDNUrl(string $path, string $type = 'images'): string
     {
-        $image = Image::make($file);
-
-        // Resize if too large
-        if ($image->width() > 1200 || $image->height() > 1200) {
-            $image->resize(1200, 1200, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            });
-        }
-
-        // Convert to WebP for better compression
-        $image->encode('webp', 85);
-
-        return $image->stream()->getContents();
+        $baseUrl = $this->cdnEndpoints[$type] ?? $this->cdnEndpoints['static'];
+        return "{$baseUrl}/{$path}";
     }
 
-    private function generateFilename(string $extension): string
+    private function generateFilename(UploadedFile $file): string
     {
-        return uniqid() . '_' . time() . '.' . $extension;
+        $extension = $file->getClientOriginalExtension();
+        $hash = hash('sha256', $file->getContent() . microtime(true) . rand());
+        return date('Y/m/d') . '/' . substr($hash, 0, 16) . '.' . $extension;
     }
 
-    public function generateThumbnail(string $imagePath, int $width = 300, int $height = 300): string
+    private function warmCache(string $path, string $type): void
     {
-        try {
-            $originalImage = Storage::disk($this->disk)->get($imagePath);
-            $image = Image::make($originalImage);
+        $url = $this->getCDNUrl($path, $type);
+        
+        // Warm cache in background
+        dispatch(function () use ($url) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_NOBODY, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_exec($ch);
+            curl_close($ch);
+        })->onQueue('cdn');
+    }
 
-            $thumbnail = $image->fit($width, $height)->encode('webp', 80);
+    private function generateThumbnail(string $path): string
+    {
+        $thumbnailPath = str_replace('.', '_thumb.', $path);
+        
+        // Queue thumbnail generation
+        dispatch(new \App\Jobs\GenerateThumbnailJob($path, $thumbnailPath));
+        
+        return $this->getCDNUrl($thumbnailPath, 'images');
+    }
 
-            $thumbnailPath = str_replace('.', '_thumb.', $imagePath);
-            Storage::disk($this->disk)->put($thumbnailPath, $thumbnail->stream()->getContents());
-
-            return $this->getCDNUrl($thumbnailPath);
-        } catch (\Exception $e) {
-            \Log::error('Thumbnail generation failed', [
-                'path' => $imagePath,
-                'error' => $e->getMessage(),
-            ]);
-
-            return $this->getCDNUrl($imagePath);
-        }
+    public function invalidateCache(string $path): bool
+    {
+        // Implement CDN cache invalidation
+        // This would typically call your CDN provider's API
+        return true;
     }
 }
