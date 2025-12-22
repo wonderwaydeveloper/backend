@@ -39,5 +39,33 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->throttleApi('60,1');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\App\Exceptions\PostNotFoundException $e) {
+            return $e->render();
+        });
+        
+        $exceptions->render(function (\App\Exceptions\UserNotFoundException $e) {
+            return $e->render();
+        });
+        
+        $exceptions->render(function (\App\Exceptions\UnauthorizedActionException $e) {
+            return $e->render();
+        });
+        
+        $exceptions->render(function (\App\Exceptions\ValidationException $e) {
+            return $e->render();
+        });
+        
+        $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Resource not found',
+                'message' => 'منبع مورد نظر یافت نشد'
+            ], 404);
+        });
+        
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e) {
+            return response()->json([
+                'error' => 'Unauthenticated',
+                'message' => 'لطفا وارد شوید'
+            ], 401);
+        });
     })->create();
