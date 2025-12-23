@@ -35,8 +35,8 @@ info:
     email: support@wonderway.com
     url: https://wonderway.com/support
   license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
+    name: Proprietary
+    url: https://wonderway.com/license
 
 servers:
   - url: https://api.wonderway.com
