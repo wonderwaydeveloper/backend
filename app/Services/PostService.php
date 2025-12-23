@@ -2,19 +2,17 @@
 
 namespace App\Services;
 
-use App\Contracts\Services\PostServiceInterface;
+use App\Contracts\Services\{PostServiceInterface, FileUploadServiceInterface};
 use App\Contracts\Repositories\PostRepositoryInterface;
-use App\DTOs\PostDTO;
-use App\Events\PostInteraction;
-use App\Events\PostPublished;
+use App\DTOs\{PostDTO, QuotePostDTO};
+use App\Events\{PostInteraction, PostPublished};
 use App\Jobs\ProcessPostJob;
-use App\Models\Post;
-use App\Models\User;
+use App\Models\{Post, User};
 use App\Notifications\MentionNotification;
+use App\Services\{SpamDetectionService, DatabaseOptimizationService, CacheOptimizationService, PostLikeService};
+use App\Exceptions\BusinessLogicException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
-use App\DTOs\QuotePostDTO;
-use App\Exceptions\BusinessLogicException;
 
 /**
  * Post Service Class
@@ -39,8 +37,9 @@ class PostService implements PostServiceInterface
     public function __construct(
         private PostRepositoryInterface $postRepository,
         private SpamDetectionService $spamDetectionService,
-        private DatabaseOptimizationService $databaseOptimizationService,
-        private CacheOptimizationService $cacheService
+        private CacheOptimizationService $cacheService,
+        private FileUploadServiceInterface $fileUploadService,
+        private PostLikeService $postLikeService
     ) {
     }
 
@@ -109,7 +108,7 @@ class PostService implements PostServiceInterface
     public function deletePost(Post $post): void
     {
         if ($post->image) {
-            Storage::disk('public')->delete($post->image);
+            $this->fileUploadService->deleteFile($post->image);
         }
 
         $post->delete();
@@ -120,24 +119,7 @@ class PostService implements PostServiceInterface
      */
     public function toggleLike(Post $post, User $user): array
     {
-        if ($post->isLikedBy($user->id)) {
-            $post->likes()->where('user_id', $user->id)->delete();
-            if ($post->likes_count > 0) {
-                $post->decrement('likes_count');
-            }
-            $liked = false;
-        } else {
-            $post->likes()->create(['user_id' => $user->id]);
-            $post->increment('likes_count');
-            $liked = true;
-
-            event(new \App\Events\PostLiked($post, $user));
-        }
-
-        // Broadcast real-time interaction
-        broadcast(new PostInteraction($post, 'like', $user, ['liked' => $liked]));
-
-        return ['liked' => $liked, 'likes_count' => $post->likes_count];
+        return $this->postLikeService->toggleLike($post, $user);
     }
 
     /**
@@ -280,7 +262,7 @@ class PostService implements PostServiceInterface
     private function handleFileUploads(array $postData, ?UploadedFile $image, ?UploadedFile $video): array
     {
         if ($image) {
-            $postData['image'] = $image->store('posts', 'public');
+            $postData['image'] = $this->fileUploadService->uploadImage($image);
         }
 
         if ($video) {
@@ -296,7 +278,7 @@ class PostService implements PostServiceInterface
     private function processPostBusinessLogic(Post $post, bool $isDraft, ?UploadedFile $video): void
     {
         if ($video) {
-            app(\App\Services\VideoUploadService::class)->uploadVideo($video, $post);
+            $this->fileUploadService->uploadVideo($video, $post);
         }
 
         $this->processPostContent($post);
