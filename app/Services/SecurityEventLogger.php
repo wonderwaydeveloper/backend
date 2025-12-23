@@ -88,7 +88,7 @@ class SecurityEventLogger
         }
         
         $username = $parts[0];
-        $domain = $parts[1];\n        
+        $domain = $parts[1];        
         $maskedUsername = substr($username, 0, 2) . str_repeat('*', max(0, strlen($username) - 2));
         
         return $maskedUsername . '@' . $domain;

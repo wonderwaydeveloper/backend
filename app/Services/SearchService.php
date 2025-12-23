@@ -29,34 +29,42 @@ class SearchService
             // Advanced filters
             $filterStrings = [];
 
-            if (! empty($filters['user_id'])) {
-                $filterStrings[] = "user_id = {$filters['user_id']}";
+            if (! empty($filters['user_id']) && is_numeric($filters['user_id'])) {
+                $filterStrings[] = 'user_id = ' . (int)$filters['user_id'];
             }
 
             if (! empty($filters['has_media'])) {
-                $filterStrings[] = $filters['has_media'] ? "has_media = true" : "has_media = false";
+                $filterStrings[] = $filters['has_media'] ? 'has_media = true' : 'has_media = false';
             }
 
             if (! empty($filters['date_from'])) {
                 $timestamp = strtotime($filters['date_from']);
-                $filterStrings[] = "created_at >= {$timestamp}";
+                if ($timestamp !== false) {
+                    $filterStrings[] = 'created_at >= ' . (int)$timestamp;
+                }
             }
 
             if (! empty($filters['date_to'])) {
                 $timestamp = strtotime($filters['date_to'] . ' 23:59:59');
-                $filterStrings[] = "created_at <= {$timestamp}";
+                if ($timestamp !== false) {
+                    $filterStrings[] = 'created_at <= ' . (int)$timestamp;
+                }
             }
 
-            if (! empty($filters['min_likes'])) {
-                $filterStrings[] = "likes_count >= {$filters['min_likes']}";
+            if (! empty($filters['min_likes']) && is_numeric($filters['min_likes'])) {
+                $filterStrings[] = 'likes_count >= ' . (int)$filters['min_likes'];
             }
 
             if (! empty($filters['hashtags'])) {
                 $hashtags = is_array($filters['hashtags']) ? $filters['hashtags'] : [$filters['hashtags']];
                 $hashtagFilters = array_map(function ($tag) {
-                    return "hashtags = '{$tag}'";
+                    // Sanitize hashtag input
+                    $sanitized = preg_replace('/[^a-zA-Z0-9_\-]/', '', $tag);
+                    return "hashtags = '" . addslashes($sanitized) . "'";
                 }, $hashtags);
-                $filterStrings[] = '(' . implode(' OR ', $hashtagFilters) . ')';
+                if (!empty($hashtagFilters)) {
+                    $filterStrings[] = '(' . implode(' OR ', $hashtagFilters) . ')';
+                }
             }
 
             if (! empty($filterStrings)) {
@@ -116,12 +124,14 @@ class SearchService
                 $filterStrings[] = "is_verified = true";
             }
 
-            if (! empty($filters['min_followers'])) {
-                $filterStrings[] = "followers_count >= {$filters['min_followers']}";
+            if (! empty($filters['min_followers']) && is_numeric($filters['min_followers'])) {
+                $filterStrings[] = 'followers_count >= ' . (int)$filters['min_followers'];
             }
 
             if (! empty($filters['location'])) {
-                $filterStrings[] = "location = '{$filters['location']}'";
+                // Sanitize location input
+                $sanitizedLocation = preg_replace('/[^a-zA-Z0-9\s\-_]/', '', $filters['location']);
+                $filterStrings[] = "location = '" . addslashes($sanitizedLocation) . "'";
             }
 
             if (! empty($filterStrings)) {
@@ -171,8 +181,8 @@ class SearchService
             // Filters for hashtags
             $filterStrings = [];
 
-            if (! empty($filters['min_posts'])) {
-                $filterStrings[] = "posts_count >= {$filters['min_posts']}";
+            if (! empty($filters['min_posts']) && is_numeric($filters['min_posts'])) {
+                $filterStrings[] = 'posts_count >= ' . (int)$filters['min_posts'];
             }
 
             if (! empty($filterStrings)) {

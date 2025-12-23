@@ -22,23 +22,35 @@ class PostController extends Controller
 
     public function index(): JsonResponse
     {
-        $posts = $this->postService->getPublicPosts(request('page', 1));
-        return response()->json([
-            'data' => PostResource::collection($posts->items()),
-            'meta' => ['current_page' => $posts->currentPage(), 'total' => $posts->total()]
-        ]);
+        try {
+            $posts = $this->postService->getPublicPosts(request('page', 1));
+            return response()->json([
+                'data' => PostResource::collection($posts->items()),
+                'meta' => ['current_page' => $posts->currentPage(), 'total' => $posts->total()]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch posts'], 500);
+        }
     }
 
     public function store(StorePostRequest $request): JsonResponse
     {
-        $dto = PostDTO::fromRequest($request->validated(), $request->user()->id);
-        $post = $this->postService->createPost($dto, $request->file('image'), $request->file('video'));
-        return response()->json(new PostResource($post), 201);
+        try {
+            $dto = PostDTO::fromRequest($request->validated(), $request->user()->id);
+            $post = $this->postService->createPost($dto, $request->file('image'), $request->file('video'));
+            return response()->json(new PostResource($post), 201);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to create post'], 500);
+        }
     }
 
     public function show(Post $post): JsonResponse
     {
-        return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
+        try {
+            return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Post not found'], 404);
+        }
     }
 
     public function update(UpdatePostRequest $request, Post $post): JsonResponse

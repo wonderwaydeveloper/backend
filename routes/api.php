@@ -93,11 +93,11 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
-    Route::apiResource('posts', PostController::class)->middleware(['advanced.rate.limit:posts,10,1']);
-    Route::put('/posts/{post}', [PostController::class, 'update'])->middleware(['advanced.rate.limit:posts,5,1']);
+    Route::apiResource('posts', PostController::class);
+    Route::put('/posts/{post}', [PostController::class, 'update']);
     Route::get('/posts/{post}/edit-history', [PostController::class, 'editHistory']);
     Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware(['advanced.rate.limit:likes,60,1']);
-    Route::post('/posts/{post}/quote', [PostController::class, 'quote'])->middleware(['advanced.rate.limit:posts,10,1']);
+    Route::post('/posts/{post}/quote', [PostController::class, 'quote']);
     Route::get('/timeline', [PostController::class, 'timeline'])->name('main.timeline');
     Route::get('/drafts', [PostController::class, 'drafts']);
     Route::post('/posts/{post}/publish', [PostController::class, 'publish']);

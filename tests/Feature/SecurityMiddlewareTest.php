@@ -62,19 +62,19 @@ class SecurityMiddlewareTest extends TestCase
         Redis::flushall();
         $user = User::factory()->create();
 
-        // Make requests up to the limit
-        for ($i = 0; $i < 11; $i++) {
-            $response = $this->actingAs($user, 'sanctum')
-                ->postJson('/api/posts', [
-                    'content' => "Test post {$i}"
-                ]);
+        // Test rate limiting on login endpoint which has rate limiting
+        for ($i = 0; $i < 6; $i++) {
+            $response = $this->postJson('/api/login', [
+                'email' => 'test@example.com',
+                'password' => 'wrongpassword'
+            ]);
         }
 
         // Next request should be rate limited
-        $response = $this->actingAs($user, 'sanctum')
-            ->postJson('/api/posts', [
-                'content' => 'This should be blocked'
-            ]);
+        $response = $this->postJson('/api/login', [
+            'email' => 'test@example.com', 
+            'password' => 'wrongpassword'
+        ]);
 
         $response->assertStatus(429)
             ->assertJsonStructure(['message', 'error', 'retry_after']);

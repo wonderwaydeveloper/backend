@@ -83,9 +83,12 @@ class UserRepository implements UserRepositoryInterface
 
     public function searchUsers(string $query, int $limit = 20): Collection
     {
-        return User::where(function ($q) use ($query) {
-            $q->where('name', 'like', "%{$query}%")
-              ->orWhere('username', 'like', "%{$query}%");
+        // Sanitize search query
+        $sanitizedQuery = $this->sanitizeSearchQuery($query);
+        
+        return User::where(function ($q) use ($sanitizedQuery) {
+            $q->where('name', 'like', "%{$sanitizedQuery}%")
+              ->orWhere('username', 'like', "%{$sanitizedQuery}%");
         })
             ->active()
             ->select(['id', 'name', 'username', 'avatar', 'bio', 'is_private'])
@@ -135,10 +138,30 @@ class UserRepository implements UserRepositoryInterface
 
     public function getMentionableUsers(string $query, int $limit = 10): Collection
     {
-        return User::where('username', 'like', "{$query}%")
+        // Sanitize search query
+        $sanitizedQuery = $this->sanitizeSearchQuery($query);
+        
+        return User::where('username', 'like', "{$sanitizedQuery}%")
             ->select(['id', 'name', 'username', 'avatar'])
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Sanitize search query to prevent SQL injection
+     */
+    private function sanitizeSearchQuery(string $query): string
+    {
+        // Remove dangerous characters
+        $query = preg_replace('/[%_\\]/', '\\$0', $query);
+        
+        // Remove null bytes
+        $query = str_replace(chr(0), '', $query);
+        
+        // Limit length
+        $query = substr($query, 0, 50);
+        
+        return trim($query);
     }
 
     private function clearUserCache(User $user): void
