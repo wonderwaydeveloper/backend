@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\PostServiceInterface;
 use App\Contracts\PostRepositoryInterface;
+use App\DTOs\PostDTO;
 use App\Events\PostInteraction;
 use App\Events\PostPublished;
 use App\Jobs\ProcessPostJob;
@@ -23,7 +25,7 @@ use Illuminate\Support\Facades\Storage;
  * @author WonderWay Team
  * @version 1.0.0
  */
-class PostService
+class PostService implements PostServiceInterface
 {
     /**
      * PostService constructor.
@@ -58,65 +60,19 @@ class PostService
 
     /**
      * Create a new post
-     *
-     * @param array $data Post data including content, settings, etc.
-     * @param User $user User creating the post
-     * @param UploadedFile|null $image Optional image attachment
-     * @param UploadedFile|null $video Optional video attachment
-     * @return Post Created post with relations
-     * @throws \Exception When post is detected as spam
      */
-    public function createPost(array $data, User $user, ?UploadedFile $image = null, ?UploadedFile $video = null): Post
+    public function createPost(PostDTO $postDTO, ?UploadedFile $image = null, ?UploadedFile $video = null): Post
     {
-        // Sanitize content
-        $sanitizedContent = $this->sanitizeContent($data['content']);
-        
-        $postData = [
-            'user_id' => $user->id,
-            'content' => $sanitizedContent,
-            'reply_settings' => $data['reply_settings'] ?? 'everyone',
-            'quoted_post_id' => $data['quoted_post_id'] ?? null,
-            'gif_url' => $data['gif_url'] ?? null,
-        ];
+        $postData = $postDTO->toArray();
+        $postData['content'] = $this->sanitizeContent($postData['content']);
 
-        // Handle image upload
-        if ($image) {
-            $postData['image'] = $image->store('posts', 'public');
-        }
-
-        // Handle video upload
-        if ($video) {
-            // Video will be processed asynchronously
-            $postData['video'] = 'processing';
-        }
-
-        // Handle draft status
-        $isDraft = $data['is_draft'] ?? false;
-        $postData['is_draft'] = $isDraft;
-        $postData['published_at'] = $isDraft ? null : now();
+        // Handle file uploads
+        $postData = $this->handleFileUploads($postData, $image, $video);
 
         $post = $this->postRepository->create($postData);
 
-        // Handle video upload after post creation
-        if ($video) {
-            app(\App\Services\VideoUploadService::class)->uploadVideo($video, $post);
-        }
-
-        // Process hashtags and mentions
-        $this->processPostContent($post);
-
-        // Handle spam detection for published posts
-        if (! $isDraft) {
-            $this->handleSpamDetection($post);
-        }
-
-        // Process post asynchronously
-        $this->processPostAsync($post, $isDraft);
-
-        // Broadcast if published
-        if (! $isDraft) {
-            broadcast(new PostPublished($post->load('user:id,name,username,avatar')));
-        }
+        // Process post content and handle business logic
+        $this->processPostBusinessLogic($post, $postDTO->isDraft, $video);
 
         return $post->load('user:id,name,username,avatar', 'hashtags');
     }
@@ -226,7 +182,7 @@ class PostService
     {
         $quotePost = Post::create([
             'user_id' => $user->id,
-            'content' => $data['content'],
+            'content' => $data['content'] ?? '',
             'quoted_post_id' => $originalPost->id,
             'is_draft' => false,
             'published_at' => now(),
@@ -254,14 +210,20 @@ class PostService
      */
     public function updatePost(Post $post, array $data): Post
     {
-        $post->editPost(
-            $data['content'],
-            $data['edit_reason'] ?? null
-        );
+        try {
+            $post->editPost(
+                $data['content'],
+                $data['edit_reason'] ?? null
+            );
 
-        $post->syncHashtags();
+            $post->syncHashtags();
 
-        return $post->load('user:id,name,username,avatar', 'hashtags', 'edits');
+            return $post->load('user:id,name,username,avatar', 'hashtags', 'edits');
+        } catch (\Exception $e) {
+            throw new \Illuminate\Http\Exceptions\HttpResponseException(
+                response()->json(['message' => $e->getMessage()], 422)
+            );
+        }
     }
 
     /**
@@ -320,20 +282,47 @@ class PostService
     }
 
     /**
+     * Handle file uploads
+     */
+    private function handleFileUploads(array $postData, ?UploadedFile $image, ?UploadedFile $video): array
+    {
+        if ($image) {
+            $postData['image'] = $image->store('posts', 'public');
+        }
+
+        if ($video) {
+            $postData['video'] = 'processing';
+        }
+
+        return $postData;
+    }
+
+    /**
+     * Process post business logic
+     */
+    private function processPostBusinessLogic(Post $post, bool $isDraft, ?UploadedFile $video): void
+    {
+        if ($video) {
+            app(\App\Services\VideoUploadService::class)->uploadVideo($video, $post);
+        }
+
+        $this->processPostContent($post);
+
+        if (!$isDraft) {
+            $this->handleSpamDetection($post);
+            $this->processPostAsync($post, $isDraft);
+            broadcast(new PostPublished($post->load('user:id,name,username,avatar')));
+        }
+    }
+
+    /**
      * Sanitize content to prevent XSS and other attacks
      */
     private function sanitizeContent(string $content): string
     {
-        // Remove potentially dangerous HTML tags and scripts
         $content = strip_tags($content);
-        
-        // Remove null bytes
         $content = str_replace(chr(0), '', $content);
-        
-        // Normalize whitespace
         $content = preg_replace('/\s+/', ' ', $content);
-        
-        // Trim and return
         return trim($content);
     }
 }

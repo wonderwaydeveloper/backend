@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
+use App\Contracts\Services\NotificationServiceInterface;
 use App\Events\NotificationSent;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
-class NotificationService
+class NotificationService implements NotificationServiceInterface
 {
     private $emailService;
     private $pushService;
@@ -20,9 +21,77 @@ class NotificationService
         $this->pushService = $pushService;
     }
 
+    public function send(\App\DTOs\NotificationDTO $dto): \App\Models\Notification
+    {
+        return $this->createNotification(
+            User::find($dto->userId),
+            $dto->type,
+            $dto->data
+        );
+    }
+
+    public function sendToUser(User $user, string $type, array $data): Notification
+    {
+        return $this->createNotification($user, $type, $data);
+    }
+
+    public function sendToFollowers(User $user, string $type, array $data): int
+    {
+        $followers = $user->followers;
+        $count = 0;
+        
+        foreach ($followers as $follower) {
+            $this->createNotification($follower, $type, $data);
+            $count++;
+        }
+        
+        return $count;
+    }
+
+    public function markAsRead(int $notificationId, int $userId): bool
+    {
+        return Notification::where('id', $notificationId)
+            ->where('user_id', $userId)
+            ->update(['read_at' => now()]) > 0;
+    }
+
+    public function markAllAsRead(int $userId): int
+    {
+        return Notification::where('user_id', $userId)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+    }
+
+    public function getUnreadCount(int $userId): int
+    {
+        return Notification::where('user_id', $userId)
+            ->whereNull('read_at')
+            ->count();
+    }
+
+    public function getUserNotifications(int $userId, int $limit = 20): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return Notification::where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->paginate($limit);
+    }
+
+    public function deleteNotification(int $notificationId, int $userId): bool
+    {
+        return Notification::where('id', $notificationId)
+            ->where('user_id', $userId)
+            ->delete() > 0;
+    }
+
+    public function updatePreferences(int $userId, array $preferences): bool
+    {
+        return User::where('id', $userId)
+            ->update(['notification_preferences' => $preferences]) > 0;
+    }
+
     public function notifyLike($post, $user)
     {
-        $notification = $this->createNotification($post->user, 'like', [
+        $notification = $this->sendToUser($post->user, 'like', [
             'user_id' => $user->id,
             'user_name' => $user->name,
             'post_id' => $post->id,
@@ -34,7 +103,7 @@ class NotificationService
 
     public function notifyComment($post, $user)
     {
-        $notification = $this->createNotification($post->user, 'comment', [
+        $notification = $this->sendToUser($post->user, 'comment', [
             'user_id' => $user->id,
             'user_name' => $user->name,
             'post_id' => $post->id,
@@ -46,7 +115,7 @@ class NotificationService
 
     public function notifyFollow($follower, $followee)
     {
-        $notification = $this->createNotification($followee, 'follow', [
+        $notification = $this->sendToUser($followee, 'follow', [
             'user_id' => $follower->id,
             'user_name' => $follower->name,
         ]);
@@ -57,7 +126,7 @@ class NotificationService
 
     public function notifyMention($post, $mentionedUser, $mentioningUser)
     {
-        $notification = $this->createNotification($mentionedUser, 'mention', [
+        $notification = $this->sendToUser($mentionedUser, 'mention', [
             'user_id' => $mentioningUser->id,
             'user_name' => $mentioningUser->name,
             'post_id' => $post->id,
@@ -69,7 +138,7 @@ class NotificationService
 
     public function notifyRepost($post, $user)
     {
-        $notification = $this->createNotification($post->user, 'repost', [
+        $notification = $this->sendToUser($post->user, 'repost', [
             'user_id' => $user->id,
             'user_name' => $user->name,
             'post_id' => $post->id,
@@ -98,7 +167,15 @@ class NotificationService
         } catch (\Exception $e) {
             Log::error('Notification creation failed', ['error' => $e->getMessage()]);
 
-            return null;
+            // Return a new notification instance instead of null
+            return Notification::make([
+                'user_id' => $user->id,
+                'type' => $type,
+                'title' => $this->getNotificationTitle($type),
+                'message' => $this->getNotificationMessage($type),
+                'data' => $data,
+                'read_at' => null,
+            ]);
         }
     }
 

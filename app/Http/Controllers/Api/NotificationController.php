@@ -2,63 +2,54 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Notification\{SendNotificationAction, MarkAsReadAction};
 use App\Http\Controllers\Controller;
+use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
-use Illuminate\Http\Request;
+use App\Services\NotificationService;
+use Illuminate\Http\{JsonResponse, Request};
 
 class NotificationController extends Controller
 {
-    public function index(Request $request)
-    {
-        $notifications = $request->user()
-            ->notifications()
-            ->with('fromUser:id,name,username,avatar')
-            ->latest()
-            ->paginate(20);
+    public function __construct(
+        private NotificationService $notificationService,
+        private MarkAsReadAction $markAsReadAction
+    ) {}
 
+    public function index(Request $request): JsonResponse
+    {
+        $notifications = $this->notificationService->getUserNotifications(
+            $request->user()->id,
+            $request->get('limit', 20)
+        );
         return response()->json($notifications);
     }
 
-    public function unread(Request $request)
+    public function unreadCount(Request $request): JsonResponse
     {
-        $notifications = $request->user()
-            ->notifications()
-            ->unread()
-            ->with('fromUser:id,name,username,avatar')
-            ->latest()
-            ->paginate(20);
-
-        return response()->json($notifications);
+        $count = $this->notificationService->getUnreadCount($request->user()->id);
+        return response()->json(['count' => $count]);
     }
 
-    public function markAsRead(Notification $notification)
+    public function markAsRead(Notification $notification): JsonResponse
     {
-        if ($notification->user_id !== auth()->id()) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $notification->markAsRead();
-
+        $this->authorize('update', $notification);
+        $this->markAsReadAction->execute($notification);
         return response()->json(['message' => 'علامت خوانده شد']);
     }
 
-    public function markAllAsRead(Request $request)
+    public function markAllAsRead(Request $request): JsonResponse
     {
-        $request->user()
-            ->notifications()
-            ->unread()
-            ->update(['read_at' => now()]);
-
+        $this->notificationService->markAllAsRead($request->user()->id);
         return response()->json(['message' => 'همه علامت خوانده شد']);
     }
 
-    public function unreadCount(Request $request)
+    public function unread(Request $request): JsonResponse
     {
-        $count = $request->user()
-            ->notifications()
-            ->unread()
-            ->count();
-
-        return response()->json(['count' => $count]);
+        $notifications = Notification::where('user_id', $request->user()->id)
+            ->whereNull('read_at')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        return response()->json($notifications);
     }
 }

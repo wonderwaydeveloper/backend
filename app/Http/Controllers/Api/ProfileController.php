@@ -2,90 +2,58 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\User\{UpdateUserProfileAction, FollowUserAction, UnfollowUserAction};
+use App\DTOs\UserUpdateDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\UserService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use Illuminate\Http\{JsonResponse, Request};
 
 class ProfileController extends Controller
 {
     public function __construct(
-        private UserService $userService
-    ) {
-    }
+        private UserService $userService,
+        private UpdateUserProfileAction $updateAction,
+        private FollowUserAction $followAction,
+        private UnfollowUserAction $unfollowAction
+    ) {}
 
     public function show(User $user): JsonResponse
     {
-        $userProfile = $this->userService->getUserProfile($user);
-
-        return response()->json($userProfile);
+        return response()->json(new UserResource($user->load(['followers', 'following'])));
     }
 
     public function posts(User $user): JsonResponse
     {
         $posts = $this->userService->getUserPosts($user);
-
         return response()->json($posts);
     }
 
     public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $user = $this->userService->updateProfile(
-            $request->user(),
-            $request->validated()
-        );
-
-        return response()->json($user);
+        $dto = UserUpdateDTO::fromRequest($request);
+        $user = $this->updateAction->execute($request->user(), $dto);
+        return response()->json(new UserResource($user));
     }
 
-    public function search(Request $request): JsonResponse
+    public function follow(User $user): JsonResponse
     {
-        $request->validate(['q' => 'required|string|min:2|max:50']);
+        $result = $this->followAction->execute(auth()->user(), $user);
+        return response()->json($result);
+    }
 
-        $users = $this->userService->searchUsers($request->input('q'));
-
-        return response()->json($users);
+    public function unfollow(User $user): JsonResponse
+    {
+        $result = $this->unfollowAction->execute(auth()->user(), $user);
+        return response()->json($result);
     }
 
     public function updatePrivacy(Request $request): JsonResponse
     {
-        $request->validate(['is_private' => 'required|boolean']);
-
-        $result = $this->userService->updatePrivacySettings(
-            $request->user(),
-            $request->boolean('is_private')
-        );
-
-        return response()->json($result);
-    }
-
-    public function block(User $user, Request $request): JsonResponse
-    {
-        $result = $this->userService->blockUser($request->user(), $user);
-
-        return response()->json($result);
-    }
-
-    public function unblock(User $user, Request $request): JsonResponse
-    {
-        $result = $this->userService->unblockUser($request->user(), $user);
-
-        return response()->json($result);
-    }
-
-    public function mute(User $user, Request $request): JsonResponse
-    {
-        $result = $this->userService->muteUser($request->user(), $user);
-
-        return response()->json($result);
-    }
-
-    public function unmute(User $user, Request $request): JsonResponse
-    {
-        $result = $this->userService->unmuteUser($request->user(), $user);
-
-        return response()->json($result);
+        $user = $request->user();
+        $user->update($request->only(['is_private']));
+        return response()->json(new UserResource($user));
     }
 }

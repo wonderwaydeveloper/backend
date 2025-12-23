@@ -31,7 +31,11 @@ class ProfileTest extends TestCase
     public function test_can_view_user_posts()
     {
         $user = User::factory()->create();
-        Post::factory()->count(3)->create(['user_id' => $user->id]);
+        Post::factory()->count(3)->create([
+            'user_id' => $user->id,
+            'is_draft' => false,
+            'published_at' => now()
+        ]);
 
         $response = $this->actingAs($user, 'sanctum')
             ->getJson("/api/users/{$user->id}/posts");

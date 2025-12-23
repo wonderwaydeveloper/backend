@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\UserRegistrationDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
@@ -62,7 +63,16 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $result = $this->authService->register($request->validated());
+        $validated = $request->validated();
+        $dto = new UserRegistrationDTO(
+            name: $validated['name'],
+            username: $validated['username'],
+            email: $validated['email'],
+            password: $validated['password'],
+            dateOfBirth: $validated['date_of_birth']
+        );
+        
+        $result = $this->authService->register($dto);
 
         return response()->json($result, 201);
     }
@@ -97,12 +107,8 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $result = $this->authService->login($request->validated());
-
-        // Handle 2FA response
-        if (isset($result['status'])) {
-            return response()->json($result, $result['status']);
-        }
+        $validated = $request->validated();
+        $result = $this->authService->login($validated['email'], $validated['password']);
 
         return response()->json($result);
     }
@@ -121,9 +127,9 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $result = $this->authService->logout($request->user());
+        $this->authService->logout($request->user());
 
-        return response()->json($result);
+        return response()->json(['message' => 'خروج موفقیتآمیز بود']);
     }
 
     /**

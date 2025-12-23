@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Contracts\UserRepositoryInterface;
+use App\Contracts\Services\UserServiceInterface;
+use App\Contracts\Repositories\UserRepositoryInterface;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-class UserService
+class UserService implements UserServiceInterface
 {
     public function __construct(
         private UserRepositoryInterface $userRepository
@@ -33,11 +34,11 @@ class UserService
     /**
      * Update user profile
      */
-    public function updateProfile(User $user, array $data): User
+    public function updateProfile(int $userId, \App\DTOs\UserUpdateDTO $dto): User
     {
-        $allowedFields = ['name', 'bio', 'avatar'];
-        $updateData = array_intersect_key($data, array_flip($allowedFields));
-
+        $user = User::findOrFail($userId);
+        $updateData = $dto->toArray();
+        
         return $this->userRepository->update($user, $updateData);
     }
 
@@ -52,14 +53,11 @@ class UserService
     /**
      * Update user privacy settings
      */
-    public function updatePrivacySettings(User $user, bool $isPrivate): array
+    public function updatePrivacySettings(int $userId, array $settings): User
     {
-        $user->update(['is_private' => $isPrivate]);
-
-        return [
-            'message' => 'Privacy settings updated',
-            'is_private' => $user->is_private,
-        ];
+        $user = User::findOrFail($userId);
+        $user->update($settings);
+        return $user;
     }
 
     /**
@@ -112,5 +110,96 @@ class UserService
             'message' => 'User unmuted successfully',
             'unmuted_user' => $targetUser->only(['id', 'name', 'username']),
         ];
+    }
+
+    /**
+     * Register new user
+     */
+    public function register(\App\DTOs\UserRegistrationDTO $dto): User
+    {
+        $userData = $dto->toArray();
+        $userData['password'] = bcrypt($userData['password']);
+        return User::create($userData);
+    }
+
+    /**
+     * Follow user
+     */
+    public function follow(int $userId, int $targetUserId): bool
+    {
+        $user = User::findOrFail($userId);
+        $targetUser = User::findOrFail($targetUserId);
+        
+        if (!$user->following()->where('following_id', $targetUserId)->exists()) {
+            $user->following()->attach($targetUserId);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Unfollow user
+     */
+    public function unfollow(int $userId, int $targetUserId): bool
+    {
+        $user = User::findOrFail($userId);
+        return $user->following()->detach($targetUserId) > 0;
+    }
+
+    /**
+     * Get user followers
+     */
+    public function getFollowers(int $userId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $user = User::findOrFail($userId);
+        return $user->followers()->paginate(20);
+    }
+
+    /**
+     * Get user following
+     */
+    public function getFollowing(int $userId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $user = User::findOrFail($userId);
+        return $user->following()->paginate(20);
+    }
+
+    /**
+     * Get user by ID
+     */
+    public function getUserById(int $userId): User
+    {
+        return User::findOrFail($userId);
+    }
+
+    /**
+     * Get user suggestions
+     */
+    public function getSuggestions(int $userId): \Illuminate\Database\Eloquent\Collection
+    {
+        $user = User::findOrFail($userId);
+        return User::whereNotIn('id', $user->following()->pluck('following_id'))
+            ->where('id', '!=', $userId)
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Deactivate user account
+     */
+    public function deactivateAccount(int $userId): bool
+    {
+        $user = User::findOrFail($userId);
+        return $user->update(['is_active' => false]);
+    }
+
+    /**
+     * Search users
+     */
+    public function search(string $query): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return User::where('name', 'like', "%{$query}%")
+            ->orWhere('username', 'like', "%{$query}%")
+            ->paginate(20);
     }
 }

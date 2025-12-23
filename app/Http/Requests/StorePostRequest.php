@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\PostContentRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePostRequest extends FormRequest
@@ -14,9 +15,9 @@ class StorePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'required|string|max:280',
+            'content' => ['required', 'string', new PostContentRule()],
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
-            'video' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm|max:102400', // 100MB
+            'video' => 'nullable|file|mimes:mp4,mov,avi,mkv,webm|max:102400',
             'gif_url' => 'nullable|url|max:500',
             'reply_settings' => 'nullable|in:everyone,following,mentioned,none',
             'quoted_post_id' => 'nullable|exists:posts,id',
