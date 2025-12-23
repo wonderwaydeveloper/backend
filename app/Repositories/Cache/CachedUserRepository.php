@@ -3,11 +3,9 @@
 namespace App\Repositories\Cache;
 
 use App\Contracts\Repositories\UserRepositoryInterface;
-use App\DTOs\UserRegistrationDTO;
-use App\DTOs\UserUpdateDTO;
 use App\Models\User;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class CachedUserRepository implements UserRepositoryInterface
@@ -18,12 +16,19 @@ class CachedUserRepository implements UserRepositoryInterface
         private UserRepositoryInterface $repository
     ) {}
 
-    public function find(int $id): ?User
+    public function create(array $data): User
+    {
+        $user = $this->repository->create($data);
+        $this->clearUserCache($user->id);
+        return $user;
+    }
+
+    public function findById(int $id): ?User
     {
         return Cache::remember(
             "user.{$id}",
             self::CACHE_TTL,
-            fn() => $this->repository->find($id)
+            fn() => $this->repository->findById($id)
         );
     }
 
@@ -45,56 +50,69 @@ class CachedUserRepository implements UserRepositoryInterface
         );
     }
 
-    public function create(UserRegistrationDTO $dto): User
+    public function update(User $user, array $data): User
     {
-        $user = $this->repository->create($dto);
+        $result = $this->repository->update($user, $data);
         $this->clearUserCache($user->id);
-        return $user;
+        return $result;
     }
 
-    public function update(int $id, UserUpdateDTO $dto): User
+    public function delete(User $user): bool
     {
-        $user = $this->repository->update($id, $dto);
-        $this->clearUserCache($id);
-        return $user;
-    }
-
-    public function delete(int $id): bool
-    {
-        $result = $this->repository->delete($id);
+        $result = $this->repository->delete($user);
         if ($result) {
-            $this->clearUserCache($id);
+            $this->clearUserCache($user->id);
         }
         return $result;
     }
 
-    public function getFollowers(int $userId): LengthAwarePaginator
+    public function getUserWithCounts(int $id): ?User
     {
-        return $this->repository->getFollowers($userId);
+        return Cache::remember(
+            "user.counts.{$id}",
+            self::CACHE_TTL,
+            fn() => $this->repository->getUserWithCounts($id)
+        );
     }
 
-    public function getFollowing(int $userId): LengthAwarePaginator
+    public function getUserPosts(int $userId): LengthAwarePaginator
     {
-        return $this->repository->getFollowing($userId);
+        return $this->repository->getUserPosts($userId);
     }
 
-    public function search(string $query): LengthAwarePaginator
+    public function searchUsers(string $query, int $limit = 20): Collection
     {
-        return $this->repository->search($query);
+        return $this->repository->searchUsers($query, $limit);
     }
 
-    public function getSuggestions(int $userId, int $limit = 10): Collection
+    public function getFollowers(int $userId, int $limit = 20): Collection
+    {
+        return $this->repository->getFollowers($userId, $limit);
+    }
+
+    public function getFollowing(int $userId, int $limit = 20): Collection
+    {
+        return $this->repository->getFollowing($userId, $limit);
+    }
+
+    public function getSuggestedUsers(int $userId, int $limit = 10): Collection
     {
         return Cache::remember(
             "user.suggestions.{$userId}.{$limit}",
             1800, // 30 minutes
-            fn() => $this->repository->getSuggestions($userId, $limit)
+            fn() => $this->repository->getSuggestedUsers($userId, $limit)
         );
+    }
+
+    public function getMentionableUsers(string $query, int $limit = 10): Collection
+    {
+        return $this->repository->getMentionableUsers($query, $limit);
     }
 
     private function clearUserCache(int $userId): void
     {
         Cache::forget("user.{$userId}");
+        Cache::forget("user.counts.{$userId}");
         Cache::forget("user.suggestions.{$userId}.*");
     }
 }

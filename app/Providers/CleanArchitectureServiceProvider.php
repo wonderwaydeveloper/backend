@@ -45,8 +45,20 @@ class CleanArchitectureServiceProvider extends ServiceProvider
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
 
-        $this->app->bind(PostRepositoryInterface::class, \App\Repositories\PostRepository::class);
-        $this->app->bind(UserRepositoryInterface::class, \App\Repositories\UserRepository::class);
+        // Repository Bindings with Cache Decorators
+        $this->app->bind('App\\Repositories\\Eloquent\\EloquentPostRepository', \App\Repositories\PostRepository::class);
+        $this->app->bind(PostRepositoryInterface::class, function ($app) {
+            return new CachedPostRepository(
+                $app->make('App\\Repositories\\Eloquent\\EloquentPostRepository')
+            );
+        });
+
+        $this->app->bind('App\\Repositories\\Eloquent\\EloquentUserRepository', \App\Repositories\UserRepository::class);
+        $this->app->bind(UserRepositoryInterface::class, function ($app) {
+            return new CachedUserRepository(
+                $app->make('App\\Repositories\\Eloquent\\EloquentUserRepository')
+            );
+        });
 
         // Direct Repository Bindings
         $this->app->bind(CommentRepositoryInterface::class, EloquentCommentRepository::class);
