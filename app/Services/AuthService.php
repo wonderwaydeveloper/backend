@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Contracts\Services\AuthServiceInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
-use PragmaRX\Google2FA\Google2FA;
+use App\Exceptions\ValidationException;
+use App\DTOs\LoginDTO;
 
 class AuthService implements AuthServiceInterface
 {
@@ -45,12 +45,12 @@ class AuthService implements AuthServiceInterface
     /**
      * Login user with credentials
      */
-    public function login(string $email, string $password): array
+    public function login(LoginDTO $loginDTO): array
     {
-        $user = User::where('email', $email)->first();
+        $user = User::where('email', $loginDTO->email)->first();
         
         // Use hash_equals to prevent timing attacks
-        $validCredentials = $user && Hash::check($password, $user->password);
+        $validCredentials = $user && Hash::check($loginDTO->password, $user->password);
         
         // Always perform hash check even if user doesn't exist to prevent timing attacks
         if (!$user) {
@@ -58,7 +58,7 @@ class AuthService implements AuthServiceInterface
         }
 
         if (!$validCredentials) {
-            throw ValidationException::withMessages([
+            throw new ValidationException([
                 'email' => ['اطلاعات ورود صحیح نیست'],
             ]);
         }
@@ -154,7 +154,7 @@ class AuthService implements AuthServiceInterface
         $google2fa = new Google2FA();
 
         if (! $google2fa->verifyKey($secret, $twoFactorCode)) {
-            throw ValidationException::withMessages([
+            throw new ValidationException([
                 'two_factor_code' => ['کد تأیید دو مرحلهای نامعتبر است'],
             ]);
         }

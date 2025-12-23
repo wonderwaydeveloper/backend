@@ -13,7 +13,8 @@ use App\Models\User;
 use App\Notifications\MentionNotification;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Storage;
+use App\DTOs\QuotePostDTO;
+use App\Exceptions\BusinessLogicException;
 
 /**
  * Post Service Class
@@ -178,15 +179,9 @@ class PostService implements PostServiceInterface
     /**
      * Create quote post
      */
-    public function createQuotePost(array $data, User $user, Post $originalPost): Post
+    public function createQuotePost(QuotePostDTO $quoteDTO): Post
     {
-        $quotePost = Post::create([
-            'user_id' => $user->id,
-            'content' => $data['content'] ?? '',
-            'quoted_post_id' => $originalPost->id,
-            'is_draft' => false,
-            'published_at' => now(),
-        ]);
+        $quotePost = Post::create($quoteDTO->toArray());
 
         $this->processPostContent($quotePost);
 
@@ -220,9 +215,7 @@ class PostService implements PostServiceInterface
 
             return $post->load('user:id,name,username,avatar', 'hashtags', 'edits');
         } catch (\Exception $e) {
-            throw new \Illuminate\Http\Exceptions\HttpResponseException(
-                response()->json(['message' => $e->getMessage()], 422)
-            );
+            throw new BusinessLogicException($e->getMessage(), 'POST_UPDATE_FAILED');
         }
     }
 
@@ -267,7 +260,7 @@ class PostService implements PostServiceInterface
                 $errorType = 'TOO_MANY_LINKS';
             }
 
-            throw new \Exception('پست شما به دلیل مشکوک بودن تأیید نشد', 422);
+            throw new BusinessLogicException('پست شما به دلیل مشکوک بودن تأیید نشد', $errorType);
         }
     }
 

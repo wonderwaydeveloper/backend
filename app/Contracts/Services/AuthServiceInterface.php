@@ -2,6 +2,7 @@
 
 namespace App\Contracts\Services;
 
+use App\DTOs\LoginDTO;
 use App\DTOs\UserRegistrationDTO;
 use App\Models\User;
 
@@ -9,7 +10,7 @@ interface AuthServiceInterface
 {
     public function register(UserRegistrationDTO $dto): array;
     
-    public function login(string $email, string $password): array;
+    public function login(LoginDTO $loginDTO): array;
     
     public function logout(User $user): bool;
     

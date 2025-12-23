@@ -3,6 +3,7 @@
 namespace App\Contracts\Services;
 
 use App\DTOs\PostDTO;
+use App\DTOs\QuotePostDTO;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -18,7 +19,7 @@ interface PostServiceInterface
     public function getUserTimeline(User $user, int $limit = 20): array;
     public function getUserDrafts(User $user): LengthAwarePaginator;
     public function publishPost(Post $post): Post;
-    public function createQuotePost(array $data, User $user, Post $originalPost): Post;
+    public function createQuotePost(QuotePostDTO $quoteDTO): Post;
     public function getPostQuotes(Post $post): LengthAwarePaginator;
     public function updatePost(Post $post, array $data): Post;
     public function getEditHistory(Post $post): array;

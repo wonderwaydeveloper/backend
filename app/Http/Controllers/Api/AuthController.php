@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\DTOs\LoginDTO;
 use App\DTOs\UserRegistrationDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
@@ -108,7 +109,8 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        $result = $this->authService->login($validated['email'], $validated['password']);
+        $loginDTO = LoginDTO::fromRequest($validated);
+        $result = $this->authService->login($loginDTO);
 
         return response()->json($result);
     }
