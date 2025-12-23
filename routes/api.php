@@ -65,28 +65,29 @@ Route::prefix('auth/social')->group(function () {
     Route::get('/facebook/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleFacebookCallback']);
 });
 
-// API v1 Routes (Current) - Include versioned routes
+// API v1 Routes (Legacy)
 Route::prefix('v1')->middleware(['api.version:v1'])->group(function () {
-    // Public routes with security middleware
     Route::middleware(['spam.detection'])->group(function () {
-        Route::get('/posts', [PostController::class, 'index']);
+        Route::get('/posts', [PostController::class, 'index'])->name('v1.posts.index');
     });
     
     Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
-        Route::apiResource('posts', PostController::class)->middleware(['advanced.rate.limit:posts,10,1']);
-        Route::get('/timeline', [PostController::class, 'timeline']);
+        Route::apiResource('posts', PostController::class, ['as' => 'v1'])->middleware(['advanced.rate.limit:posts,10,1']);
+        Route::get('/timeline', [PostController::class, 'timeline'])->name('v1.timeline');
     });
 });
-
-// GraphQL Endpoint
-Route::post('/graphql', [App\Http\Controllers\Api\GraphQLController::class, 'query'])
-    ->middleware(['auth:sanctum']);
 
 // API v2 Enhanced Routes
 Route::prefix('v2')->middleware(['api.version:v2', 'auth:sanctum'])->group(function () {
     Route::get('/search/posts', [App\Http\Controllers\Api\V2\SearchController::class, 'posts']);
     Route::get('/search/users', [App\Http\Controllers\Api\V2\SearchController::class, 'users']);
 });
+
+// GraphQL Endpoint
+Route::post('/graphql', [App\Http\Controllers\Api\GraphQLController::class, 'query'])
+    ->middleware(['auth:sanctum']);
+
+// Current API Routes (Latest Version)
 
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -97,7 +98,7 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::get('/posts/{post}/edit-history', [PostController::class, 'editHistory']);
     Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware(['advanced.rate.limit:likes,60,1']);
     Route::post('/posts/{post}/quote', [PostController::class, 'quote'])->middleware(['advanced.rate.limit:posts,10,1']);
-    Route::get('/timeline', [PostController::class, 'timeline']);
+    Route::get('/timeline', [PostController::class, 'timeline'])->name('main.timeline');
     Route::get('/drafts', [PostController::class, 'drafts']);
     Route::post('/posts/{post}/publish', [PostController::class, 'publish']);
 
@@ -155,6 +156,19 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/stories/{story}/view', [App\Http\Controllers\Api\StoryController::class, 'view']);
 
     Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store']);
+
+    // Streaming routes
+    Route::prefix('streams')->group(function () {
+        Route::get('/', [App\Http\Controllers\Api\StreamingController::class, 'live']);
+        Route::post('/', [App\Http\Controllers\Api\StreamingController::class, 'create']);
+        Route::post('/{stream}/start', [App\Http\Controllers\Api\StreamingController::class, 'startById']);
+        Route::post('/{stream}/end', [App\Http\Controllers\Api\StreamingController::class, 'endById']);
+        Route::post('/{stream}/join', [App\Http\Controllers\Api\StreamingController::class, 'joinById']);
+        Route::post('/{stream}/leave', [App\Http\Controllers\Api\StreamingController::class, 'leaveById']);
+        Route::get('/{stream}/stats', [App\Http\Controllers\Api\StreamingController::class, 'statsById']);
+    });
+
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
         ->middleware('check.reply.permission');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
@@ -378,16 +392,21 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::post('/track', [App\Http\Controllers\Api\ABTestController::class, 'track']);
     });
 
-    // Live Streaming Routes
-    Route::prefix('streams')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\LiveStreamController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\LiveStreamController::class, 'store']);
-        Route::get('/{stream}', [App\Http\Controllers\Api\LiveStreamController::class, 'show']);
-        Route::post('/{stream}/start', [App\Http\Controllers\Api\LiveStreamController::class, 'start']);
-        Route::post('/{stream}/end', [App\Http\Controllers\Api\LiveStreamController::class, 'end']);
-        Route::post('/{stream}/join', [App\Http\Controllers\Api\LiveStreamController::class, 'join']);
-        Route::post('/{stream}/leave', [App\Http\Controllers\Api\LiveStreamController::class, 'leave']);
+    // Streaming Routes (Consolidated)
+    Route::prefix('streaming')->group(function () {
+        Route::post('/create', [App\Http\Controllers\Api\StreamingController::class, 'create']);
+        Route::post('/start', [App\Http\Controllers\Api\StreamingController::class, 'start']);
+        Route::post('/end', [App\Http\Controllers\Api\StreamingController::class, 'end']);
+        Route::get('/live', [App\Http\Controllers\Api\StreamingController::class, 'live']);
+        Route::get('/my-streams', [App\Http\Controllers\Api\StreamingController::class, 'myStreams']);
+        Route::get('/{stream}', [App\Http\Controllers\Api\StreamingController::class, 'show']);
+        Route::delete('/{stream}', [App\Http\Controllers\Api\StreamingController::class, 'delete']);
+        Route::post('/{streamKey}/join', [App\Http\Controllers\Api\StreamingController::class, 'join']);
+        Route::post('/{streamKey}/leave', [App\Http\Controllers\Api\StreamingController::class, 'leave']);
+        Route::get('/{streamKey}/stats', [App\Http\Controllers\Api\StreamingController::class, 'stats']);
     });
+
+    // Remove duplicate Live Streaming Routes (use streaming above instead)
 
     // Conversion Tracking Routes
     Route::prefix('conversions')->group(function () {
@@ -434,7 +453,12 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
             Route::get('/status', [App\Monetization\Controllers\PremiumController::class, 'getStatus']);
         });
     });
+});
 
-    // Include streaming routes with security middleware
-    require __DIR__.'/streaming.php';
+// Streaming Webhooks (No Auth Required)
+Route::prefix('streaming')->group(function () {
+    Route::post('/auth', [App\Http\Controllers\Api\StreamingController::class, 'auth']);
+    Route::post('/publish-done', [App\Http\Controllers\Api\StreamingController::class, 'publishDone']);
+    Route::post('/play', [App\Http\Controllers\Api\StreamingController::class, 'play']);
+    Route::post('/play-done', [App\Http\Controllers\Api\StreamingController::class, 'playDone']);
 });

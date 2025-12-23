@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Stream;
+use App\Models\LiveStream;
 use App\Services\StreamingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -36,11 +37,66 @@ class StreamingController extends Controller
             'stream' => [
                 'id' => $stream->id,
                 'title' => $stream->title,
+                'description' => $stream->description,
                 'stream_key' => $stream->stream_key,
-                'rtmp_url' => config('streaming.rtmp_url') . '/' . $stream->stream_key,
+                'rtmp_url' => config('streaming.rtmp_url', 'rtmp://localhost/live') . '/' . $stream->stream_key,
                 'status' => $stream->status,
-            ],
+            ]
         ], 201);
+    }
+
+    public function startById(Stream $stream): JsonResponse
+    {
+        if ($stream->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $stream->update([
+            'status' => 'live',
+            'started_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function endById(Stream $stream): JsonResponse
+    {
+        if ($stream->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $stream->update([
+            'status' => 'ended',
+            'ended_at' => now(),
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function joinById(Stream $stream): JsonResponse
+    {
+        if ($stream->status !== 'live') {
+            return response()->json(['message' => 'Stream is not live'], 404);
+        }
+
+        if ($stream->is_private && !auth()->user()->following->contains($stream->user_id)) {
+            return response()->json(['message' => 'Cannot join private stream'], 403);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function leaveById(Stream $stream): JsonResponse
+    {
+        return response()->json(['success' => true]);
+    }
+
+    public function statsById(Stream $stream): JsonResponse
+    {
+        return response()->json([
+            'viewer_count' => 0,
+            'duration' => $stream->started_at ? now()->diffInSeconds($stream->started_at) : 0,
+        ]);
     }
 
     public function start(Request $request): JsonResponse

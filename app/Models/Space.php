@@ -67,6 +67,11 @@ class Space extends Model
             return false;
         }
 
+        // Host can always join
+        if ($this->host_id === $userId) {
+            return true;
+        }
+
         // Always allow joining public spaces
         if ($this->privacy === 'public') {
             return true;

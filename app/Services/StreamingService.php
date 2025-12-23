@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Stream;
+use App\Models\LiveStream;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -33,12 +34,6 @@ class StreamingService
             'status' => 'created',
             'is_private' => $data['is_private'] ?? false,
             'category' => $data['category'] ?? 'general',
-            'scheduled_at' => $data['scheduled_at'] ?? null,
-            'settings' => [
-                'allow_chat' => $data['allow_chat'] ?? true,
-                'record_stream' => $data['record_stream'] ?? true,
-                'quality_options' => ['480p', '720p', '1080p'],
-            ],
         ]);
 
         // Store stream info in Redis for quick access
@@ -74,14 +69,6 @@ class StreamingService
             'status' => 'live',
             'started_at' => now()->toISOString(),
         ]);
-
-        // Broadcast stream started event
-        if (! app()->environment('testing')) {
-            broadcast(new \App\Events\StreamStarted($stream));
-        }
-
-        // Notify followers
-        $this->notifyFollowers($stream);
 
         Log::info('Stream started', ['stream_id' => $stream->id]);
 
@@ -222,17 +209,13 @@ class StreamingService
             ->get();
 
         return $liveStreams->map(function ($stream) {
-            $stats = $this->getStreamStats($stream->stream_key);
-
+            $viewers = Redis::hget("stream:{$stream->stream_key}", 'viewers') ?? 0;
             return [
                 'id' => $stream->id,
                 'title' => $stream->title,
                 'description' => $stream->description,
                 'user' => $stream->user->only(['id', 'name', 'username', 'avatar']),
-                'viewers' => $stats['viewers'],
-                'duration' => $stats['duration'],
-                'thumbnail' => $this->getStreamThumbnail($stream->stream_key),
-                'urls' => $this->getStreamUrls($stream->stream_key),
+                'viewers' => (int) $viewers,
             ];
         })->toArray();
     }
