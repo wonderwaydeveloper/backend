@@ -81,13 +81,12 @@ class CommunityNoteService
         }
     }
 
-    public function getNotesForPost(Post $post): array
+    public function getNotesForPost(Post $post)
     {
         return $post->approvedCommunityNotes()
             ->with(['author:id,name,username', 'votes'])
             ->orderBy('helpful_votes', 'desc')
-            ->get()
-            ->toArray();
+            ->get();
     }
 
     public function getPendingNotes(): array

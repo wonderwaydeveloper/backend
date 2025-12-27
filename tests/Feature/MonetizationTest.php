@@ -19,6 +19,7 @@ class MonetizationTest extends TestCase
         $response = $this->postJson('/api/monetization/ads', [
             'title' => 'Test Ad',
             'content' => 'This is a test advertisement',
+            'target_url' => 'https://example.com',
             'budget' => 100.00,
             'start_date' => now()->addDay()->toISOString(),
             'end_date' => now()->addWeek()->toISOString(),

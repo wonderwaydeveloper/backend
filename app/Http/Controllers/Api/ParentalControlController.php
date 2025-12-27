@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ParentalControlRequest;
+use App\Http\Resources\UserResource;
 use App\Models\ParentalControl;
 use App\Models\ParentalLink;
 use App\Models\User;
@@ -18,13 +20,10 @@ class ParentalControlController extends Controller
         $this->service = $service;
     }
 
-    public function linkChild(Request $request)
+    public function linkChild(ParentalControlRequest $request)
     {
-        $request->validate([
-            'child_email' => 'required|email|exists:users,email',
-        ]);
-
-        $child = User::where('email', $request->child_email)->first();
+        $validated = $request->validated();
+        $child = User::where('email', $validated['child_email'])->first();
 
         if (! $child->is_child) {
             return response()->json(['message' => 'این کاربر کودک نیست'], 400);
@@ -82,9 +81,10 @@ class ParentalControlController extends Controller
         return response()->json($control);
     }
 
-    public function updateSettings(Request $request, User $child)
+    public function updateSettings(ParentalControlRequest $request, User $child)
     {
         $parent = $request->user();
+        $validated = $request->validated();
 
         $link = ParentalLink::where('parent_id', $parent->id)
             ->where('child_id', $child->id)
@@ -95,25 +95,9 @@ class ParentalControlController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
-            'require_follow_approval' => 'sometimes|boolean',
-            'restrict_dm' => 'sometimes|boolean',
-            'content_filter' => 'sometimes|boolean',
-            'daily_post_limit' => 'sometimes|integer|min:1|max:50',
-            'usage_start_time' => 'sometimes|date_format:H:i',
-            'usage_end_time' => 'sometimes|date_format:H:i',
-        ]);
-
         $control = ParentalControl::updateOrCreate(
             ['child_id' => $child->id],
-            $request->only([
-                'require_follow_approval',
-                'restrict_dm',
-                'content_filter',
-                'daily_post_limit',
-                'usage_start_time',
-                'usage_end_time',
-            ])
+            $validated['settings'] ?? []
         );
 
         return response()->json($control);
@@ -126,7 +110,7 @@ class ParentalControlController extends Controller
             ->with('parentalControl')
             ->get();
 
-        return response()->json($children);
+        return UserResource::collection($children);
     }
 
     public function getParents(Request $request)
@@ -135,7 +119,7 @@ class ParentalControlController extends Controller
             ->wherePivot('status', 'approved')
             ->get();
 
-        return response()->json($parents);
+        return UserResource::collection($parents);
     }
 
     public function childActivity(Request $request, User $child)
@@ -156,9 +140,10 @@ class ParentalControlController extends Controller
         return response()->json($activity);
     }
 
-    public function blockContent(Request $request, User $child)
+    public function blockContent(ParentalControlRequest $request, User $child)
     {
         $parent = $request->user();
+        $validated = $request->validated();
 
         $link = ParentalLink::where('parent_id', $parent->id)
             ->where('child_id', $child->id)
@@ -169,12 +154,8 @@ class ParentalControlController extends Controller
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
-            'keyword' => 'required|string',
-        ]);
-
         $control = ParentalControl::firstOrCreate(['child_id' => $child->id]);
-        $this->service->blockContent($control->id, $request->keyword);
+        $this->service->blockContent($control->id, $validated['content_type'], $validated['content_id']);
 
         return response()->json(['message' => 'محتوا مسدود شد']);
     }

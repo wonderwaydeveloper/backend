@@ -12,6 +12,7 @@ class MessageResource extends JsonResource
         return [
             'id' => $this->id,
             'content' => $this->content,
+            'sender_id' => $this->sender_id,
             'media_path' => $this->media_path ? asset('storage/' . $this->media_path) : null,
             'media_type' => $this->media_type,
             'gif_url' => $this->gif_url,

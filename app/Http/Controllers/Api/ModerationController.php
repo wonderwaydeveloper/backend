@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReportRequest;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
@@ -11,41 +12,33 @@ use Illuminate\Support\Facades\DB;
 
 class ModerationController extends Controller
 {
-    public function reportContent(Request $request)
+    public function reportContent(ReportRequest $request)
     {
-        $request->validate([
-            'reportable_type' => 'required|in:post,comment,user',
-            'reportable_id' => 'required|integer',
-            'reason' => 'required|in:spam,harassment,inappropriate,copyright,fake_news,violence,hate_speech,other',
-            'description' => 'nullable|string|max:500',
-        ]);
+        $validated = $request->validated();
 
         try {
-            // Check if user already reported this content
             $existingReport = DB::table('reports')
                 ->where('reporter_id', auth()->id())
-                ->where('reportable_type', $request->reportable_type)
-                ->where('reportable_id', $request->reportable_id)
+                ->where('reportable_type', $validated['reportable_type'])
+                ->where('reportable_id', $validated['reportable_id'])
                 ->first();
 
             if ($existingReport) {
                 return response()->json(['message' => 'شما قبلاً این محتوا را گزارش کرده‌اید'], 400);
             }
 
-            // Create report
             DB::table('reports')->insert([
                 'reporter_id' => auth()->id(),
-                'reportable_type' => $request->reportable_type,
-                'reportable_id' => $request->reportable_id,
-                'reason' => $request->reason,
-                'description' => $request->description,
+                'reportable_type' => $validated['reportable_type'],
+                'reportable_id' => $validated['reportable_id'],
+                'reason' => $validated['reason'],
+                'description' => $validated['description'] ?? null,
                 'status' => 'pending',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Auto-moderate based on report count
-            $this->autoModerate($request->reportable_type, $request->reportable_id);
+            $this->autoModerate($validated['reportable_type'], $validated['reportable_id']);
 
             return response()->json(['message' => 'گزارش شما ثبت شد و بررسی خواهد شد']);
 

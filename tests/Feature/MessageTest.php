@@ -23,7 +23,9 @@ class MessageTest extends TestCase
             ]);
 
         $response->assertStatus(201)
-            ->assertJsonStructure(['id', 'content', 'sender_id']);
+            ->assertJsonStructure([
+                'data' => ['id', 'content', 'sender_id']
+            ]);
 
         $this->assertDatabaseHas('messages', [
             'sender_id' => $user->id,
@@ -51,7 +53,7 @@ class MessageTest extends TestCase
         $response = $this->actingAs($user, 'sanctum')
             ->postJson("/api/messages/users/{$recipient->id}", []);
 
-        $response->assertStatus(400);
+        $response->assertStatus(422);
     }
 
     public function test_user_can_view_conversations(): void

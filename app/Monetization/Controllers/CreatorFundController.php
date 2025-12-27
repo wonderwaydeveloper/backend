@@ -3,6 +3,7 @@
 namespace App\Monetization\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreatorFundRequest;
 use App\Monetization\Services\CreatorFundService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,26 +22,23 @@ class CreatorFundController extends Controller
         return response()->json(['data' => $analytics]);
     }
 
-    public function calculateEarnings(Request $request): JsonResponse
+    public function calculateEarnings(CreatorFundRequest $request): JsonResponse
     {
-        $request->validate([
-            'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2024',
-        ]);
+        $validated = $request->validated();
 
         $earnings = $this->creatorFundService->calculateMonthlyEarnings(
             auth()->user(),
-            $request->month,
-            $request->year
+            (int) $validated['month'],
+            (int) $validated['year']
         );
 
         return response()->json([
-            'message' => 'Earnings calculated successfully',
+            'message' => 'Earnings calculated successfully', 
             'data' => [
-                'month' => $request->month,
-                'year' => $request->year,
-                'earnings' => $earnings,
-            ],
+                'month' => $validated['month'],
+                'year' => $validated['year'],
+                'earnings' => $earnings
+            ]
         ]);
     }
 
@@ -55,35 +53,21 @@ class CreatorFundController extends Controller
         return response()->json(['data' => $history]);
     }
 
-    public function requestPayout(Request $request): JsonResponse
+    public function requestPayout(CreatorFundRequest $request): JsonResponse
     {
-        $request->validate([
-            'month' => 'required|integer|min:1|max:12',
-            'year' => 'required|integer|min:2024',
+        $validated = $request->validated();
+        $user = auth()->user();
+
+        // Setup payout method
+        $user->update([
+            'payout_method' => $validated['payout_method'],
+            'payout_details' => [
+                'bank_details' => $validated['bank_details'] ?? null,
+                'paypal_email' => $validated['paypal_email'] ?? null,
+                'crypto_wallet' => $validated['crypto_wallet'] ?? null,
+            ]
         ]);
 
-        $fund = auth()->user()->creatorFunds()
-            ->where('month', $request->month)
-            ->where('year', $request->year)
-            ->first();
-
-        if (! $fund) {
-            return response()->json(['message' => 'No earnings found for this period'], 404);
-        }
-
-        if (! $fund->isEligible()) {
-            return response()->json(['message' => 'Not eligible for payout'], 400);
-        }
-
-        if ($fund->status !== 'pending') {
-            return response()->json(['message' => 'Payout already processed'], 400);
-        }
-
-        $fund->update(['status' => 'approved']);
-
-        return response()->json([
-            'message' => 'Payout request submitted successfully',
-            'data' => $fund,
-        ]);
+        return response()->json(['message' => 'Payout request submitted successfully']);
     }
 }

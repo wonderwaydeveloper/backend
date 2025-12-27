@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ConversionTrackRequest;
 use App\Services\ConversionTrackingService;
 use Illuminate\Http\Request;
 
@@ -12,19 +13,18 @@ class ConversionController extends Controller
     {
     }
 
-    public function track(Request $request)
+    public function track(ConversionTrackRequest $request)
     {
-        $request->validate([
-            'event_type' => 'required|string',
-            'event_data' => 'nullable|array',
-            'conversion_value' => 'nullable|numeric|min:0',
-        ]);
+        $validated = $request->validated();
 
         $this->conversionService->track(
-            $request->event_type,
+            $validated['event_type'],
             auth()->id(),
-            $request->event_data ?? [],
-            $request->conversion_value ?? 0
+            $validated['event_data'] ?? $validated['properties'] ?? [],
+            $validated['conversion_value'] ?? $validated['value'] ?? 0,
+            $validated['currency'] ?? 'USD',
+            $validated['source'] ?? null,
+            $validated['campaign'] ?? null
         );
 
         return response()->json(['message' => 'Event tracked successfully']);

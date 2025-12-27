@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoryRequest;
+use App\Http\Resources\StoryResource;
 use App\Models\Story;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,19 +20,17 @@ class StoryController extends Controller
             ->whereIn('user_id', $followingIds)
             ->with('user:id,name,username,avatar')
             ->latest()
-            ->get()
-            ->groupBy('user_id');
+            ->get();
 
-        return response()->json($stories);
+        return response()->json([
+            'data' => StoryResource::collection($stories)
+        ]);
     }
 
-    public function store(Request $request)
+    public function store(StoryRequest $request)
     {
-        $request->validate([
-            'media' => 'required|file|mimes:jpeg,png,jpg,mp4|max:10240',
-            'caption' => 'nullable|string|max:280',
-        ]);
-
+        $validated = $request->validated();
+        
         $mediaType = $request->file('media')->getMimeType();
         $mediaType = str_starts_with($mediaType, 'video') ? 'video' : 'image';
 
@@ -40,11 +40,17 @@ class StoryController extends Controller
             'user_id' => $request->user()->id,
             'media_type' => $mediaType,
             'media_url' => $mediaUrl,
-            'caption' => $request->caption,
+            'content' => $validated['content'] ?? null,
+            'duration' => $validated['duration'] ?? 15,
+            'background_color' => $validated['background_color'] ?? null,
+            'font_style' => $validated['font_style'] ?? 'normal',
+            'is_close_friends' => $validated['is_close_friends'] ?? false,
             'expires_at' => now()->addHours(24),
         ]);
 
-        return response()->json($story, 201);
+        return response()->json(
+            new StoryResource($story)
+        , 201);
     }
 
     public function destroy(Story $story)

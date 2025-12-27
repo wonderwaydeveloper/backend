@@ -3,26 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\GroupChatRequest;
+use App\Http\Resources\GroupChatResource;
 use App\Models\GroupConversation;
 use App\Models\GroupMessage;
 use Illuminate\Http\Request;
 
 class GroupChatController extends Controller
 {
-    public function create(Request $request)
+    public function create(GroupChatRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'member_ids' => 'required|array|min:1|max:49',
-            'member_ids.*' => 'exists:users,id',
-        ]);
+        $validated = $request->validated();
 
         $group = GroupConversation::create([
-            'name' => $request->name,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'is_private' => $validated['is_private'] ?? false,
             'created_by' => $request->user()->id,
         ]);
 
-        $members = array_unique(array_merge([$request->user()->id], $request->member_ids));
+        $members = array_unique(array_merge([$request->user()->id], $validated['members'] ?? []));
 
         foreach ($members as $memberId) {
             $group->members()->attach($memberId, [
@@ -30,9 +30,7 @@ class GroupChatController extends Controller
             ]);
         }
 
-        $group->load('members');
-
-        return response()->json($group, 201);
+        return new GroupChatResource($group->load('members'));
     }
 
     public function addMember(Request $request, GroupConversation $group)
@@ -98,14 +96,14 @@ class GroupChatController extends Controller
             return response()->json(['message' => 'You are not a member of this group'], 403);
         }
 
-        if (! $request->content && ! $request->hasFile('media')) {
+        if (! $request->input('content') && ! $request->hasFile('media')) {
             return response()->json(['message' => 'Content or media is required'], 400);
         }
 
         $data = [
             'group_conversation_id' => $group->id,
             'sender_id' => $request->user()->id,
-            'content' => $request->content,
+            'content' => $request->input('content'),
         ];
 
         if ($request->hasFile('media')) {
@@ -148,6 +146,6 @@ class GroupChatController extends Controller
         ->orderBy('last_message_at', 'desc')
         ->paginate(20);
 
-        return response()->json($groups);
+        return GroupChatResource::collection($groups);
     }
 }

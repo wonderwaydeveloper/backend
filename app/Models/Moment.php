@@ -31,6 +31,11 @@ class Moment extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function posts()
     {
         return $this->belongsToMany(Post::class, 'moment_posts')

@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PhoneVerificationRequest;
+use App\Http\Requests\PhoneLoginRequest;
+use App\Http\Requests\PhoneRegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Models\PhoneVerificationCode;
 use App\Models\User;
 use App\Services\SmsService;
@@ -19,36 +23,28 @@ class PhoneAuthController extends Controller
         $this->smsService = $smsService;
     }
 
-    public function sendCode(Request $request)
+    public function sendCode(PhoneVerificationRequest $request)
     {
-        $request->validate([
-            'phone' => 'required|string|regex:/^[0-9+]{10,15}$/',
-        ]);
-
+        $validated = $request->validated();
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         PhoneVerificationCode::create([
-            'phone' => $request->phone,
+            'phone' => $validated['phone'],
             'code' => $code,
             'expires_at' => now()->addMinutes(5),
         ]);
 
-        $this->smsService->sendVerificationCode($request->phone, $code);
+        $this->smsService->sendVerificationCode($validated['phone'], $code);
 
-        return response()->json([
-            'message' => 'Verification code sent successfully',
-        ]);
+        return response()->json(['message' => 'Verification code sent successfully']);
     }
 
-    public function verifyCode(Request $request)
+    public function verifyCode(PhoneLoginRequest $request)
     {
-        $request->validate([
-            'phone' => 'required|string',
-            'code' => 'required|string|size:6',
-        ]);
+        $validated = $request->validated();
 
-        $verification = PhoneVerificationCode::where('phone', $request->phone)
-            ->where('code', $request->code)
+        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
+            ->where('code', $validated['verification_code'])
             ->where('verified', false)
             ->latest()
             ->first();
@@ -61,25 +57,14 @@ class PhoneAuthController extends Controller
 
         $verification->update(['verified' => true]);
 
-        return response()->json([
-            'message' => 'Phone verified successfully',
-            'verified' => true,
-        ]);
+        return response()->json(['message' => 'Phone verified successfully', 'verified' => true]);
     }
 
-    public function register(Request $request)
+    public function register(PhoneRegisterRequest $request)
     {
-        $request->validate([
-            'phone' => 'required|string|unique:users',
-            'code' => 'required|string|size:6',
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'date_of_birth' => 'required|date',
-        ]);
+        $validated = $request->validated();
 
-        $verification = PhoneVerificationCode::where('phone', $request->phone)
-            ->where('code', $request->code)
+        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
             ->where('verified', true)
             ->latest()
             ->first();
@@ -91,34 +76,41 @@ class PhoneAuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'phone' => $request->phone,
+            'name' => $validated['name'],
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
             'phone_verified_at' => now(),
-            'password' => Hash::make($request->password),
-            'date_of_birth' => $request->date_of_birth,
+            'password' => Hash::make($validated['password']),
+            'date_of_birth' => $validated['date_of_birth'],
         ]);
 
         $user->assignRole('user');
-
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ], 201);
+        return response()->json(['user' => new UserResource($user), 'token' => $token], 201);
     }
 
-    public function login(Request $request)
+    public function login(PhoneLoginRequest $request)
     {
-        $request->validate([
-            'phone' => 'required|string',
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
-        $user = User::where('phone', $request->phone)->first();
+        // For phone login, we need verification code, not password
+        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
+            ->where('code', $validated['verification_code'])
+            ->where('verified', true)
+            ->latest()
+            ->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$verification) {
+            throw ValidationException::withMessages([
+                'phone' => ['The provided credentials are incorrect.'],
+            ]);
+        }
+
+        $user = User::where('phone', $validated['phone'])->first();
+
+        if (!$user) {
             throw ValidationException::withMessages([
                 'phone' => ['The provided credentials are incorrect.'],
             ]);
@@ -126,9 +118,6 @@ class PhoneAuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-        ]);
+        return response()->json(['user' => new UserResource($user), 'token' => $token]);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MomentRequest;
+use App\Http\Resources\MomentResource;
 use App\Models\Moment;
 use App\Models\Post;
 use Illuminate\Http\Request;
@@ -18,38 +20,33 @@ class MomentController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($moments);
+        return MomentResource::collection($moments);
     }
 
-    public function store(Request $request)
+    public function store(MomentRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'privacy' => 'required|in:public,private',
-            'cover_image' => 'nullable|image|max:2048',
-            'post_ids' => 'required|array|min:2|max:20',
-            'post_ids.*' => 'exists:posts,id',
-        ]);
+        $validated = $request->validated();
 
         $moment = Moment::create([
             'user_id' => $request->user()->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'privacy' => $request->privacy,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'privacy' => $validated['privacy'] ?? 'public',
             'cover_image' => $request->hasFile('cover_image')
                 ? $request->file('cover_image')->store('moments', 'public')
                 : null,
         ]);
 
-        // Add posts to moment
-        foreach ($request->post_ids as $index => $postId) {
-            $moment->addPost($postId, $index);
+        // Add posts to moment if provided
+        if (isset($validated['post_ids']) && is_array($validated['post_ids'])) {
+            foreach ($validated['post_ids'] as $index => $postId) {
+                $moment->addPost($postId, $index);
+            }
         }
 
-        $moment->load('user:id,name,username,avatar', 'posts.user:id,name,username,avatar');
+        $moment->load('creator', 'posts');
 
-        return response()->json($moment, 201);
+        return new MomentResource($moment);
     }
 
     public function show(Moment $moment)
@@ -66,22 +63,17 @@ class MomentController extends Controller
 
         $moment->incrementViews();
 
-        return response()->json($moment);
+        return new MomentResource($moment);
     }
 
-    public function update(Request $request, Moment $moment)
+    public function update(MomentRequest $request, Moment $moment)
     {
         $this->authorize('update', $moment);
 
-        $request->validate([
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'privacy' => 'required|in:public,private',
-        ]);
+        $validated = $request->validated();
+        $moment->update($validated);
 
-        $moment->update($request->only(['title', 'description', 'privacy']));
-
-        return response()->json($moment);
+        return new MomentResource($moment);
     }
 
     public function destroy(Moment $moment)
@@ -132,7 +124,7 @@ class MomentController extends Controller
             ->latest()
             ->paginate(20);
 
-        return response()->json($moments);
+        return MomentResource::collection($moments);
     }
 
     public function featured()
@@ -145,6 +137,6 @@ class MomentController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json(['data' => $moments]);
+        return MomentResource::collection($moments);
     }
 }

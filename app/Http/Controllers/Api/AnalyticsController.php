@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AnalyticsTrackRequest;
 use App\Models\Post;
 use App\Services\AnalyticsService;
 use Illuminate\Http\JsonResponse;
@@ -60,25 +61,18 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    public function trackEvent(Request $request): JsonResponse
+    public function trackEvent(AnalyticsTrackRequest $request): JsonResponse
     {
-        $request->validate([
-            'event_type' => 'required|string|in:post_view,post_like,post_comment,profile_view',
-            'entity_type' => 'required|string|in:post,user',
-            'entity_id' => 'required|integer',
-            'metadata' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         \App\Models\AnalyticsEvent::track(
-            $request->event_type,
-            $request->entity_type,
-            $request->entity_id,
-            $request->user()?->id,
-            $request->get('metadata', [])
+            $validated['event_type'],
+            $validated['entity_type'] ?? 'unknown',
+            $validated['entity_id'] ?? 0,
+            $validated['user_id'] ?? $request->user()?->id,
+            $validated['properties'] ?? []
         );
 
-        return response()->json([
-            'message' => 'Event tracked successfully',
-        ]);
+        return response()->json(['message' => 'Event tracked successfully']);
     }
 }

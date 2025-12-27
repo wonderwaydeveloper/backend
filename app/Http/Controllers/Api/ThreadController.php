@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ThreadRequest;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
 
@@ -11,29 +13,20 @@ class ThreadController extends Controller
     /**
      * Create a new thread
      */
-    public function create(Request $request)
+    public function create(ThreadRequest $request)
     {
-        $request->validate([
-            'posts' => 'required|array|min:2|max:25',
-            'posts.*.content' => 'required|string|max:280',
-            'posts.*.image' => 'nullable|image|max:2048',
-        ]);
-
+        $validated = $request->validated();
         $user = $request->user();
         $firstPost = null;
         $position = 1;
 
-        foreach ($request->posts as $postData) {
+        foreach ($validated['posts'] as $postData) {
             $data = [
                 'user_id' => $user->id,
                 'content' => $postData['content'],
                 'is_draft' => false,
                 'published_at' => now(),
             ];
-
-            if (isset($postData['image'])) {
-                $data['image'] = $postData['image']->store('posts', 'public');
-            }
 
             if ($firstPost) {
                 $data['thread_id'] = $firstPost->id;
@@ -42,28 +35,17 @@ class ThreadController extends Controller
 
             $post = Post::create($data);
             $post->syncHashtags();
-            $mentionedUsers = $post->processMentions($post->content);
-
-            foreach ($mentionedUsers as $mentionedUser) {
-                $mentionedUser->notify(new \App\Notifications\MentionNotification($user, $post));
-            }
 
             if (! $firstPost) {
                 $firstPost = $post;
             }
         }
 
-        // Broadcast thread creation
         broadcast(new \App\Events\PostPublished($firstPost->load('user:id,name,username,avatar')));
 
-        $firstPost->load([
-            'threadPosts.user:id,name,username,avatar',
-            'threadPosts.hashtags',
-            'user:id,name,username,avatar',
-            'hashtags',
-        ]);
-
-        return response()->json($firstPost, 201);
+        return response()->json(
+            new PostResource($firstPost->load('threadPosts.user', 'user', 'hashtags'))
+        , 201);
     }
 
     /**
@@ -87,8 +69,8 @@ class ThreadController extends Controller
         });
 
         return response()->json([
-            'thread_root' => $threadRoot,
-            'thread_posts' => $threadRoot->threadPosts,
+            'thread_root' => new PostResource($threadRoot),
+            'thread_posts' => PostResource::collection($threadRoot->threadPosts),
             'total_posts' => $threadRoot->threadPosts->count() + 1,
         ]);
     }
@@ -108,7 +90,7 @@ class ThreadController extends Controller
 
         $data = [
             'user_id' => $request->user()->id,
-            'content' => $request->content,
+            'content' => $request->input('content'),
             'thread_id' => $threadRoot->id,
             'thread_position' => $lastPosition + 1,
             'is_draft' => false,
@@ -121,7 +103,7 @@ class ThreadController extends Controller
 
         $newPost = Post::create($data);
         $newPost->syncHashtags();
-        $mentionedUsers = $newPost->processMentions($newPost->content);
+        $mentionedUsers = $newPost->processMentions($data['content']);
 
         foreach ($mentionedUsers as $mentionedUser) {
             $mentionedUser->notify(new \App\Notifications\MentionNotification($request->user(), $newPost));
@@ -131,7 +113,7 @@ class ThreadController extends Controller
 
         $newPost->load('user:id,name,username,avatar', 'hashtags');
 
-        return response()->json($newPost, 201);
+        return new PostResource($newPost);
     }
 
     /**

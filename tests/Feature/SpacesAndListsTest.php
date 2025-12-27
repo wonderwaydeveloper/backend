@@ -28,7 +28,9 @@ class SpacesAndListsTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'id', 'title', 'description', 'status', 'host',
+                'data' => [
+                    'id', 'title', 'description', 'status', 'host',
+                ]
             ]);
 
         $this->assertDatabaseHas('spaces', [
@@ -117,7 +119,9 @@ class SpacesAndListsTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'id', 'name', 'description', 'privacy',
+                'data' => [
+                    'id', 'name', 'description', 'privacy',
+                ]
             ]);
 
         $this->assertDatabaseHas('lists', [

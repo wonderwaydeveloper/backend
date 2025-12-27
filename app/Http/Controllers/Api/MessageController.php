@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Events\MessageSent;
 use App\Events\UserTyping;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SendMessageRequest;
+use App\Http\Resources\ConversationResource;
+use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -22,7 +25,9 @@ class MessageController extends Controller
             ->orderBy('last_message_at', 'desc')
             ->paginate(20);
 
-        return response()->json($conversations);
+        return response()->json([
+            'data' => ConversationResource::collection($conversations)
+        ]);
     }
 
     public function messages(Request $request, User $user)
@@ -45,25 +50,21 @@ class MessageController extends Controller
             ->unread()
             ->update(['read_at' => now()]);
 
-        return response()->json($messages);
+        return MessageResource::collection($messages);
     }
 
-    public function send(Request $request, User $user)
+    public function send(SendMessageRequest $request, User $user)
     {
-        $request->validate([
-            'content' => 'nullable|string|max:1000',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:10240',
-            'gif_url' => 'nullable|url',
-        ]);
-
+        try {
+            $validated = $request->validated();
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $e->errors()], 400);
+        }
+        
         $currentUser = $request->user();
 
         if ($currentUser->id === $user->id) {
             return response()->json(['message' => 'نمیتوانید به خودتان پیام بدهید'], 400);
-        }
-
-        if (! $request->content && ! $request->hasFile('media') && ! $request->gif_url) {
-            return response()->json(['message' => 'پیام یا فایل الزامی است'], 400);
         }
 
         $conversation = Conversation::between($currentUser->id, $user->id);
@@ -79,7 +80,7 @@ class MessageController extends Controller
         $data = [
             'conversation_id' => $conversation->id,
             'sender_id' => $currentUser->id,
-            'content' => $request->content,
+            'content' => $validated['content'] ?? null,
         ];
 
         if ($request->hasFile('media')) {
@@ -91,20 +92,13 @@ class MessageController extends Controller
             $data['media_type'] = $mediaType;
         }
 
-        if ($request->gif_url) {
-            $data['gif_url'] = $request->gif_url;
-        }
-
         $message = Message::create($data);
-
         $conversation->update(['last_message_at' => now()]);
-
         $message->load('sender:id,name,username,avatar');
 
-        // Broadcast real-time message
         broadcast(new MessageSent($message));
 
-        return response()->json($message, 201);
+        return new MessageResource($message);
     }
 
     public function typing(Request $request, User $user)

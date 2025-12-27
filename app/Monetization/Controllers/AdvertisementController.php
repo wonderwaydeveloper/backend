@@ -3,6 +3,7 @@
 namespace App\Monetization\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AdvertisementRequest;
 use App\Monetization\Models\Advertisement;
 use App\Monetization\Services\AdvertisementService;
 use Illuminate\Http\JsonResponse;
@@ -15,30 +16,16 @@ class AdvertisementController extends Controller
     ) {
     }
 
-    public function create(Request $request): JsonResponse
+    public function create(AdvertisementRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'title' => 'required|string|max:100',
-            'content' => 'required|string|max:280',
-            'media_url' => 'nullable|url',
-            'budget' => 'required|numeric|min:10',
-            'cost_per_click' => 'nullable|numeric|min:0.01',
-            'cost_per_impression' => 'nullable|numeric|min:0.001',
-            'start_date' => 'required|date|after:now',
-            'end_date' => 'required|date|after:start_date',
-            'target_audience' => 'nullable|array',
-            'targeting_criteria' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         $ad = $this->advertisementService->createAdvertisement([
             'advertiser_id' => auth()->id(),
             ...$validated,
         ]);
 
-        return response()->json([
-            'message' => 'Advertisement created successfully',
-            'data' => $ad,
-        ], 201);
+        return response()->json(['message' => 'Advertisement created successfully', 'data' => $ad], 201);
     }
 
     public function getTargetedAds(Request $request): JsonResponse

@@ -18,10 +18,10 @@ class DeviceController extends Controller
         DeviceToken::updateOrCreate(
             [
                 'user_id' => $request->user()->id,
-                'token' => $request->token,
+                'token' => $request->input('token'),
             ],
             [
-                'platform' => $request->platform,
+                'device_type' => $request->input('platform'),
             ]
         );
 

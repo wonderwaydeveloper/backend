@@ -17,7 +17,7 @@ class PushNotificationTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/push/register', [
-                'token' => 'test_device_token_123',
+                'device_token' => 'test_device_token_123',
                 'device_type' => 'android',
                 'device_name' => 'Samsung Galaxy S21',
             ]);
@@ -79,7 +79,7 @@ class PushNotificationTest extends TestCase
             ->getJson('/api/push/devices');
 
         $response->assertStatus(200)
-            ->assertJsonCount(2, 'devices');
+            ->assertJsonCount(2, 'data');
     }
 
     public function test_device_registration_requires_token(): void
@@ -92,7 +92,7 @@ class PushNotificationTest extends TestCase
             ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['token']);
+            ->assertJsonValidationErrors(['device_token']);
     }
 
     public function test_device_registration_requires_valid_type(): void
@@ -101,7 +101,7 @@ class PushNotificationTest extends TestCase
 
         $response = $this->actingAs($user, 'sanctum')
             ->postJson('/api/push/register', [
-                'token' => 'test_token',
+                'device_token' => 'test_token',
                 'device_type' => 'invalid_type',
             ]);
 
@@ -112,7 +112,7 @@ class PushNotificationTest extends TestCase
     public function test_guest_cannot_register_device(): void
     {
         $response = $this->postJson('/api/push/register', [
-            'token' => 'test_token',
+            'device_token' => 'test_token',
             'device_type' => 'android',
         ]);
 

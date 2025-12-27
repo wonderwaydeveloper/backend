@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MediaUploadRequest;
 use App\Jobs\GenerateThumbnailJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,47 +13,33 @@ use Intervention\Image\ImageManager;
 
 class MediaController extends Controller
 {
-    public function uploadImage(Request $request)
+    public function uploadImage(MediaUploadRequest $request)
     {
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
-            'type' => 'in:post,avatar,cover,story',
-            'quality' => 'integer|min:60|max:100',
-        ]);
-
+        $validated = $request->validated();
+        
         try {
-            $file = $request->file('image');
-            $type = $request->input('type', 'post');
-            $quality = $request->input('quality', 85);
+            $file = $validated['image'];
+            $quality = 85;
 
             // Generate unique filename
             $filename = $this->generateFilename($file->getClientOriginalExtension());
-            $path = "media/{$type}s/" . date('Y/m/d');
+            $path = "media/images/" . date('Y/m/d');
 
             // Process and optimize image
-            $processedImage = $this->processImage($file, $type, $quality);
+            $processedImage = $this->processImage($file, 'post', $quality);
 
-            // Store original and processed versions
+            // Store processed image
             $fullPath = "{$path}/{$filename}";
             Storage::disk('public')->put($fullPath, $processedImage);
 
-            // Generate thumbnail for certain types
-            if (in_array($type, ['post', 'story'])) {
-                GenerateThumbnailJob::dispatch($fullPath, $type);
-            }
-
-            $url = Storage::disk('public')->url($fullPath);
+            GenerateThumbnailJob::dispatch($fullPath, 'post');
 
             return response()->json([
-                'message' => 'فایل با موفقیت آپلود شد',
-                'data' => [
-                    'url' => $url,
-                    'path' => $fullPath,
-                    'filename' => $filename,
-                    'size' => strlen($processedImage),
-                    'type' => $type,
-                    'dimensions' => $this->getImageDimensions($processedImage),
-                ],
+                'url' => Storage::disk('public')->url($fullPath),
+                'path' => $fullPath,
+                'type' => 'image',
+                'size' => strlen($processedImage),
+                'alt_text' => $validated['alt_text'] ?? null,
             ]);
 
         } catch (\Exception $e) {

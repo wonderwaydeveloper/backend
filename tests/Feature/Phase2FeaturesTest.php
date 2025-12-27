@@ -161,7 +161,7 @@ class Phase2FeaturesTest extends TestCase
         $response = $this->postJson('/api/streaming/create', [
             'title' => 'API Test Stream',
             'description' => 'Testing API',
-            'category' => 'technology',
+            'category' => 'education',
         ]);
 
         $response->assertStatus(201)

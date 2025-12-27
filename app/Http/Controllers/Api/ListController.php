@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListRequest;
+use App\Http\Resources\ListResource;
 use App\Models\User;
 use App\Models\UserList;
 use Illuminate\Http\Request;
@@ -19,22 +21,20 @@ class ListController extends Controller
         return response()->json($lists);
     }
 
-    public function store(Request $request)
+    public function store(ListRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'privacy' => 'required|in:public,private',
-        ]);
+        $validated = $request->validated();
 
         $list = UserList::create([
             'user_id' => $request->user()->id,
-            'name' => $request->name,
-            'description' => $request->description,
-            'privacy' => $request->privacy,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'privacy' => $validated['privacy'] ?? 'public',
         ]);
 
-        return response()->json($list, 201);
+        return response()->json([
+            'data' => new ListResource($list)
+        ], 201);
     }
 
     public function show(UserList $list)

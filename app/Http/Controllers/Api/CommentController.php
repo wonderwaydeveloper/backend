@@ -30,7 +30,7 @@ class CommentController extends Controller
 
         $comment = $post->comments()->create([
             'user_id' => $request->user()->id,
-            'content' => $request->content,
+            'content' => $request->input('content'),
         ]);
 
         // Process mentions in comment

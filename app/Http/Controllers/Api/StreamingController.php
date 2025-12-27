@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StreamRequest;
+use App\Http\Resources\StreamResource;
 use App\Models\Stream;
 use App\Models\LiveStream;
 use App\Services\StreamingService;
@@ -18,30 +20,14 @@ class StreamingController extends Controller
         $this->streamingService = $streamingService;
     }
 
-    public function create(Request $request): JsonResponse
+    public function create(StreamRequest $request): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'category' => 'nullable|string|in:gaming,music,talk,education,entertainment,sports,technology,other',
-            'is_private' => 'boolean',
-            'scheduled_at' => 'nullable|date|after:now',
-            'allow_chat' => 'boolean',
-            'record_stream' => 'boolean',
-        ]);
-
-        $stream = $this->streamingService->createStream(auth()->user(), $request->all());
+        $validated = $request->validated();
+        $stream = $this->streamingService->createStream(auth()->user(), $validated);
 
         return response()->json([
             'success' => true,
-            'stream' => [
-                'id' => $stream->id,
-                'title' => $stream->title,
-                'description' => $stream->description,
-                'stream_key' => $stream->stream_key,
-                'rtmp_url' => config('streaming.rtmp_url', 'rtmp://localhost/live') . '/' . $stream->stream_key,
-                'status' => $stream->status,
-            ]
+            'stream' => new StreamResource($stream)
         ], 201);
     }
 
@@ -179,22 +165,7 @@ class StreamingController extends Controller
 
         return response()->json([
             'success' => true,
-            'stream' => [
-                'id' => $stream->id,
-                'title' => $stream->title,
-                'description' => $stream->description,
-                'status' => $stream->status,
-                'category' => $stream->category,
-                'is_private' => $stream->is_private,
-                'user' => $stream->user,
-                'viewers' => $stream->is_live ? $this->streamingService->getStreamStats($stream->stream_key)['viewers'] : 0,
-                'duration' => $stream->duration_formatted,
-                'thumbnail' => $stream->thumbnail,
-                'urls' => $stream->is_live ? $stream->stream_urls : null,
-                'created_at' => $stream->created_at,
-                'started_at' => $stream->started_at,
-                'ended_at' => $stream->ended_at,
-            ],
+            'stream' => new StreamResource($stream)
         ]);
     }
 

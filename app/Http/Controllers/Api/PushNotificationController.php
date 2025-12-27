@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PushNotificationRequest;
+use App\Http\Resources\DeviceResource;
 use App\Models\DeviceToken;
 use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
@@ -16,35 +18,25 @@ class PushNotificationController extends Controller
         $this->pushService = $pushService;
     }
 
-    public function registerDevice(Request $request)
+    public function registerDevice(PushNotificationRequest $request)
     {
-        $request->validate([
-            'token' => 'required|string',
-            'device_type' => 'required|in:android,ios,web',
-            'device_name' => 'nullable|string|max:100',
-        ]);
+        $validated = $request->validated();
 
         try {
             $device = DeviceToken::updateOrCreate([
                 'user_id' => auth()->id(),
-                'token' => $request->token,
+                'token' => $validated['device_token'],
             ], [
-                'device_type' => $request->device_type,
-                'device_name' => $request->device_name,
+                'device_type' => $validated['device_type'],
+                'device_name' => $validated['app_version'] ?? null,
                 'active' => true,
                 'last_used_at' => now(),
             ]);
 
-            return response()->json([
-                'message' => 'دستگاه با موفقیت ثبت شد',
-                'device_id' => $device->id,
-            ]);
+            return response()->json(['message' => 'دستگاه با موفقیت ثبت شد', 'device_id' => $device->id]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'خطا در ثبت دستگاه',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'خطا در ثبت دستگاه'], 500);
         }
     }
 
@@ -65,12 +57,9 @@ class PushNotificationController extends Controller
         }
     }
 
-    public function testNotification(Request $request)
+    public function testNotification(PushNotificationRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:100',
-            'body' => 'required|string|max:200',
-        ]);
+        $validated = $request->validated();
 
         try {
             $devices = auth()->user()->devices()->where('active', true)->get();
@@ -83,8 +72,9 @@ class PushNotificationController extends Controller
             foreach ($devices as $device) {
                 $result = $this->pushService->sendToDevice(
                     $device->token,
-                    $request->title,
-                    $request->body
+                    $validated['title'],
+                    $validated['body'],
+                    $validated['data'] ?? []
                 );
                 if ($result) {
                     $successCount++;
@@ -98,10 +88,7 @@ class PushNotificationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'خطا در ارسال اعلان تست',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'خطا در ارسال اعلان تست'], 500);
         }
     }
 
@@ -112,6 +99,6 @@ class PushNotificationController extends Controller
             ->orderBy('last_used_at', 'desc')
             ->get();
 
-        return response()->json(['devices' => $devices]);
+        return DeviceResource::collection($devices);
     }
 }

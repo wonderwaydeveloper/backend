@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class PerformanceDashboardController extends Controller
 {
     public function __construct(
-        private PerformanceMonitoringService $performanceService
+        protected PerformanceMonitoringService $performanceService
     ) {
     }
 

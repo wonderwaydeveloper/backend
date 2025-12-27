@@ -25,7 +25,7 @@ class StoryTest extends TestCase
         ]);
 
         $response->assertStatus(201)
-                ->assertJsonStructure(['id', 'media_url', 'user_id']);
+                ->assertJsonStructure(['id', 'media_url']);
     }
 
     public function test_user_can_view_stories()

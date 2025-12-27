@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\NotificationPreferenceRequest;
 use Illuminate\Http\Request;
 
 class NotificationPreferenceController extends Controller
@@ -39,23 +40,15 @@ class NotificationPreferenceController extends Controller
         return response()->json(['preferences' => $preferences]);
     }
 
-    public function update(Request $request)
+    public function update(NotificationPreferenceRequest $request)
     {
-        $request->validate([
-            'preferences' => 'required|array',
-            'preferences.email' => 'required|array',
-            'preferences.push' => 'required|array',
-            'preferences.in_app' => 'required|array',
-        ]);
-
+        $validated = $request->validated();
         $user = $request->user();
-        $user->notification_preferences = $request->preferences;
+        
+        $user->notification_preferences = $validated['preferences'];
         $user->save();
 
-        return response()->json([
-            'message' => 'تنظیمات اطلاعرسانی بروزرسانی شد',
-            'preferences' => $user->notification_preferences,
-        ]);
+        return response()->json(['message' => 'تنظیمات اطلاعرسانی بروزرسانی شد', 'preferences' => $user->notification_preferences]);
     }
 
     public function updateType(Request $request, $type)

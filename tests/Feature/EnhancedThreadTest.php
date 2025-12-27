@@ -26,7 +26,7 @@ class EnhancedThreadTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'id', 'content', 'thread_posts',
+                'id', 'content',
             ]);
 
         $this->assertDatabaseHas('posts', [

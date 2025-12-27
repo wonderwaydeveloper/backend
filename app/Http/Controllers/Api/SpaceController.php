@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SpaceRequest;
+use App\Http\Resources\SpaceResource;
 use App\Models\Space;
 use App\Models\SpaceParticipant;
 use Illuminate\Http\Request;
@@ -18,32 +20,22 @@ class SpaceController extends Controller
             ->orderBy('current_participants', 'desc')
             ->paginate(20);
 
-        return response()->json($spaces);
+        return SpaceResource::collection($spaces);
     }
 
-    public function store(Request $request)
+    public function store(SpaceRequest $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
-            'privacy' => 'required|in:public,followers,invited',
-            'max_participants' => 'nullable|integer|min:2|max:50',
-            'scheduled_at' => 'nullable|date|after:now',
-        ]);
+        $validated = $request->validated();
 
         $space = Space::create([
             'host_id' => $request->user()->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'privacy' => $request->privacy,
-            'max_participants' => $request->max_participants ?? 10,
-            'status' => $request->scheduled_at ? 'scheduled' : 'live',
-            'scheduled_at' => $request->scheduled_at,
-            'started_at' => $request->scheduled_at ? null : now(),
-            'settings' => [
-                'recording_enabled' => $request->boolean('recording_enabled', false),
-                'chat_enabled' => $request->boolean('chat_enabled', true),
-            ],
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'is_public' => $validated['is_public'] ?? true,
+            'max_participants' => $validated['max_participants'] ?? 10,
+            'scheduled_at' => $validated['scheduled_at'] ?? null,
+            'status' => isset($validated['scheduled_at']) ? 'scheduled' : 'live',
+            'started_at' => isset($validated['scheduled_at']) ? null : now(),
         ]);
 
         // Add host as participant
@@ -56,9 +48,9 @@ class SpaceController extends Controller
         ]);
 
         $space->increment('current_participants');
-        $space->load('host:id,name,username,avatar');
+        $space->load('host');
 
-        return response()->json($space, 201);
+        return new SpaceResource($space);
     }
 
     public function show(Space $space)
@@ -68,7 +60,7 @@ class SpaceController extends Controller
             'participants.user:id,name,username,avatar',
         ])->loadCount('activeParticipants');
 
-        return response()->json($space);
+        return new SpaceResource($space);
     }
 
     public function join(Request $request, Space $space)

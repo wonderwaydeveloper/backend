@@ -14,9 +14,9 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'nullable|string|max:1000',
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:10240',
-            'gif_url' => 'nullable|url',
+            'content' => 'required_without_all:media,gif_url|nullable|string|max:1000',
+            'media' => 'required_without_all:content,gif_url|nullable|file|mimes:jpg,jpeg,png,gif,mp4,mov|max:10240',
+            'gif_url' => 'required_without_all:content,media|nullable|url',
         ];
     }
 

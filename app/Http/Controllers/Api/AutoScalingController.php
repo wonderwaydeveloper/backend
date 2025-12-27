@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AutoScalingRequest;
 use App\Services\AutoScalingService;
 use Illuminate\Http\Request;
 
@@ -42,21 +43,18 @@ class AutoScalingController extends Controller
         return response()->json($prediction);
     }
 
-    public function forceScale(Request $request)
+    public function forceScale(AutoScalingRequest $request)
     {
-        $request->validate([
-            'action' => 'required|in:scale_up,scale_down,optimize',
-            'reason' => 'required|string|max:255',
-        ]);
+        $validated = $request->validated();
 
         $recommendations = [[
-            'type' => $request->action,
-            'reason' => $request->reason,
+            'type' => $validated['action'],
+            'reason' => $validated['reason'] ?? 'Manual scaling',
             'priority' => 'manual',
-            'action' => match ($request->action) {
+            'instances' => $validated['instances'] ?? 1,
+            'action' => match ($validated['action']) {
                 'scale_up' => 'increase_workers',
                 'scale_down' => 'decrease_workers',
-                'optimize' => 'enable_caching',
             },
         ]];
 

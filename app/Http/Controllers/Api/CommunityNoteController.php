@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CommunityNoteRequest;
+use App\Http\Resources\CommunityNoteResource;
 use App\Models\CommunityNote;
 use App\Models\Post;
 use App\Services\CommunityNoteService;
@@ -15,29 +17,23 @@ class CommunityNoteController extends Controller
         private CommunityNoteService $communityNoteService
     ) {}
 
-    public function store(Request $request, Post $post): JsonResponse
+    public function store(CommunityNoteRequest $request, Post $post): JsonResponse
     {
-        $request->validate([
-            'content' => 'required|string|min:10|max:500',
-            'sources' => 'nullable|array|max:3',
-            'sources.*' => 'url|max:255',
-        ]);
+        $validated = $request->validated();
 
         try {
             $note = $this->communityNoteService->createNote(
                 $post,
                 $request->user(),
-                $request->only(['content', 'sources'])
+                $validated
             );
 
             return response()->json([
                 'message' => 'Community note created successfully',
-                'note' => $note->load('author:id,name,username'),
+                'note' => new CommunityNoteResource($note->load('author')),
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-            ], 422);
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 
@@ -66,7 +62,7 @@ class CommunityNoteController extends Controller
         $notes = $this->communityNoteService->getNotesForPost($post);
 
         return response()->json([
-            'notes' => $notes,
+            'notes' => CommunityNoteResource::collection($notes)
         ]);
     }
 
@@ -74,6 +70,8 @@ class CommunityNoteController extends Controller
     {
         $notes = $this->communityNoteService->getPendingNotes();
 
-        return response()->json($notes);
+        return response()->json([
+            'notes' => CommunityNoteResource::collection($notes)
+        ]);
     }
 }
