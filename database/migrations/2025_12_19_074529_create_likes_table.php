@@ -17,6 +17,9 @@ return new class () extends Migration {
             $table->timestamps();
 
             $table->unique(['user_id', 'likeable_id', 'likeable_type']);
+            // Performance indexes
+            $table->index(['likeable_type', 'likeable_id', 'created_at'], 'likes_entity_idx');
+            $table->index(['likeable_id', 'likeable_type', 'created_at'], 'likes_polymorphic_index');
         });
     }
 

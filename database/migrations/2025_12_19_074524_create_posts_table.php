@@ -37,6 +37,11 @@ return new class () extends Migration {
             $table->index(['is_flagged', 'is_hidden', 'is_deleted']);
             $table->index('quoted_post_id');
             $table->index(['thread_id', 'thread_position']);
+            // Performance indexes
+            $table->index(['user_id', 'is_draft', 'published_at'], 'posts_timeline_idx');
+            $table->index(['published_at', 'likes_count'], 'posts_trending_idx');
+            $table->index(['created_at', 'user_id'], 'posts_timeline_index');
+            $table->index(['user_id', 'created_at'], 'posts_user_timeline_index');
         });
     }
 

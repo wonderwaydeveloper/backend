@@ -21,6 +21,8 @@ return new class () extends Migration {
             $table->timestamps();
 
             $table->index(['user_id', 'read_at']);
+            // Performance indexes
+            $table->index(['user_id', 'read_at', 'created_at'], 'notifications_user_idx');
         });
     }
 

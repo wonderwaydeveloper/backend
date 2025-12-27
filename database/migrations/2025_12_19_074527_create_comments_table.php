@@ -17,6 +17,9 @@ return new class () extends Migration {
             $table->text('content');
             $table->unsignedInteger('likes_count')->default(0);
             $table->timestamps();
+            
+            // Performance indexes
+            $table->index(['post_id', 'created_at'], 'comments_post_index');
         });
     }
 

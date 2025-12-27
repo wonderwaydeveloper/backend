@@ -17,6 +17,9 @@ return new class () extends Migration {
             $table->timestamps();
 
             $table->unique(['follower_id', 'following_id']);
+            // Performance indexes
+            $table->index(['follower_id', 'created_at'], 'follows_timeline_idx');
+            $table->index(['follower_id', 'created_at'], 'follows_timeline_index');
         });
     }
 

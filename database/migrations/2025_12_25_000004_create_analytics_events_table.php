@@ -22,6 +22,8 @@ return new class extends Migration
             $table->index(['event_type', 'created_at']);
             $table->index(['entity_type', 'entity_id']);
             $table->index(['user_id', 'created_at']);
+            // Performance indexes
+            $table->index(['entity_type', 'entity_id', 'event_type'], 'analytics_entity_event_idx');
         });
     }
 
