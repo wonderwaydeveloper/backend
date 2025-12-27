@@ -28,6 +28,8 @@ return new class () extends Migration {
             $table->foreignId('quoted_post_id')->nullable()->constrained('posts')->onDelete('cascade');
             $table->foreignId('thread_id')->nullable()->constrained('posts')->onDelete('cascade');
             $table->integer('thread_position')->nullable();
+            $table->foreignId('community_id')->nullable()->constrained()->nullOnDelete();
+            $table->boolean('is_pinned')->default(false);
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
 
@@ -37,6 +39,8 @@ return new class () extends Migration {
             $table->index(['is_flagged', 'is_hidden', 'is_deleted']);
             $table->index('quoted_post_id');
             $table->index(['thread_id', 'thread_position']);
+            $table->index(['community_id', 'created_at']);
+            $table->index(['community_id', 'is_pinned']);
             // Performance indexes
             $table->index(['user_id', 'is_draft', 'published_at'], 'posts_timeline_idx');
             $table->index(['published_at', 'likes_count'], 'posts_trending_idx');

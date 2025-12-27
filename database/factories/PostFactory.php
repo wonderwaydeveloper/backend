@@ -17,6 +17,8 @@ class PostFactory extends Factory
             'likes_count' => 0,
             'comments_count' => 0,
             'reply_settings' => 'everyone',
+            'community_id' => null,
+            'is_pinned' => false,
         ];
     }
 

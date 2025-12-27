@@ -17,6 +17,7 @@ class Post extends Model
 
     protected $fillable = [
         'user_id',
+        'community_id',
         'content',
         'image',
         'video',
@@ -24,6 +25,7 @@ class Post extends Model
         'likes_count',
         'comments_count',
         'is_draft',
+        'is_pinned',
         'published_at',
         'reply_settings',
         'thread_id',
@@ -37,6 +39,7 @@ class Post extends Model
         'likes_count' => 'integer',
         'comments_count' => 'integer',
         'is_draft' => 'boolean',
+        'is_pinned' => 'boolean',
         'published_at' => 'datetime',
         'last_edited_at' => 'datetime',
         'is_edited' => 'boolean',
@@ -270,5 +273,20 @@ class Post extends Model
     public function hasCommunityNotes(): bool
     {
         return $this->approvedCommunityNotes()->exists();
+    }
+
+    public function community()
+    {
+        return $this->belongsTo(Community::class);
+    }
+
+    public function scopeInCommunity($query, $communityId)
+    {
+        return $query->where('community_id', $communityId);
+    }
+
+    public function scopePinned($query)
+    {
+        return $query->where('is_pinned', true);
     }
 }

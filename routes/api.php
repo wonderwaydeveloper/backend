@@ -444,5 +444,21 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
             Route::get('/status', [PremiumController::class, 'getStatus']);
         });
     });
+
+    // Communities Routes
+    Route::prefix('communities')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\CommunityController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\Api\CommunityController::class, 'store']);
+        Route::get('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'show']);
+        Route::put('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'update']);
+        Route::delete('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'destroy']);
+        Route::post('/{community}/join', [\App\Http\Controllers\Api\CommunityController::class, 'join']);
+        Route::post('/{community}/leave', [\App\Http\Controllers\Api\CommunityController::class, 'leave']);
+        Route::get('/{community}/posts', [\App\Http\Controllers\Api\CommunityController::class, 'posts']);
+        Route::get('/{community}/members', [\App\Http\Controllers\Api\CommunityController::class, 'members']);
+        Route::get('/{community}/join-requests', [\App\Http\Controllers\Api\CommunityController::class, 'joinRequests']);
+        Route::post('/{community}/join-requests/{request}/approve', [\App\Http\Controllers\Api\CommunityController::class, 'approveJoinRequest']);
+        Route::post('/{community}/join-requests/{request}/reject', [\App\Http\Controllers\Api\CommunityController::class, 'rejectJoinRequest']);
+    });
 });
 
