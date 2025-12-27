@@ -58,14 +58,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'error' => 'Resource not found',
-                'message' => 'منبع مورد نظر یافت نشد',
+                'message' => 'Resource not found',
             ], 404);
         });
 
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e) {
             return response()->json([
                 'error' => 'Unauthenticated',
-                'message' => 'لطفا وارد شوید',
+                'message' => 'Please login',
             ], 401);
         });
     })->create();

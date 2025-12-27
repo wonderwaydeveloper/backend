@@ -1,11 +1,57 @@
 <?php
 
+use App\Http\Controllers\Api\ABTestController;
+use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AutoScalingController;
+use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\CommunityNoteController;
+use App\Http\Controllers\Api\ConversionController;
+use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\FollowController;
+use App\Http\Controllers\Api\FollowRequestController;
+use App\Http\Controllers\Api\GifController;
+use App\Http\Controllers\Api\GraphQLController;
+use App\Http\Controllers\Api\GroupChatController;
+use App\Http\Controllers\Api\HashtagController;
+use App\Http\Controllers\Api\ListController;
+use App\Http\Controllers\Api\MediaController;
+use App\Http\Controllers\Api\MentionController;
+use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ModerationController;
+use App\Http\Controllers\Api\MomentController;
+use App\Http\Controllers\Api\MonitoringController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\NotificationPreferenceController;
+use App\Http\Controllers\Api\OnlineStatusController;
+use App\Http\Controllers\Api\ParentalControlController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\PerformanceController;
+use App\Http\Controllers\Api\PerformanceDashboardController;
+use App\Http\Controllers\Api\PerformanceOptimizationController;
 use App\Http\Controllers\Api\PhoneAuthController;
+use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\PushNotificationController;
+use App\Http\Controllers\Api\RepostController;
+use App\Http\Controllers\Api\ScheduledPostController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SocialAuthController;
+use App\Http\Controllers\Api\SpaceController;
+use App\Http\Controllers\Api\StoryController;
+use App\Http\Controllers\Api\StreamingController;
+use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SuggestionController;
+use App\Http\Controllers\Api\ThreadController;
+use App\Http\Controllers\Api\TimelineController;
+use App\Http\Controllers\Api\TrendingController;
+use App\Http\Controllers\Api\TwoFactorController;
+use App\Http\Controllers\Api\VideoController;
+use App\Monetization\Controllers\AdvertisementController;
+use App\Monetization\Controllers\CreatorFundController;
+use App\Monetization\Controllers\PremiumController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes with security middleware
@@ -44,29 +90,29 @@ Route::prefix('auth/phone')->middleware(['advanced.rate.limit:phone,10,5'])->gro
 });
 
 Route::middleware('auth:sanctum')->prefix('auth/2fa')->group(function () {
-    Route::post('/enable', [App\Http\Controllers\Api\TwoFactorController::class, 'enable']);
-    Route::post('/verify', [App\Http\Controllers\Api\TwoFactorController::class, 'verify']);
-    Route::post('/disable', [App\Http\Controllers\Api\TwoFactorController::class, 'disable']);
-    Route::get('/backup-codes', [App\Http\Controllers\Api\TwoFactorController::class, 'backupCodes']);
+    Route::post('/enable', [TwoFactorController::class, 'enable']);
+    Route::post('/verify', [TwoFactorController::class, 'verify']);
+    Route::post('/disable', [TwoFactorController::class, 'disable']);
+    Route::get('/backup-codes', [TwoFactorController::class, 'backupCodes']);
 });
 
 Route::prefix('auth/password')->group(function () {
-    Route::post('/forgot', [App\Http\Controllers\Api\PasswordResetController::class, 'forgot']);
-    Route::post('/reset', [App\Http\Controllers\Api\PasswordResetController::class, 'reset']);
-    Route::post('/verify-token', [App\Http\Controllers\Api\PasswordResetController::class, 'verifyToken']);
+    Route::post('/forgot', [PasswordResetController::class, 'forgot']);
+    Route::post('/reset', [PasswordResetController::class, 'reset']);
+    Route::post('/verify-token', [PasswordResetController::class, 'verifyToken']);
 });
 
 Route::prefix('auth/social')->group(function () {
-    Route::get('/google', [App\Http\Controllers\Api\SocialAuthController::class, 'redirectToGoogle']);
-    Route::get('/google/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleGoogleCallback']);
-    Route::get('/github', [App\Http\Controllers\Api\SocialAuthController::class, 'redirectToGithub']);
-    Route::get('/github/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleGithubCallback']);
-    Route::get('/facebook', [App\Http\Controllers\Api\SocialAuthController::class, 'redirectToFacebook']);
-    Route::get('/facebook/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'handleFacebookCallback']);
+    Route::get('/google', [SocialAuthController::class, 'redirectToGoogle']);
+    Route::get('/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
+    Route::get('/github', [SocialAuthController::class, 'redirectToGithub']);
+    Route::get('/github/callback', [SocialAuthController::class, 'handleGithubCallback']);
+    Route::get('/facebook', [SocialAuthController::class, 'redirectToFacebook']);
+    Route::get('/facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
 });
 
 // GraphQL Endpoint
-Route::post('/graphql', [App\Http\Controllers\Api\GraphQLController::class, 'query'])
+Route::post('/graphql', [GraphQLController::class, 'query'])
     ->middleware(['auth:sanctum']);
 
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
@@ -83,70 +129,70 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/posts/{post}/publish', [PostController::class, 'publish']);
 
     // Video routes
-    Route::get('/videos/{video}/status', [App\Http\Controllers\Api\VideoController::class, 'status']);
+    Route::get('/videos/{video}/status', [VideoController::class, 'status']);
 
     // Community Notes routes
     Route::prefix('posts/{post}/community-notes')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\CommunityNoteController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\CommunityNoteController::class, 'store']);
+        Route::get('/', [CommunityNoteController::class, 'index']);
+        Route::post('/', [CommunityNoteController::class, 'store']);
     });
-    Route::post('/community-notes/{note}/vote', [App\Http\Controllers\Api\CommunityNoteController::class, 'vote']);
-    Route::get('/community-notes/pending', [App\Http\Controllers\Api\CommunityNoteController::class, 'pending']);
+    Route::post('/community-notes/{note}/vote', [CommunityNoteController::class, 'vote']);
+    Route::get('/community-notes/pending', [CommunityNoteController::class, 'pending']);
 
     // Analytics routes
     Route::prefix('analytics')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Api\AnalyticsController::class, 'dashboard']);
-        Route::get('/user', [App\Http\Controllers\Api\AnalyticsController::class, 'userAnalytics']);
-        Route::get('/posts/{post}', [App\Http\Controllers\Api\AnalyticsController::class, 'postAnalytics']);
+        Route::get('/dashboard', [AnalyticsController::class, 'dashboard']);
+        Route::get('/user', [AnalyticsController::class, 'userAnalytics']);
+        Route::get('/posts/{post}', [AnalyticsController::class, 'postAnalytics']);
     });
     
     // Public analytics tracking (no auth required)
-    Route::post('/analytics/track', [App\Http\Controllers\Api\AnalyticsController::class, 'trackEvent'])->withoutMiddleware(['auth:sanctum']);
+    Route::post('/analytics/track', [AnalyticsController::class, 'trackEvent'])->withoutMiddleware(['auth:sanctum']);
 
     // Performance Optimization routes
     Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Api\PerformanceOptimizationController::class, 'dashboard']);
-        Route::post('/cache/warmup', [App\Http\Controllers\Api\PerformanceOptimizationController::class, 'warmupCache']);
-        Route::delete('/cache/clear', [App\Http\Controllers\Api\PerformanceOptimizationController::class, 'clearCache']);
-        Route::get('/timeline/optimize', [App\Http\Controllers\Api\PerformanceOptimizationController::class, 'optimizeTimeline']);
+        Route::get('/dashboard', [PerformanceOptimizationController::class, 'dashboard']);
+        Route::post('/cache/warmup', [PerformanceOptimizationController::class, 'warmupCache']);
+        Route::delete('/cache/clear', [PerformanceOptimizationController::class, 'clearCache']);
+        Route::get('/timeline/optimize', [PerformanceOptimizationController::class, 'optimizeTimeline']);
     });
 
-    Route::post('/threads', [App\Http\Controllers\Api\ThreadController::class, 'create']);
-    Route::get('/threads/{post}', [App\Http\Controllers\Api\ThreadController::class, 'show']);
-    Route::post('/threads/{post}/add', [App\Http\Controllers\Api\ThreadController::class, 'addToThread']);
-    Route::get('/threads/{post}/stats', [App\Http\Controllers\Api\ThreadController::class, 'stats']);
+    Route::post('/threads', [ThreadController::class, 'create']);
+    Route::get('/threads/{post}', [ThreadController::class, 'show']);
+    Route::post('/threads/{post}/add', [ThreadController::class, 'addToThread']);
+    Route::get('/threads/{post}/stats', [ThreadController::class, 'stats']);
 
-    Route::post('/scheduled-posts', [App\Http\Controllers\Api\ScheduledPostController::class, 'store']);
-    Route::get('/scheduled-posts', [App\Http\Controllers\Api\ScheduledPostController::class, 'index']);
-    Route::delete('/scheduled-posts/{scheduledPost}', [App\Http\Controllers\Api\ScheduledPostController::class, 'destroy']);
+    Route::post('/scheduled-posts', [ScheduledPostController::class, 'store']);
+    Route::get('/scheduled-posts', [ScheduledPostController::class, 'index']);
+    Route::delete('/scheduled-posts/{scheduledPost}', [ScheduledPostController::class, 'destroy']);
 
-    Route::get('/gifs/search', [App\Http\Controllers\Api\GifController::class, 'search']);
-    Route::get('/gifs/trending', [App\Http\Controllers\Api\GifController::class, 'trending']);
+    Route::get('/gifs/search', [GifController::class, 'search']);
+    Route::get('/gifs/trending', [GifController::class, 'trending']);
 
-    Route::get('/bookmarks', [App\Http\Controllers\Api\BookmarkController::class, 'index']);
-    Route::post('/posts/{post}/bookmark', [App\Http\Controllers\Api\BookmarkController::class, 'toggle']);
+    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+    Route::post('/posts/{post}/bookmark', [BookmarkController::class, 'toggle']);
 
-    Route::post('/posts/{post}/repost', [App\Http\Controllers\Api\RepostController::class, 'repost']);
+    Route::post('/posts/{post}/repost', [RepostController::class, 'repost']);
     Route::get('/posts/{post}/quotes', [PostController::class, 'quotes']);
-    Route::get('/my-reposts', [App\Http\Controllers\Api\RepostController::class, 'myReposts']);
+    Route::get('/my-reposts', [RepostController::class, 'myReposts']);
 
-    Route::get('/stories', [App\Http\Controllers\Api\StoryController::class, 'index']);
-    Route::post('/stories', [App\Http\Controllers\Api\StoryController::class, 'store']);
-    Route::delete('/stories/{story}', [App\Http\Controllers\Api\StoryController::class, 'destroy']);
-    Route::post('/stories/{story}/view', [App\Http\Controllers\Api\StoryController::class, 'view']);
+    Route::get('/stories', [StoryController::class, 'index']);
+    Route::post('/stories', [StoryController::class, 'store']);
+    Route::delete('/stories/{story}', [StoryController::class, 'destroy']);
+    Route::post('/stories/{story}/view', [StoryController::class, 'view']);
 
     Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
     Route::post('/posts/{post}/comments', [CommentController::class, 'store']);
 
     // Streaming routes
     Route::prefix('streams')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\StreamingController::class, 'live']);
-        Route::post('/', [App\Http\Controllers\Api\StreamingController::class, 'create']);
-        Route::post('/{stream}/start', [App\Http\Controllers\Api\StreamingController::class, 'startById']);
-        Route::post('/{stream}/end', [App\Http\Controllers\Api\StreamingController::class, 'endById']);
-        Route::post('/{stream}/join', [App\Http\Controllers\Api\StreamingController::class, 'joinById']);
-        Route::post('/{stream}/leave', [App\Http\Controllers\Api\StreamingController::class, 'leaveById']);
-        Route::get('/{stream}/stats', [App\Http\Controllers\Api\StreamingController::class, 'statsById']);
+        Route::get('/', [StreamingController::class, 'live']);
+        Route::post('/', [StreamingController::class, 'create']);
+        Route::post('/{stream}/start', [StreamingController::class, 'startById']);
+        Route::post('/{stream}/end', [StreamingController::class, 'endById']);
+        Route::post('/{stream}/join', [StreamingController::class, 'joinById']);
+        Route::post('/{stream}/leave', [StreamingController::class, 'leaveById']);
+        Route::get('/{stream}/stats', [StreamingController::class, 'statsById']);
     });
 
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
@@ -155,10 +201,10 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
 
     Route::post('/users/{user}/follow', [FollowController::class, 'follow'])->middleware('throttle:30,1');
-    Route::post('/users/{user}/follow-request', [App\Http\Controllers\Api\FollowRequestController::class, 'send']);
-    Route::get('/follow-requests', [App\Http\Controllers\Api\FollowRequestController::class, 'index']);
-    Route::post('/follow-requests/{followRequest}/accept', [App\Http\Controllers\Api\FollowRequestController::class, 'accept']);
-    Route::post('/follow-requests/{followRequest}/reject', [App\Http\Controllers\Api\FollowRequestController::class, 'reject']);
+    Route::post('/users/{user}/follow-request', [FollowRequestController::class, 'send']);
+    Route::get('/follow-requests', [FollowRequestController::class, 'index']);
+    Route::post('/follow-requests/{followRequest}/accept', [FollowRequestController::class, 'accept']);
+    Route::post('/follow-requests/{followRequest}/reject', [FollowRequestController::class, 'reject']);
     Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
     Route::get('/users/{user}/following', [FollowController::class, 'following']);
 
@@ -166,282 +212,282 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::get('/users/{user}/posts', [ProfileController::class, 'posts']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy']);
-    Route::get('/search/users', [App\Http\Controllers\Api\SearchController::class, 'users']);
-    Route::get('/search/posts', [App\Http\Controllers\Api\SearchController::class, 'posts']);
-    Route::get('/search/hashtags', [App\Http\Controllers\Api\SearchController::class, 'hashtags']);
-    Route::get('/search/all', [App\Http\Controllers\Api\SearchController::class, 'all']);
-    Route::get('/search/advanced', [App\Http\Controllers\Api\SearchController::class, 'advanced']);
-    Route::get('/search/suggestions', [App\Http\Controllers\Api\SearchController::class, 'suggestions']);
-    Route::get('/suggestions/users', [App\Http\Controllers\Api\SuggestionController::class, 'users']);
+    Route::get('/search/users', [SearchController::class, 'users']);
+    Route::get('/search/posts', [SearchController::class, 'posts']);
+    Route::get('/search/hashtags', [SearchController::class, 'hashtags']);
+    Route::get('/search/all', [SearchController::class, 'all']);
+    Route::get('/search/advanced', [SearchController::class, 'advanced']);
+    Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
+    Route::get('/suggestions/users', [SuggestionController::class, 'users']);
 
-    Route::post('/devices/register', [App\Http\Controllers\Api\DeviceController::class, 'register']);
-    Route::delete('/devices/{token}', [App\Http\Controllers\Api\DeviceController::class, 'unregister']);
+    Route::post('/devices/register', [DeviceController::class, 'register']);
+    Route::delete('/devices/{token}', [DeviceController::class, 'unregister']);
 
     Route::prefix('groups')->group(function () {
-        Route::post('/', [App\Http\Controllers\Api\GroupChatController::class, 'create']);
-        Route::get('/my-groups', [App\Http\Controllers\Api\GroupChatController::class, 'myGroups']);
-        Route::post('/{group}/members', [App\Http\Controllers\Api\GroupChatController::class, 'addMember']);
-        Route::delete('/{group}/members/{userId}', [App\Http\Controllers\Api\GroupChatController::class, 'removeMember']);
-        Route::put('/{group}', [App\Http\Controllers\Api\GroupChatController::class, 'update']);
-        Route::post('/{group}/messages', [App\Http\Controllers\Api\GroupChatController::class, 'sendMessage']);
-        Route::get('/{group}/messages', [App\Http\Controllers\Api\GroupChatController::class, 'messages']);
+        Route::post('/', [GroupChatController::class, 'create']);
+        Route::get('/my-groups', [GroupChatController::class, 'myGroups']);
+        Route::post('/{group}/members', [GroupChatController::class, 'addMember']);
+        Route::delete('/{group}/members/{userId}', [GroupChatController::class, 'removeMember']);
+        Route::put('/{group}', [GroupChatController::class, 'update']);
+        Route::post('/{group}/messages', [GroupChatController::class, 'sendMessage']);
+        Route::get('/{group}/messages', [GroupChatController::class, 'messages']);
     });
 
     Route::prefix('messages')->group(function () {
-        Route::get('/conversations', [App\Http\Controllers\Api\MessageController::class, 'conversations']);
-        Route::get('/users/{user}', [App\Http\Controllers\Api\MessageController::class, 'messages']);
-        Route::post('/users/{user}', [App\Http\Controllers\Api\MessageController::class, 'send'])->middleware('throttle:60,1');
-        Route::post('/users/{user}/typing', [App\Http\Controllers\Api\MessageController::class, 'typing']);
-        Route::post('/{message}/read', [App\Http\Controllers\Api\MessageController::class, 'markAsRead']);
-        Route::get('/unread-count', [App\Http\Controllers\Api\MessageController::class, 'unreadCount']);
+        Route::get('/conversations', [MessageController::class, 'conversations']);
+        Route::get('/users/{user}', [MessageController::class, 'messages']);
+        Route::post('/users/{user}', [MessageController::class, 'send'])->middleware('throttle:60,1');
+        Route::post('/users/{user}/typing', [MessageController::class, 'typing']);
+        Route::post('/{message}/read', [MessageController::class, 'markAsRead']);
+        Route::get('/unread-count', [MessageController::class, 'unreadCount']);
     });
 
-    Route::get('/subscription/plans', [App\Http\Controllers\Api\SubscriptionController::class, 'plans']);
-    Route::get('/subscription/current', [App\Http\Controllers\Api\SubscriptionController::class, 'current']);
-    Route::post('/subscription/subscribe', [App\Http\Controllers\Api\SubscriptionController::class, 'subscribe']);
-    Route::post('/subscription/cancel', [App\Http\Controllers\Api\SubscriptionController::class, 'cancel']);
-    Route::get('/subscription/history', [App\Http\Controllers\Api\SubscriptionController::class, 'history']);
+    Route::get('/subscription/plans', [SubscriptionController::class, 'plans']);
+    Route::get('/subscription/current', [SubscriptionController::class, 'current']);
+    Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe']);
+    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel']);
+    Route::get('/subscription/history', [SubscriptionController::class, 'history']);
 
-    Route::get('/hashtags/trending', [App\Http\Controllers\Api\HashtagController::class, 'trending']);
-    Route::get('/hashtags/search', [App\Http\Controllers\Api\HashtagController::class, 'search']);
-    Route::get('/hashtags/suggestions', [App\Http\Controllers\Api\HashtagController::class, 'suggestions']);
-    Route::get('/hashtags/{hashtag:slug}', [App\Http\Controllers\Api\HashtagController::class, 'show']);
+    Route::get('/hashtags/trending', [HashtagController::class, 'trending']);
+    Route::get('/hashtags/search', [HashtagController::class, 'search']);
+    Route::get('/hashtags/suggestions', [HashtagController::class, 'suggestions']);
+    Route::get('/hashtags/{hashtag:slug}', [HashtagController::class, 'show']);
 
     // Advanced Trending Routes
     Route::prefix('trending')->group(function () {
-        Route::get('/hashtags', [App\Http\Controllers\Api\TrendingController::class, 'hashtags']);
-        Route::get('/posts', [App\Http\Controllers\Api\TrendingController::class, 'posts']);
-        Route::get('/users', [App\Http\Controllers\Api\TrendingController::class, 'users']);
-        Route::get('/personalized', [App\Http\Controllers\Api\TrendingController::class, 'personalized']);
-        Route::get('/velocity/{type}/{id}', [App\Http\Controllers\Api\TrendingController::class, 'velocity']);
-        Route::get('/all', [App\Http\Controllers\Api\TrendingController::class, 'all']);
-        Route::get('/stats', [App\Http\Controllers\Api\TrendingController::class, 'stats']);
-        Route::post('/refresh', [App\Http\Controllers\Api\TrendingController::class, 'refresh']);
+        Route::get('/hashtags', [TrendingController::class, 'hashtags']);
+        Route::get('/posts', [TrendingController::class, 'posts']);
+        Route::get('/users', [TrendingController::class, 'users']);
+        Route::get('/personalized', [TrendingController::class, 'personalized']);
+        Route::get('/velocity/{type}/{id}', [TrendingController::class, 'velocity']);
+        Route::get('/all', [TrendingController::class, 'all']);
+        Route::get('/stats', [TrendingController::class, 'stats']);
+        Route::post('/refresh', [TrendingController::class, 'refresh']);
     });
 
     // Spaces (Audio Rooms) Routes
     Route::prefix('spaces')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\SpaceController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\SpaceController::class, 'store']);
-        Route::get('/{space}', [App\Http\Controllers\Api\SpaceController::class, 'show']);
-        Route::post('/{space}/join', [App\Http\Controllers\Api\SpaceController::class, 'join']);
-        Route::post('/{space}/leave', [App\Http\Controllers\Api\SpaceController::class, 'leave']);
-        Route::put('/{space}/participants/{participant}/role', [App\Http\Controllers\Api\SpaceController::class, 'updateRole']);
-        Route::post('/{space}/end', [App\Http\Controllers\Api\SpaceController::class, 'end']);
+        Route::get('/', [SpaceController::class, 'index']);
+        Route::post('/', [SpaceController::class, 'store']);
+        Route::get('/{space}', [SpaceController::class, 'show']);
+        Route::post('/{space}/join', [SpaceController::class, 'join']);
+        Route::post('/{space}/leave', [SpaceController::class, 'leave']);
+        Route::put('/{space}/participants/{participant}/role', [SpaceController::class, 'updateRole']);
+        Route::post('/{space}/end', [SpaceController::class, 'end']);
     });
 
     // Lists Routes
     Route::prefix('lists')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\ListController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\ListController::class, 'store']);
-        Route::get('/discover', [App\Http\Controllers\Api\ListController::class, 'discover']);
-        Route::get('/{list}', [App\Http\Controllers\Api\ListController::class, 'show']);
-        Route::put('/{list}', [App\Http\Controllers\Api\ListController::class, 'update']);
-        Route::delete('/{list}', [App\Http\Controllers\Api\ListController::class, 'destroy']);
-        Route::post('/{list}/members', [App\Http\Controllers\Api\ListController::class, 'addMember']);
-        Route::delete('/{list}/members/{user}', [App\Http\Controllers\Api\ListController::class, 'removeMember']);
-        Route::post('/{list}/subscribe', [App\Http\Controllers\Api\ListController::class, 'subscribe']);
-        Route::post('/{list}/unsubscribe', [App\Http\Controllers\Api\ListController::class, 'unsubscribe']);
-        Route::get('/{list}/posts', [App\Http\Controllers\Api\ListController::class, 'posts']);
+        Route::get('/', [ListController::class, 'index']);
+        Route::post('/', [ListController::class, 'store']);
+        Route::get('/discover', [ListController::class, 'discover']);
+        Route::get('/{list}', [ListController::class, 'show']);
+        Route::put('/{list}', [ListController::class, 'update']);
+        Route::delete('/{list}', [ListController::class, 'destroy']);
+        Route::post('/{list}/members', [ListController::class, 'addMember']);
+        Route::delete('/{list}/members/{user}', [ListController::class, 'removeMember']);
+        Route::post('/{list}/subscribe', [ListController::class, 'subscribe']);
+        Route::post('/{list}/unsubscribe', [ListController::class, 'unsubscribe']);
+        Route::get('/{list}/posts', [ListController::class, 'posts']);
     });
 
     // Poll routes
-    Route::post('/polls', [App\Http\Controllers\Api\PollController::class, 'store']);
-    Route::post('/polls/{poll}/vote/{option}', [App\Http\Controllers\Api\PollController::class, 'vote']);
-    Route::get('/polls/{poll}/results', [App\Http\Controllers\Api\PollController::class, 'results']);
+    Route::post('/polls', [PollController::class, 'store']);
+    Route::post('/polls/{poll}/vote/{option}', [PollController::class, 'vote']);
+    Route::get('/polls/{poll}/results', [PollController::class, 'results']);
 
     Route::prefix('notifications')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\NotificationController::class, 'index']);
-        Route::get('/unread', [App\Http\Controllers\Api\NotificationController::class, 'unread']);
-        Route::get('/unread-count', [App\Http\Controllers\Api\NotificationController::class, 'unreadCount']);
-        Route::post('/{notification}/read', [App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
-        Route::post('/mark-all-read', [App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::get('/unread', [NotificationController::class, 'unread']);
+        Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 
     Route::prefix('parental')->group(function () {
-        Route::post('/link-child', [App\Http\Controllers\Api\ParentalControlController::class, 'linkChild']);
-        Route::post('/links/{link}/approve', [App\Http\Controllers\Api\ParentalControlController::class, 'approveLink']);
-        Route::post('/links/{link}/reject', [App\Http\Controllers\Api\ParentalControlController::class, 'rejectLink']);
-        Route::get('/settings', [App\Http\Controllers\Api\ParentalControlController::class, 'getSettings']);
-        Route::put('/children/{child}/settings', [App\Http\Controllers\Api\ParentalControlController::class, 'updateSettings']);
-        Route::get('/children', [App\Http\Controllers\Api\ParentalControlController::class, 'getChildren']);
-        Route::get('/parents', [App\Http\Controllers\Api\ParentalControlController::class, 'getParents']);
-        Route::get('/child/{child}/activity', [App\Http\Controllers\Api\ParentalControlController::class, 'childActivity']);
-        Route::post('/child/{child}/block-content', [App\Http\Controllers\Api\ParentalControlController::class, 'blockContent']);
+        Route::post('/link-child', [ParentalControlController::class, 'linkChild']);
+        Route::post('/links/{link}/approve', [ParentalControlController::class, 'approveLink']);
+        Route::post('/links/{link}/reject', [ParentalControlController::class, 'rejectLink']);
+        Route::get('/settings', [ParentalControlController::class, 'getSettings']);
+        Route::put('/children/{child}/settings', [ParentalControlController::class, 'updateSettings']);
+        Route::get('/children', [ParentalControlController::class, 'getChildren']);
+        Route::get('/parents', [ParentalControlController::class, 'getParents']);
+        Route::get('/child/{child}/activity', [ParentalControlController::class, 'childActivity']);
+        Route::post('/child/{child}/block-content', [ParentalControlController::class, 'blockContent']);
     });
 
     // Performance & Monitoring
     Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Api\PerformanceController::class, 'dashboard']);
-        Route::get('/timeline/optimized', [App\Http\Controllers\Api\PerformanceController::class, 'optimizeTimeline']);
-        Route::post('/cache/warmup', [App\Http\Controllers\Api\PerformanceController::class, 'warmupCache']);
-        Route::delete('/cache/clear', [App\Http\Controllers\Api\PerformanceController::class, 'clearCache']);
+        Route::get('/dashboard', [PerformanceController::class, 'dashboard']);
+        Route::get('/timeline/optimized', [PerformanceController::class, 'optimizeTimeline']);
+        Route::post('/cache/warmup', [PerformanceController::class, 'warmupCache']);
+        Route::delete('/cache/clear', [PerformanceController::class, 'clearCache']);
     });
 
     // Performance Dashboard Routes
     Route::prefix('performance-dashboard')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Api\PerformanceDashboardController::class, 'dashboard']);
-        Route::get('/metrics', [App\Http\Controllers\Api\PerformanceDashboardController::class, 'metrics']);
-        Route::get('/api-stats', [App\Http\Controllers\Api\PerformanceDashboardController::class, 'apiStats']);
-        Route::get('/real-time', [App\Http\Controllers\Api\PerformanceDashboardController::class, 'realTimeMetrics']);
-        Route::get('/health', [App\Http\Controllers\Api\PerformanceDashboardController::class, 'systemHealth']);
+        Route::get('/dashboard', [PerformanceDashboardController::class, 'dashboard']);
+        Route::get('/metrics', [PerformanceDashboardController::class, 'metrics']);
+        Route::get('/api-stats', [PerformanceDashboardController::class, 'apiStats']);
+        Route::get('/real-time', [PerformanceDashboardController::class, 'realTimeMetrics']);
+        Route::get('/health', [PerformanceDashboardController::class, 'systemHealth']);
     });
 
     // Monitoring routes (add admin middleware in production)
     Route::prefix('monitoring')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\Api\MonitoringController::class, 'dashboard']);
-        Route::get('/metrics', [App\Http\Controllers\Api\MonitoringController::class, 'metrics']);
-        Route::get('/errors', [App\Http\Controllers\Api\MonitoringController::class, 'errors']);
-        Route::get('/performance', [App\Http\Controllers\Api\MonitoringController::class, 'performance']);
-        Route::get('/database', [App\Http\Controllers\Api\MonitoringController::class, 'database']);
-        Route::get('/cache', [App\Http\Controllers\Api\MonitoringController::class, 'cache']);
-        Route::get('/queue', [App\Http\Controllers\Api\MonitoringController::class, 'queue']);
+        Route::get('/dashboard', [MonitoringController::class, 'dashboard']);
+        Route::get('/metrics', [MonitoringController::class, 'metrics']);
+        Route::get('/errors', [MonitoringController::class, 'errors']);
+        Route::get('/performance', [MonitoringController::class, 'performance']);
+        Route::get('/database', [MonitoringController::class, 'database']);
+        Route::get('/cache', [MonitoringController::class, 'cache']);
+        Route::get('/queue', [MonitoringController::class, 'queue']);
     });
 
-    Route::post('/users/{user}/block', [App\Http\Controllers\Api\ProfileController::class, 'block']);
-    Route::post('/users/{user}/unblock', [App\Http\Controllers\Api\ProfileController::class, 'unblock']);
-    Route::post('/users/{user}/mute', [App\Http\Controllers\Api\ProfileController::class, 'mute']);
-    Route::post('/users/{user}/unmute', [App\Http\Controllers\Api\ProfileController::class, 'unmute']);
+    Route::post('/users/{user}/block', [ProfileController::class, 'block']);
+    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock']);
+    Route::post('/users/{user}/mute', [ProfileController::class, 'mute']);
+    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute']);
 
     // Phase 3: Notification Preferences
     Route::prefix('notifications/preferences')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\NotificationPreferenceController::class, 'index']);
-        Route::put('/', [App\Http\Controllers\Api\NotificationPreferenceController::class, 'update']);
-        Route::put('/{type}', [App\Http\Controllers\Api\NotificationPreferenceController::class, 'updateType']);
-        Route::put('/{type}/{category}', [App\Http\Controllers\Api\NotificationPreferenceController::class, 'updateSpecific']);
+        Route::get('/', [NotificationPreferenceController::class, 'index']);
+        Route::put('/', [NotificationPreferenceController::class, 'update']);
+        Route::put('/{type}', [NotificationPreferenceController::class, 'updateType']);
+        Route::put('/{type}/{category}', [NotificationPreferenceController::class, 'updateSpecific']);
     });
 
     // Phase 3: Media Upload
     Route::prefix('media')->group(function () {
-        Route::post('/upload/image', [App\Http\Controllers\Api\MediaController::class, 'uploadImage']);
-        Route::post('/upload/video', [App\Http\Controllers\Api\MediaController::class, 'uploadVideo']);
-        Route::post('/upload/document', [App\Http\Controllers\Api\MediaController::class, 'uploadDocument']);
-        Route::delete('/delete', [App\Http\Controllers\Api\MediaController::class, 'deleteMedia']);
+        Route::post('/upload/image', [MediaController::class, 'uploadImage']);
+        Route::post('/upload/video', [MediaController::class, 'uploadVideo']);
+        Route::post('/upload/document', [MediaController::class, 'uploadDocument']);
+        Route::delete('/delete', [MediaController::class, 'deleteMedia']);
     });
 
     // Phase 3: Content Moderation
     Route::prefix('moderation')->group(function () {
-        Route::post('/report', [App\Http\Controllers\Api\ModerationController::class, 'reportContent']);
-        Route::get('/reports', [App\Http\Controllers\Api\ModerationController::class, 'getReports']); // Admin only
-        Route::put('/reports/{report}', [App\Http\Controllers\Api\ModerationController::class, 'updateReportStatus']); // Admin only
-        Route::get('/stats', [App\Http\Controllers\Api\ModerationController::class, 'getContentStats']); // Admin only
+        Route::post('/report', [ModerationController::class, 'reportContent']);
+        Route::get('/reports', [ModerationController::class, 'getReports']); // Admin only
+        Route::put('/reports/{report}', [ModerationController::class, 'updateReportStatus']); // Admin only
+        Route::get('/stats', [ModerationController::class, 'getContentStats']); // Admin only
     });
 
     // Phase 3: Push Notifications
     Route::prefix('push')->group(function () {
-        Route::post('/register', [App\Http\Controllers\Api\PushNotificationController::class, 'registerDevice']);
-        Route::delete('/unregister/{token}', [App\Http\Controllers\Api\PushNotificationController::class, 'unregisterDevice']);
-        Route::post('/test', [App\Http\Controllers\Api\PushNotificationController::class, 'testNotification']);
-        Route::get('/devices', [App\Http\Controllers\Api\PushNotificationController::class, 'getDevices']);
+        Route::post('/register', [PushNotificationController::class, 'registerDevice']);
+        Route::delete('/unregister/{token}', [PushNotificationController::class, 'unregisterDevice']);
+        Route::post('/test', [PushNotificationController::class, 'testNotification']);
+        Route::get('/devices', [PushNotificationController::class, 'getDevices']);
     });
 
     // Mention System
     Route::prefix('mentions')->group(function () {
-        Route::get('/search-users', [App\Http\Controllers\Api\MentionController::class, 'searchUsers']);
-        Route::get('/my-mentions', [App\Http\Controllers\Api\MentionController::class, 'getUserMentions']);
-        Route::get('/{type}/{id}', [App\Http\Controllers\Api\MentionController::class, 'getMentions'])
+        Route::get('/search-users', [MentionController::class, 'searchUsers']);
+        Route::get('/my-mentions', [MentionController::class, 'getUserMentions']);
+        Route::get('/{type}/{id}', [MentionController::class, 'getMentions'])
             ->where('type', 'post|comment');
     });
 
     // Real-time Features
     Route::prefix('realtime')->group(function () {
-        Route::post('/status', [App\Http\Controllers\Api\OnlineStatusController::class, 'updateStatus']);
-        Route::get('/online-users', [App\Http\Controllers\Api\OnlineStatusController::class, 'getOnlineUsers']);
-        Route::get('/timeline', [App\Http\Controllers\Api\TimelineController::class, 'liveTimeline']);
-        Route::get('/posts/{post}', [App\Http\Controllers\Api\TimelineController::class, 'getPostUpdates']);
+        Route::post('/status', [OnlineStatusController::class, 'updateStatus']);
+        Route::get('/online-users', [OnlineStatusController::class, 'getOnlineUsers']);
+        Route::get('/timeline', [TimelineController::class, 'liveTimeline']);
+        Route::get('/posts/{post}', [TimelineController::class, 'getPostUpdates']);
     });
 
     // Moments Routes
     Route::prefix('moments')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\MomentController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\MomentController::class, 'store']);
-        Route::get('/featured', [App\Http\Controllers\Api\MomentController::class, 'featured']);
-        Route::get('/my-moments', [App\Http\Controllers\Api\MomentController::class, 'myMoments']);
-        Route::get('/{moment}', [App\Http\Controllers\Api\MomentController::class, 'show']);
-        Route::put('/{moment}', [App\Http\Controllers\Api\MomentController::class, 'update']);
-        Route::delete('/{moment}', [App\Http\Controllers\Api\MomentController::class, 'destroy']);
-        Route::post('/{moment}/posts', [App\Http\Controllers\Api\MomentController::class, 'addPost']);
-        Route::delete('/{moment}/posts/{post}', [App\Http\Controllers\Api\MomentController::class, 'removePost']);
+        Route::get('/', [MomentController::class, 'index']);
+        Route::post('/', [MomentController::class, 'store']);
+        Route::get('/featured', [MomentController::class, 'featured']);
+        Route::get('/my-moments', [MomentController::class, 'myMoments']);
+        Route::get('/{moment}', [MomentController::class, 'show']);
+        Route::put('/{moment}', [MomentController::class, 'update']);
+        Route::delete('/{moment}', [MomentController::class, 'destroy']);
+        Route::post('/{moment}/posts', [MomentController::class, 'addPost']);
+        Route::delete('/{moment}/posts/{post}', [MomentController::class, 'removePost']);
     });
 
     // A/B Testing Routes (Admin only in production)
     Route::prefix('ab-tests')->group(function () {
-        Route::get('/', [App\Http\Controllers\Api\ABTestController::class, 'index']);
-        Route::post('/', [App\Http\Controllers\Api\ABTestController::class, 'store']);
-        Route::get('/{id}', [App\Http\Controllers\Api\ABTestController::class, 'show']);
-        Route::post('/{id}/start', [App\Http\Controllers\Api\ABTestController::class, 'start']);
-        Route::post('/{id}/stop', [App\Http\Controllers\Api\ABTestController::class, 'stop']);
-        Route::post('/assign', [App\Http\Controllers\Api\ABTestController::class, 'assign']);
-        Route::post('/track', [App\Http\Controllers\Api\ABTestController::class, 'track']);
+        Route::get('/', [ABTestController::class, 'index']);
+        Route::post('/', [ABTestController::class, 'store']);
+        Route::get('/{id}', [ABTestController::class, 'show']);
+        Route::post('/{id}/start', [ABTestController::class, 'start']);
+        Route::post('/{id}/stop', [ABTestController::class, 'stop']);
+        Route::post('/assign', [ABTestController::class, 'assign']);
+        Route::post('/track', [ABTestController::class, 'track']);
     });
 
     // Streaming Routes (Consolidated)
     Route::prefix('streaming')->group(function () {
-        Route::post('/create', [App\Http\Controllers\Api\StreamingController::class, 'create']);
-        Route::post('/start', [App\Http\Controllers\Api\StreamingController::class, 'start']);
-        Route::post('/end', [App\Http\Controllers\Api\StreamingController::class, 'end']);
-        Route::get('/live', [App\Http\Controllers\Api\StreamingController::class, 'live']);
-        Route::get('/my-streams', [App\Http\Controllers\Api\StreamingController::class, 'myStreams']);
-        Route::get('/{stream}', [App\Http\Controllers\Api\StreamingController::class, 'show']);
-        Route::delete('/{stream}', [App\Http\Controllers\Api\StreamingController::class, 'delete']);
-        Route::post('/{streamKey}/join', [App\Http\Controllers\Api\StreamingController::class, 'join']);
-        Route::post('/{streamKey}/leave', [App\Http\Controllers\Api\StreamingController::class, 'leave']);
-        Route::get('/{streamKey}/stats', [App\Http\Controllers\Api\StreamingController::class, 'stats']);
+        Route::post('/create', [StreamingController::class, 'create']);
+        Route::post('/start', [StreamingController::class, 'start']);
+        Route::post('/end', [StreamingController::class, 'end']);
+        Route::get('/live', [StreamingController::class, 'live']);
+        Route::get('/my-streams', [StreamingController::class, 'myStreams']);
+        Route::get('/{stream}', [StreamingController::class, 'show']);
+        Route::delete('/{stream}', [StreamingController::class, 'delete']);
+        Route::post('/{streamKey}/join', [StreamingController::class, 'join']);
+        Route::post('/{streamKey}/leave', [StreamingController::class, 'leave']);
+        Route::get('/{streamKey}/stats', [StreamingController::class, 'stats']);
     });
 
     // Remove duplicate Live Streaming Routes (use streaming above instead)
 
     // Conversion Tracking Routes
     Route::prefix('conversions')->group(function () {
-        Route::post('/track', [App\Http\Controllers\Api\ConversionController::class, 'track']);
-        Route::get('/funnel', [App\Http\Controllers\Api\ConversionController::class, 'funnel']);
-        Route::get('/by-source', [App\Http\Controllers\Api\ConversionController::class, 'bySource']);
-        Route::get('/user-journey', [App\Http\Controllers\Api\ConversionController::class, 'userJourney']);
-        Route::get('/cohort-analysis', [App\Http\Controllers\Api\ConversionController::class, 'cohortAnalysis']);
+        Route::post('/track', [ConversionController::class, 'track']);
+        Route::get('/funnel', [ConversionController::class, 'funnel']);
+        Route::get('/by-source', [ConversionController::class, 'bySource']);
+        Route::get('/user-journey', [ConversionController::class, 'userJourney']);
+        Route::get('/cohort-analysis', [ConversionController::class, 'cohortAnalysis']);
     });
 
     // Auto-scaling Routes (Admin only in production)
     Route::prefix('auto-scaling')->group(function () {
-        Route::get('/status', [App\Http\Controllers\Api\AutoScalingController::class, 'status']);
-        Route::get('/metrics', [App\Http\Controllers\Api\AutoScalingController::class, 'metrics']);
-        Route::get('/history', [App\Http\Controllers\Api\AutoScalingController::class, 'history']);
-        Route::get('/predict', [App\Http\Controllers\Api\AutoScalingController::class, 'predict']);
-        Route::post('/force-scale', [App\Http\Controllers\Api\AutoScalingController::class, 'forceScale']);
+        Route::get('/status', [AutoScalingController::class, 'status']);
+        Route::get('/metrics', [AutoScalingController::class, 'metrics']);
+        Route::get('/history', [AutoScalingController::class, 'history']);
+        Route::get('/predict', [AutoScalingController::class, 'predict']);
+        Route::post('/force-scale', [AutoScalingController::class, 'forceScale']);
     });
     // Monetization Routes
     Route::prefix('monetization')->group(function () {
         // Advertisement Routes
         Route::prefix('ads')->group(function () {
-            Route::post('/', [App\Monetization\Controllers\AdvertisementController::class, 'create']);
-            Route::get('/targeted', [App\Monetization\Controllers\AdvertisementController::class, 'getTargetedAds']);
-            Route::post('/{adId}/click', [App\Monetization\Controllers\AdvertisementController::class, 'recordClick']);
-            Route::get('/analytics', [App\Monetization\Controllers\AdvertisementController::class, 'getAnalytics']);
-            Route::post('/{adId}/pause', [App\Monetization\Controllers\AdvertisementController::class, 'pause']);
-            Route::post('/{adId}/resume', [App\Monetization\Controllers\AdvertisementController::class, 'resume']);
+            Route::post('/', [AdvertisementController::class, 'create']);
+            Route::get('/targeted', [AdvertisementController::class, 'getTargetedAds']);
+            Route::post('/{adId}/click', [AdvertisementController::class, 'recordClick']);
+            Route::get('/analytics', [AdvertisementController::class, 'getAnalytics']);
+            Route::post('/{adId}/pause', [AdvertisementController::class, 'pause']);
+            Route::post('/{adId}/resume', [AdvertisementController::class, 'resume']);
         });
 
         // Creator Fund Routes
         Route::prefix('creator-fund')->group(function () {
-            Route::get('/analytics', [App\Monetization\Controllers\CreatorFundController::class, 'getAnalytics']);
-            Route::post('/calculate-earnings', [App\Monetization\Controllers\CreatorFundController::class, 'calculateEarnings']);
-            Route::get('/earnings-history', [App\Monetization\Controllers\CreatorFundController::class, 'getEarningsHistory']);
-            Route::post('/request-payout', [App\Monetization\Controllers\CreatorFundController::class, 'requestPayout']);
+            Route::get('/analytics', [CreatorFundController::class, 'getAnalytics']);
+            Route::post('/calculate-earnings', [CreatorFundController::class, 'calculateEarnings']);
+            Route::get('/earnings-history', [CreatorFundController::class, 'getEarningsHistory']);
+            Route::post('/request-payout', [CreatorFundController::class, 'requestPayout']);
         });
 
         // Premium Subscription Routes
         Route::prefix('premium')->group(function () {
-            Route::get('/plans', [App\Monetization\Controllers\PremiumController::class, 'getPlans']);
-            Route::post('/subscribe', [App\Monetization\Controllers\PremiumController::class, 'subscribe']);
-            Route::post('/cancel', [App\Monetization\Controllers\PremiumController::class, 'cancel']);
-            Route::get('/status', [App\Monetization\Controllers\PremiumController::class, 'getStatus']);
+            Route::get('/plans', [PremiumController::class, 'getPlans']);
+            Route::post('/subscribe', [PremiumController::class, 'subscribe']);
+            Route::post('/cancel', [PremiumController::class, 'cancel']);
+            Route::get('/status', [PremiumController::class, 'getStatus']);
         });
     });
 });
 
 // Streaming Webhooks (No Auth Required)
 Route::prefix('streaming')->group(function () {
-    Route::post('/auth', [App\Http\Controllers\Api\StreamingController::class, 'auth']);
-    Route::post('/publish-done', [App\Http\Controllers\Api\StreamingController::class, 'publishDone']);
-    Route::post('/play', [App\Http\Controllers\Api\StreamingController::class, 'play']);
-    Route::post('/play-done', [App\Http\Controllers\Api\StreamingController::class, 'playDone']);
+    Route::post('/auth', [StreamingController::class, 'auth']);
+    Route::post('/publish-done', [StreamingController::class, 'publishDone']);
+    Route::post('/play', [StreamingController::class, 'play']);
+    Route::post('/play-done', [StreamingController::class, 'playDone']);
 });
