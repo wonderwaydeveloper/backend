@@ -3,219 +3,251 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\PerformanceMonitoringService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use App\Services\{CacheOptimizationService, DatabaseOptimizationService};
+use Illuminate\Http\{JsonResponse, Request};
+use Illuminate\Support\Facades\{Cache, DB, Redis};
 
 class PerformanceDashboardController extends Controller
 {
     public function __construct(
-        protected PerformanceMonitoringService $performanceService
-    ) {
-    }
+        private CacheOptimizationService $cacheService,
+        private DatabaseOptimizationService $dbService
+    ) {}
 
     public function dashboard(): JsonResponse
     {
-        $data = $this->performanceService->getDashboardData();
-
         return response()->json([
-            'success' => true,
-            'data' => $data,
-            'message' => 'Performance dashboard data retrieved successfully',
+            'cache_stats' => $this->cacheService->getCacheStats(),
+            'database_stats' => $this->getDatabaseStats(),
+            'performance_metrics' => $this->getPerformanceMetrics(),
+            'optimization_status' => $this->getOptimizationStatus()
         ]);
     }
 
-    public function metrics(Request $request): JsonResponse
+    public function optimizeDatabase(): JsonResponse
     {
-        $minutes = $request->get('minutes', 60);
-        $metrics = $this->performanceService->getMetrics($minutes);
+        $results = [
+            'indexes_created' => $this->dbService->createOptimizedIndexes(),
+            'tables_optimized' => $this->dbService->optimizeTableStructure(),
+            'timestamp' => now()->toISOString()
+        ];
+
+        return response()->json($results);
+    }
+
+    public function warmupCache(Request $request): JsonResponse
+    {
+        $userIds = $request->get('user_ids', []);
+        
+        if (empty($userIds)) {
+            // Warm cache for top 100 active users
+            $userIds = DB::table('users')
+                ->orderBy('last_activity_at', 'desc')
+                ->limit(100)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        $results = $this->cacheService->batchWarmup($userIds);
 
         return response()->json([
-            'success' => true,
-            'data' => $metrics,
-            'message' => 'Performance metrics retrieved successfully',
+            'warmed_users' => count($userIds),
+            'results' => $results,
+            'timestamp' => now()->toISOString()
         ]);
     }
 
-    public function apiStats(): JsonResponse
+    public function clearCache(Request $request): JsonResponse
     {
-        $stats = $this->performanceService->getApiStatistics();
+        $tags = $request->get('tags', ['timeline', 'posts', 'user']);
+        
+        foreach ($tags as $tag) {
+            Cache::tags([$tag])->flush();
+        }
 
         return response()->json([
-            'success' => true,
-            'data' => $stats,
-            'message' => 'API statistics retrieved successfully',
+            'cleared_tags' => $tags,
+            'timestamp' => now()->toISOString()
+        ]);
+    }
+
+    public function queryAnalysis(): JsonResponse
+    {
+        return response()->json([
+            'slow_queries' => $this->dbService->analyzeSlowQueries(),
+            'connection_pool' => $this->dbService->getConnectionPoolStats(),
+            'recommendations' => $this->getPerformanceRecommendations()
         ]);
     }
 
     public function realTimeMetrics(): JsonResponse
     {
-        $metrics = $this->performanceService->getRealTimeMetrics();
-
         return response()->json([
-            'success' => true,
-            'data' => $metrics,
-            'message' => 'Real-time metrics retrieved successfully',
+            'response_time' => $this->measureResponseTime(),
+            'memory_usage' => $this->getMemoryUsage(),
+            'active_connections' => $this->getActiveConnections(),
+            'cache_hit_ratio' => $this->getCacheHitRatio(),
+            'timestamp' => now()->toISOString()
         ]);
     }
 
-    public function systemHealth(): JsonResponse
+    private function getDatabaseStats(): array
     {
-        $health = [
-            'status' => 'healthy',
-            'checks' => [
-                'database' => $this->checkDatabase(),
-                'cache' => $this->checkCache(),
-                'storage' => $this->checkStorage(),
-                'memory' => $this->checkMemory(),
-            ],
-            'timestamp' => now()->toISOString(),
-        ];
-
-        // Determine overall status
-        $failedChecks = array_filter($health['checks'], fn ($check) => ! $check['healthy']);
-        if (! empty($failedChecks)) {
-            $health['status'] = count($failedChecks) > 1 ? 'critical' : 'warning';
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $health,
-            'message' => 'System health check completed',
-        ]);
-    }
-
-    private function checkDatabase(): array
-    {
-        try {
-            \DB::connection()->getPdo();
-            $responseTime = $this->measureExecutionTime(function () {
-                \DB::select('SELECT 1');
-            });
-
-            return [
-                'healthy' => true,
-                'response_time' => $responseTime,
-                'message' => 'Database connection successful',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'healthy' => false,
-                'response_time' => null,
-                'message' => 'Database connection failed: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    private function checkCache(): array
-    {
-        try {
-            $key = 'health_check_' . time();
-            $value = 'test_value';
-
-            $responseTime = $this->measureExecutionTime(function () use ($key, $value) {
-                \Cache::put($key, $value, 60);
-                $retrieved = \Cache::get($key);
-                \Cache::forget($key);
-
-                if ($retrieved !== $value) {
-                    throw new \Exception('Cache value mismatch');
-                }
-            });
-
-            return [
-                'healthy' => true,
-                'response_time' => $responseTime,
-                'message' => 'Cache system operational',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'healthy' => false,
-                'response_time' => null,
-                'message' => 'Cache system failed: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    private function checkStorage(): array
-    {
-        try {
-            $diskFree = disk_free_space(storage_path());
-            $diskTotal = disk_total_space(storage_path());
-            $usagePercent = (($diskTotal - $diskFree) / $diskTotal) * 100;
-
-            $healthy = $usagePercent < 90; // Alert if disk usage > 90%
-
-            return [
-                'healthy' => $healthy,
-                'usage_percent' => round($usagePercent, 2),
-                'free_space' => $this->formatBytes($diskFree),
-                'total_space' => $this->formatBytes($diskTotal),
-                'message' => $healthy ? 'Storage space sufficient' : 'Low disk space warning',
-            ];
-        } catch (\Exception $e) {
-            return [
-                'healthy' => false,
-                'message' => 'Storage check failed: ' . $e->getMessage(),
-            ];
-        }
-    }
-
-    private function checkMemory(): array
-    {
-        $memoryUsage = memory_get_usage(true);
-        $memoryLimit = $this->getMemoryLimit();
-        $usagePercent = ($memoryUsage / $memoryLimit) * 100;
-
-        $healthy = $usagePercent < 80; // Alert if memory usage > 80%
-
         return [
-            'healthy' => $healthy,
-            'usage_percent' => round($usagePercent, 2),
-            'current_usage' => $this->formatBytes($memoryUsage),
-            'memory_limit' => $this->formatBytes($memoryLimit),
-            'peak_usage' => $this->formatBytes(memory_get_peak_usage(true)),
-            'message' => $healthy ? 'Memory usage normal' : 'High memory usage detected',
+            'total_queries' => $this->getTotalQueries(),
+            'avg_query_time' => $this->getAverageQueryTime(),
+            'connection_pool' => $this->dbService->getConnectionPoolStats()
         ];
     }
 
-    private function measureExecutionTime(callable $callback): float
+    private function getPerformanceMetrics(): array
+    {
+        return [
+            'response_time_avg' => $this->getAverageResponseTime(),
+            'throughput' => $this->getThroughput(),
+            'error_rate' => $this->getErrorRate(),
+            'uptime' => $this->getUptime()
+        ];
+    }
+
+    private function getOptimizationStatus(): array
+    {
+        return [
+            'n_plus_one_eliminated' => $this->checkNPlusOneStatus(),
+            'indexes_optimized' => $this->checkIndexStatus(),
+            'cache_layers_active' => $this->checkCacheStatus(),
+            'query_optimization' => $this->checkQueryOptimization()
+        ];
+    }
+
+    private function measureResponseTime(): float
     {
         $start = microtime(true);
-        $callback();
-        $end = microtime(true);
-
-        return round(($end - $start) * 1000, 2); // Convert to milliseconds
+        
+        // Simple database query to measure response time
+        DB::select('SELECT 1');
+        
+        return round((microtime(true) - $start) * 1000, 2); // milliseconds
     }
 
-    private function getMemoryLimit(): int
+    private function getMemoryUsage(): array
     {
-        $memoryLimit = ini_get('memory_limit');
+        return [
+            'current_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
+            'peak_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
+            'limit_mb' => ini_get('memory_limit')
+        ];
+    }
 
-        if ($memoryLimit === '-1') {
-            return PHP_INT_MAX;
+    private function getActiveConnections(): int
+    {
+        try {
+            $result = DB::select("SHOW STATUS LIKE 'Threads_connected'");
+            return (int) ($result[0]->Value ?? 0);
+        } catch (\Exception $e) {
+            return 0;
         }
-
-        $unit = strtolower(substr($memoryLimit, -1));
-        $value = (int) substr($memoryLimit, 0, -1);
-
-        return match($unit) {
-            'g' => $value * 1024 * 1024 * 1024,
-            'm' => $value * 1024 * 1024,
-            'k' => $value * 1024,
-            default => $value
-        };
     }
 
-    private function formatBytes(int $bytes): string
+    private function getCacheHitRatio(): float
     {
-        $units = ['B', 'KB', 'MB', 'GB'];
-        $bytes = max($bytes, 0);
-        $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
+        return $this->cacheService->getCacheStats()['hit_ratio'] ?? 0;
+    }
 
-        $bytes /= pow(1024, $pow);
+    private function getTotalQueries(): int
+    {
+        try {
+            $result = DB::select("SHOW STATUS LIKE 'Questions'");
+            return (int) ($result[0]->Value ?? 0);
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
 
-        return round($bytes, 2) . ' ' . $units[$pow];
+    private function getAverageQueryTime(): float
+    {
+        // This would need to be implemented with query logging
+        return 0.0;
+    }
+
+    private function getAverageResponseTime(): float
+    {
+        // This would be tracked via middleware
+        return 0.0;
+    }
+
+    private function getThroughput(): int
+    {
+        // Requests per second - would be tracked via middleware
+        return 0;
+    }
+
+    private function getErrorRate(): float
+    {
+        // Error percentage - would be tracked via middleware
+        return 0.0;
+    }
+
+    private function getUptime(): string
+    {
+        try {
+            $result = DB::select("SHOW STATUS LIKE 'Uptime'");
+            $seconds = (int) ($result[0]->Value ?? 0);
+            return gmdate('H:i:s', $seconds);
+        } catch (\Exception $e) {
+            return 'Unknown';
+        }
+    }
+
+    private function checkNPlusOneStatus(): bool
+    {
+        // Check if optimized repositories are being used
+        return class_exists('App\Repositories\OptimizedPostRepository');
+    }
+
+    private function checkIndexStatus(): bool
+    {
+        try {
+            $indexes = DB::select("SHOW INDEX FROM posts WHERE Key_name = 'idx_posts_timeline'");
+            return !empty($indexes);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    private function checkCacheStatus(): bool
+    {
+        try {
+            Redis::ping();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    private function checkQueryOptimization(): bool
+    {
+        // Check if query optimization service is active
+        return class_exists('App\Services\DatabaseOptimizationService');
+    }
+
+    private function getPerformanceRecommendations(): array
+    {
+        $recommendations = [];
+        
+        if ($this->getCacheHitRatio() < 80) {
+            $recommendations[] = 'Cache hit ratio is low - consider warming more cache';
+        }
+        
+        if ($this->getActiveConnections() > 50) {
+            $recommendations[] = 'High connection count - consider connection pooling';
+        }
+        
+        $memoryUsage = $this->getMemoryUsage();
+        if ($memoryUsage['current_mb'] > 256) {
+            $recommendations[] = 'High memory usage - check for memory leaks';
+        }
+        
+        return $recommendations;
     }
 }

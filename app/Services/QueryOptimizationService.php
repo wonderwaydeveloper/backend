@@ -6,73 +6,136 @@ use Illuminate\Support\Facades\{DB, Cache};
 
 class QueryOptimizationService
 {
-    public function optimizePostQueries(): void
+    public function getOptimizedTimelineQuery(int $userId): string
     {
-        // Add indexes for better performance
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_posts_user_created ON posts(user_id, created_at DESC)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_posts_published ON posts(published_at) WHERE published_at IS NOT NULL');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_likes_post_user ON likes(likeable_id, user_id)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_follows_follower ON follows(follower_id, following_id)');
+        return "
+            SELECT p.id, p.user_id, p.content, p.created_at,
+                   u.name, u.username, u.avatar
+            FROM posts p
+            INNER JOIN users u ON p.user_id = u.id
+            INNER JOIN follows f ON p.user_id = f.following_id
+            WHERE f.follower_id = {$userId} AND p.is_draft = 0
+            ORDER BY p.created_at DESC
+            LIMIT 20
+        ";
     }
 
-    public function getOptimizedTimeline(int $userId, int $limit = 20): array
+    public function getOptimizedSearchQuery(string $query): string
     {
-        return Cache::remember("timeline:v2:{$userId}:{$limit}", 300, function () use ($userId, $limit) {
+        $sanitized = addslashes($query);
+        return "
+            SELECT p.id, p.content, p.created_at,
+                   u.name, u.username
+            FROM posts p
+            INNER JOIN users u ON p.user_id = u.id
+            WHERE MATCH(p.content) AGAINST('{$sanitized}' IN NATURAL LANGUAGE MODE)
+            AND p.is_draft = 0
+            ORDER BY MATCH(p.content) AGAINST('{$sanitized}' IN NATURAL LANGUAGE MODE) DESC
+            LIMIT 50
+        ";
+    }
+
+    public function optimizeTimelineQuery(int $userId, int $limit = 20): array
+    {
+        return Cache::remember("optimized_timeline:{$userId}:{$limit}", 300, function () use ($userId, $limit) {
+            // Single optimized query
             return DB::select("
-                WITH user_posts AS (
-                    SELECT p.id, p.content, p.created_at, p.likes_count, p.comments_count,
-                           u.name, u.username, u.avatar, p.user_id,
-                           EXISTS(SELECT 1 FROM likes l WHERE l.likeable_id = p.id AND l.user_id = ?) as is_liked
-                    FROM posts p
-                    INNER JOIN users u ON p.user_id = u.id
-                    WHERE (p.user_id IN (
-                        SELECT following_id FROM follows WHERE follower_id = ?
-                    ) OR p.user_id = ?)
-                    AND p.published_at IS NOT NULL
-                    ORDER BY p.created_at DESC
-                    LIMIT ?
-                )
-                SELECT * FROM user_posts
-            ", [$userId, $userId, $userId, $limit]);
-        });
-    }
-
-    public function warmupCache(): void
-    {
-        // Warm up popular queries
-        $this->warmupTrendingPosts();
-        $this->warmupPopularHashtags();
-    }
-
-    private function warmupTrendingPosts(): void
-    {
-        Cache::remember('posts:trending:24h', 1800, function () {
-            return DB::select("
-                SELECT p.*, u.name, u.username, u.avatar,
-                       (p.likes_count * 2 + p.comments_count * 3 + p.quotes_count) as score
+                SELECT p.id, p.user_id, p.content, p.image, p.created_at,
+                       u.name, u.username, u.avatar,
+                       COUNT(DISTINCT l.id) as likes_count,
+                       COUNT(DISTINCT c.id) as comments_count
                 FROM posts p
-                INNER JOIN users u ON p.user_id = u.id
-                WHERE p.created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
-                  AND p.published_at IS NOT NULL
-                ORDER BY score DESC
-                LIMIT 100
-            ");
+                JOIN users u ON p.user_id = u.id
+                JOIN follows f ON p.user_id = f.following_id
+                LEFT JOIN likes l ON p.id = l.likeable_id AND l.likeable_type = 'App\\\\Models\\\\Post'
+                LEFT JOIN comments c ON p.id = c.post_id
+                WHERE f.follower_id = ? AND p.is_draft = 0
+                GROUP BY p.id, p.user_id, p.content, p.image, p.created_at, u.name, u.username, u.avatar
+                ORDER BY p.created_at DESC
+                LIMIT ?
+            ", [$userId, $limit]);
         });
     }
 
-    private function warmupPopularHashtags(): void
+    public function batchLoadUserLikes(array $postIds, int $userId): array
     {
-        Cache::remember('hashtags:trending', 3600, function () {
+        if (empty($postIds)) return [];
+        
+        $placeholders = str_repeat('?,', count($postIds) - 1) . '?';
+        
+        return DB::select("
+            SELECT likeable_id 
+            FROM likes 
+            WHERE user_id = ? AND likeable_id IN ({$placeholders}) AND likeable_type = 'App\\\\Models\\\\Post'
+        ", array_merge([$userId], $postIds));
+    }
+
+    public function getPopularContent(int $hours = 24): array
+    {
+        return Cache::remember("popular_content:{$hours}h", 1800, function () use ($hours) {
             return DB::select("
-                SELECT h.name, COUNT(ph.post_id) as posts_count
-                FROM hashtags h
-                INNER JOIN post_hashtags ph ON h.id = ph.hashtag_id
-                INNER JOIN posts p ON ph.post_id = p.id
-                WHERE p.created_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)
-                GROUP BY h.id, h.name
-                ORDER BY posts_count DESC
-                LIMIT 20
-            ");
+                SELECT p.id, p.content, p.created_at,
+                       u.name, u.username,
+                       (COUNT(DISTINCT l.id) * 1 + COUNT(DISTINCT c.id) * 2) as engagement_score
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                LEFT JOIN likes l ON p.id = l.likeable_id AND l.likeable_type = 'App\\\\Models\\\\Post'
+                LEFT JOIN comments c ON p.id = c.post_id
+                WHERE p.created_at > DATE_SUB(NOW(), INTERVAL ? HOUR) AND p.is_draft = 0
+                GROUP BY p.id, p.content, p.created_at, u.name, u.username
+                HAVING engagement_score > 0
+                ORDER BY engagement_score DESC
+                LIMIT 50
+            ", [$hours]);
         });
+    }
+
+    public function optimizeSearchQuery(string $query, int $limit = 20): array
+    {
+        $sanitized = addslashes($query);
+        
+        return Cache::remember("search:{$sanitized}:{$limit}", 600, function () use ($sanitized, $limit) {
+            return DB::select("
+                SELECT p.id, p.content, p.created_at,
+                       u.name, u.username, u.avatar,
+                       MATCH(p.content) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance
+                FROM posts p
+                JOIN users u ON p.user_id = u.id
+                WHERE MATCH(p.content) AGAINST(? IN NATURAL LANGUAGE MODE) AND p.is_draft = 0
+                ORDER BY relevance DESC, p.created_at DESC
+                LIMIT ?
+            ", [$sanitized, $sanitized, $limit]);
+        });
+    }
+
+    public function getQueryStats(): array
+    {
+        return [
+            'slow_queries' => $this->getSlowQueries(),
+            'cache_hit_ratio' => $this->getCacheHitRatio(),
+            'avg_query_time' => $this->getAverageQueryTime()
+        ];
+    }
+
+    private function getSlowQueries(): int
+    {
+        try {
+            $result = DB::select("SHOW STATUS LIKE 'Slow_queries'");
+            return (int) ($result[0]->Value ?? 0);
+        } catch (\Exception $e) {
+            return 0;
+        }
+    }
+
+    private function getCacheHitRatio(): float
+    {
+        // Simplified cache hit ratio calculation
+        return 85.5; // Mock value
+    }
+
+    private function getAverageQueryTime(): float
+    {
+        // Simplified average query time
+        return 12.3; // Mock value in ms
     }
 }

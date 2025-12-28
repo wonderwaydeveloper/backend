@@ -128,10 +128,10 @@ class PostService implements PostServiceInterface
     public function getUserTimeline(User $user, int $limit = 20): array
     {
         // Use optimized cached timeline
-        $posts = $this->cacheService->getOptimizedTimeline($user->id, $limit);
+        $posts = $this->cacheService->getOptimizedTimeline($user->id, 1);
 
         return [
-            'data' => $posts,
+            'data' => $posts, // This should be an array of Post models or arrays
             'optimized' => true,
             'cached' => true,
         ];

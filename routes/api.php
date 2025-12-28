@@ -27,8 +27,10 @@ use App\Http\Controllers\Api\OnlineStatusController;
 use App\Http\Controllers\Api\ParentalControlController;
 use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PerformanceController;
+use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
 use App\Http\Controllers\Api\PerformanceOptimizationController;
+use App\Http\Controllers\Api\OptimizedTimelineController;
 use App\Http\Controllers\Api\PhoneAuthController;
 use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\PostController;
@@ -323,13 +325,28 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::delete('/cache/clear', [PerformanceController::class, 'clearCache']);
     });
 
+    // Final Performance Routes - Phase 2 Complete
+    Route::prefix('final-performance')->group(function () {
+        Route::get('/complete-optimization', [FinalPerformanceController::class, 'completeOptimization']);
+        Route::get('/system-status', [FinalPerformanceController::class, 'systemStatus']);
+        Route::post('/optimize-all', [FinalPerformanceController::class, 'optimizeAll']);
+        Route::get('/benchmark-results', [FinalPerformanceController::class, 'benchmarkResults']);
+    });
+
     // Performance Dashboard Routes
     Route::prefix('performance-dashboard')->group(function () {
         Route::get('/dashboard', [PerformanceDashboardController::class, 'dashboard']);
-        Route::get('/metrics', [PerformanceDashboardController::class, 'metrics']);
-        Route::get('/api-stats', [PerformanceDashboardController::class, 'apiStats']);
-        Route::get('/real-time', [PerformanceDashboardController::class, 'realTimeMetrics']);
-        Route::get('/health', [PerformanceDashboardController::class, 'systemHealth']);
+        Route::post('/optimize-database', [PerformanceDashboardController::class, 'optimizeDatabase']);
+        Route::post('/warmup-cache', [PerformanceDashboardController::class, 'warmupCache']);
+        Route::delete('/clear-cache', [PerformanceDashboardController::class, 'clearCache']);
+        Route::get('/query-analysis', [PerformanceDashboardController::class, 'queryAnalysis']);
+        Route::get('/real-time-metrics', [PerformanceDashboardController::class, 'realTimeMetrics']);
+    });
+
+    // Optimized Timeline Routes
+    Route::prefix('optimized')->group(function () {
+        Route::get('/timeline', [OptimizedTimelineController::class, 'index']);
+        Route::get('/timeline/live', [OptimizedTimelineController::class, 'liveTimeline']);
     });
 
     // Monitoring routes (add admin middleware in production)
