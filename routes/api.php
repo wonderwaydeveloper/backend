@@ -52,6 +52,18 @@ use App\Monetization\Controllers\CreatorFundController;
 use App\Monetization\Controllers\PremiumController;
 use Illuminate\Support\Facades\Route;
 
+// Security Admin Routes
+Route::prefix('admin/security')->middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\SecurityController::class, 'dashboard']);
+    Route::get('/threats', [\App\Http\Controllers\Admin\SecurityController::class, 'getRecentThreats']);
+    Route::post('/block-ip', [\App\Http\Controllers\Admin\SecurityController::class, 'blockIp']);
+    Route::post('/unblock-ip', [\App\Http\Controllers\Admin\SecurityController::class, 'unblockIp']);
+    Route::get('/sessions', [\App\Http\Controllers\Admin\SecurityController::class, 'getActiveSessions']);
+    Route::post('/invalidate-session', [\App\Http\Controllers\Admin\SecurityController::class, 'invalidateSession']);
+    Route::get('/logs', [\App\Http\Controllers\Admin\SecurityController::class, 'getSecurityLogs']);
+    Route::post('/waf/rules', [\App\Http\Controllers\Admin\SecurityController::class, 'updateWafRules']);
+});
+
 // Public routes with security middleware
 Route::middleware(['spam.detection'])->group(function () {
     Route::get('/posts', [PostController::class, 'index']);
@@ -72,15 +84,20 @@ Route::post('/test', function () {
     return response()->json(['message' => 'Test endpoint']);
 });
 
-Route::post('/register', [AuthController::class, 'register'])->middleware(['advanced.rate.limit:register,3,60']);
-Route::post('/login', [AuthController::class, 'login'])->middleware(['advanced.rate.limit:login,5,5']);
+// Upload route for testing
+Route::post('/upload', function () {
+    return response()->json(['message' => 'Upload endpoint']);
+});
+
+Route::post('/register', [AuthController::class, 'register'])->middleware(['rate.limit:login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware(['rate.limit:login']);
 
 // Add user route for testing
 Route::get('/user', function () {
     return response()->json(['user' => auth()->user()]);
 })->middleware('auth:sanctum');
 
-Route::prefix('auth/phone')->middleware(['advanced.rate.limit:phone,10,5'])->group(function () {
+Route::prefix('auth/phone')->middleware(['rate.limit:api'])->group(function () {
     Route::post('/send-code', [PhoneAuthController::class, 'sendCode']);
     Route::post('/verify', [PhoneAuthController::class, 'verifyCode']);
     Route::post('/register', [PhoneAuthController::class, 'register']);
@@ -116,6 +133,13 @@ Route::post('/graphql', [GraphQLController::class, 'query'])
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    
+    // Password Management
+    Route::prefix('password')->group(function () {
+        Route::post('/change', [\App\Http\Controllers\Api\PasswordController::class, 'change']);
+        Route::post('/check-strength', [\App\Http\Controllers\Api\PasswordController::class, 'checkStrength']);
+        Route::get('/check-expiry', [\App\Http\Controllers\Api\PasswordController::class, 'checkExpiry']);
+    });
 
     Route::apiResource('posts', PostController::class);
     Route::put('/posts/{post}', [PostController::class, 'update']);

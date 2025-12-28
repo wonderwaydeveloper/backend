@@ -10,11 +10,17 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
+        then: function () {
+            Route::middleware('api')
+                ->prefix('api')
+                ->group(base_path('routes/security.php'));
+        },
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Global Security Headers for ALL requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\SessionSecurity::class);
 
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
@@ -22,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(append: [
             \App\Http\Middleware\WebApplicationFirewall::class,
+            \App\Http\Middleware\RateLimitMiddleware::class,
             \App\Http\Middleware\BruteForceProtection::class,
             \App\Http\Middleware\AdvancedRateLimit::class,
             \App\Http\Middleware\AdvancedInputValidation::class,
@@ -32,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'check.reply.permission' => \App\Http\Middleware\CheckReplyPermission::class,
             'advanced.rate.limit' => \App\Http\Middleware\AdvancedRateLimit::class,
+            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
+            'csrf.protection' => \App\Http\Middleware\CSRFProtection::class,
             'spam.detection' => \App\Http\Middleware\SpamDetectionMiddleware::class,
             'set.locale' => \App\Http\Middleware\SetLocale::class,
         ]);
