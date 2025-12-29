@@ -10,7 +10,7 @@ class ScheduledPostController extends Controller
 {
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'content' => 'required|string|max:280',
             'scheduled_at' => 'required|date|after:now',
             'media_urls' => 'nullable|array',
@@ -19,10 +19,10 @@ class ScheduledPostController extends Controller
 
         $scheduledPost = ScheduledPost::create([
             'user_id' => $request->user()->id,
-            'content' => $request->content,
-            'scheduled_at' => $request->scheduled_at,
-            'media_urls' => $request->media_urls,
-            'reply_settings' => $request->reply_settings ?? 'everyone',
+            'content' => $validated['content'],
+            'scheduled_at' => $validated['scheduled_at'],
+            'media_urls' => $validated['media_urls'] ?? null,
+            'reply_settings' => $validated['reply_settings'] ?? 'everyone',
         ]);
 
         return response()->json($scheduledPost, 201);
