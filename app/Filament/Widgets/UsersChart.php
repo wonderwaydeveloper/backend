@@ -4,10 +4,10 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 
-class PostsChart extends ChartWidget
+class UsersChart extends ChartWidget
 {
-    protected ?string $heading = 'نمودار پستها';
-    protected static ?int $sort = 2;
+    protected ?string $heading = 'نمودار کاربران';
+    protected static ?int $sort = 1;
     
     public ?string $filter = '7days';
     
@@ -32,7 +32,7 @@ class PostsChart extends ChartWidget
             case '7days':
                 for ($i = 6; $i >= 0; $i--) {
                     $date = now()->subDays($i);
-                    $count = \App\Models\Post::whereDate('created_at', $date)->count();
+                    $count = \App\Models\User::whereDate('created_at', $date)->count();
                     $labels[] = $date->format('M j');
                     $data[] = $count;
                 }
@@ -41,7 +41,7 @@ class PostsChart extends ChartWidget
             case '30days':
                 for ($i = 29; $i >= 0; $i--) {
                     $date = now()->subDays($i);
-                    $count = \App\Models\Post::whereDate('created_at', $date)->count();
+                    $count = \App\Models\User::whereDate('created_at', $date)->count();
                     $labels[] = $date->format('M j');
                     $data[] = $count;
                 }
@@ -51,7 +51,7 @@ class PostsChart extends ChartWidget
                 for ($i = 11; $i >= 0; $i--) {
                     $startDate = now()->subWeeks($i)->startOfWeek();
                     $endDate = now()->subWeeks($i)->endOfWeek();
-                    $count = \App\Models\Post::whereBetween('created_at', [$startDate, $endDate])->count();
+                    $count = \App\Models\User::whereBetween('created_at', [$startDate, $endDate])->count();
                     $labels[] = $startDate->format('M j');
                     $data[] = $count;
                 }
@@ -62,7 +62,7 @@ class PostsChart extends ChartWidget
                 $months = $filter === '6months' ? 6 : 12;
                 for ($i = $months - 1; $i >= 0; $i--) {
                     $date = now()->subMonths($i);
-                    $count = \App\Models\Post::whereYear('created_at', $date->year)
+                    $count = \App\Models\User::whereYear('created_at', $date->year)
                                             ->whereMonth('created_at', $date->month)
                                             ->count();
                     $labels[] = $date->format('M Y');
@@ -74,10 +74,10 @@ class PostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'پستهای جدید',
+                    'label' => 'کاربران جدید',
                     'data' => $data,
-                    'borderColor' => '#3b82f6',
-                    'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
+                    'borderColor' => '#10b981',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.1)',
                     'fill' => true,
                 ],
             ],
