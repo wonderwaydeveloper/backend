@@ -438,8 +438,6 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     });
 
 
-    // Remove duplicate Live Streaming Routes (use streaming above instead)
-
     // Conversion Tracking Routes
     Route::prefix('conversions')->group(function () {
         Route::post('/track', [ConversionController::class, 'track']);
