@@ -11,40 +11,58 @@ class SecurityHeaders
     {
         $response = $next($request);
         
-        $config = config('security.headers');
+        // Skip security headers for admin panel to avoid conflicts
+        if ($request->is('admin*')) {
+            return $response;
+        }
         
-        if (!$config['enabled']) {
+        $config = config('security.headers', []);
+        
+        if (empty($config) || !($config['enabled'] ?? false)) {
+            return $response;
+        }
+        
+        // Only apply headers if config exists and is properly structured
+        if (!is_array($config)) {
             return $response;
         }
         
         // HSTS Header
-        if ($config['hsts']['enabled']) {
+        if (isset($config['hsts']) && ($config['hsts']['enabled'] ?? false)) {
             $hsts = "max-age={$config['hsts']['max_age']}";
-            if ($config['hsts']['include_subdomains']) {
+            if ($config['hsts']['include_subdomains'] ?? false) {
                 $hsts .= '; includeSubDomains';
             }
-            if ($config['hsts']['preload']) {
+            if ($config['hsts']['preload'] ?? false) {
                 $hsts .= '; preload';
             }
             $response->headers->set('Strict-Transport-Security', $hsts);
         }
         
         // Content Security Policy
-        if ($config['csp']['enabled']) {
+        if (isset($config['csp']) && ($config['csp']['enabled'] ?? false)) {
             $response->headers->set('Content-Security-Policy', $config['csp']['policy']);
         }
         
         // X-Frame-Options
-        $response->headers->set('X-Frame-Options', $config['x_frame_options']);
+        if (isset($config['x_frame_options'])) {
+            $response->headers->set('X-Frame-Options', $config['x_frame_options']);
+        }
         
         // X-Content-Type-Options
-        $response->headers->set('X-Content-Type-Options', $config['x_content_type_options']);
+        if (isset($config['x_content_type_options'])) {
+            $response->headers->set('X-Content-Type-Options', $config['x_content_type_options']);
+        }
         
         // X-XSS-Protection
-        $response->headers->set('X-XSS-Protection', $config['x_xss_protection']);
+        if (isset($config['x_xss_protection'])) {
+            $response->headers->set('X-XSS-Protection', $config['x_xss_protection']);
+        }
         
         // Referrer Policy
-        $response->headers->set('Referrer-Policy', $config['referrer_policy']);
+        if (isset($config['referrer_policy'])) {
+            $response->headers->set('Referrer-Policy', $config['referrer_policy']);
+        }
         
         // Additional security headers
         $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');

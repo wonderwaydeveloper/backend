@@ -264,4 +264,12 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(CommunityJoinRequest::class);
     }
+
+    /**
+     * Check if user can access Filament admin panel
+     */
+    public function canAccessPanel(\Filament\Panel $panel): bool
+    {
+        return $this->hasRole('admin');
+    }
 }

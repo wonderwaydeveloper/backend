@@ -54,23 +54,6 @@ use App\Monetization\Controllers\CreatorFundController;
 use App\Monetization\Controllers\PremiumController;
 use Illuminate\Support\Facades\Route;
 
-// Security Admin Routes
-Route::prefix('admin/security')->middleware(['auth:sanctum', 'admin'])->group(function () {
-    Route::get('/dashboard', [\App\Http\Controllers\Admin\SecurityController::class, 'dashboard']);
-    Route::get('/threats', [\App\Http\Controllers\Admin\SecurityController::class, 'getRecentThreats']);
-    Route::post('/block-ip', [\App\Http\Controllers\Admin\SecurityController::class, 'blockIp']);
-    Route::post('/unblock-ip', [\App\Http\Controllers\Admin\SecurityController::class, 'unblockIp']);
-    Route::get('/sessions', [\App\Http\Controllers\Admin\SecurityController::class, 'getActiveSessions']);
-    Route::post('/invalidate-session', [\App\Http\Controllers\Admin\SecurityController::class, 'invalidateSession']);
-    Route::get('/logs', [\App\Http\Controllers\Admin\SecurityController::class, 'getSecurityLogs']);
-    Route::post('/waf/rules', [\App\Http\Controllers\Admin\SecurityController::class, 'updateWafRules']);
-});
-
-// Public routes with security middleware
-Route::middleware(['spam.detection'])->group(function () {
-    Route::get('/posts', [PostController::class, 'index']);
-});
-
 // Health Check endpoint
 Route::get('/health', function () {
     return response()->json([
@@ -163,23 +146,14 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     Route::post('/community-notes/{note}/vote', [CommunityNoteController::class, 'vote']);
     Route::get('/community-notes/pending', [CommunityNoteController::class, 'pending']);
 
-    // Analytics routes
+    // Analytics routes (User-level only)
     Route::prefix('analytics')->group(function () {
-        Route::get('/dashboard', [AnalyticsController::class, 'dashboard']);
         Route::get('/user', [AnalyticsController::class, 'userAnalytics']);
         Route::get('/posts/{post}', [AnalyticsController::class, 'postAnalytics']);
     });
     
     // Public analytics tracking (no auth required)
     Route::post('/analytics/track', [AnalyticsController::class, 'trackEvent'])->withoutMiddleware(['auth:sanctum']);
-
-    // Performance Optimization routes
-    Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [PerformanceOptimizationController::class, 'dashboard']);
-        Route::post('/cache/warmup', [PerformanceOptimizationController::class, 'warmupCache']);
-        Route::delete('/cache/clear', [PerformanceOptimizationController::class, 'clearCache']);
-        Route::get('/timeline/optimize', [PerformanceOptimizationController::class, 'optimizeTimeline']);
-    });
 
     Route::post('/threads', [ThreadController::class, 'create']);
     Route::get('/threads/{post}', [ThreadController::class, 'show']);
@@ -317,45 +291,27 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::post('/child/{child}/block-content', [ParentalControlController::class, 'blockContent']);
     });
 
-    // Performance & Monitoring
+    // Performance & Monitoring (User-level only)
     Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [PerformanceController::class, 'dashboard']);
+        Route::get('/dashboard', [PerformanceDashboardController::class, 'dashboard']);
         Route::get('/timeline/optimized', [PerformanceController::class, 'optimizeTimeline']);
         Route::post('/cache/warmup', [PerformanceController::class, 'warmupCache']);
         Route::delete('/cache/clear', [PerformanceController::class, 'clearCache']);
     });
 
-    // Final Performance Routes - Phase 2 Complete
-    Route::prefix('final-performance')->group(function () {
-        Route::get('/complete-optimization', [FinalPerformanceController::class, 'completeOptimization']);
-        Route::get('/system-status', [FinalPerformanceController::class, 'systemStatus']);
-        Route::post('/optimize-all', [FinalPerformanceController::class, 'optimizeAll']);
-        Route::get('/benchmark-results', [FinalPerformanceController::class, 'benchmarkResults']);
-    });
-
-    // Performance Dashboard Routes
-    Route::prefix('performance-dashboard')->group(function () {
-        Route::get('/dashboard', [PerformanceDashboardController::class, 'dashboard']);
-        Route::post('/optimize-database', [PerformanceDashboardController::class, 'optimizeDatabase']);
-        Route::post('/warmup-cache', [PerformanceDashboardController::class, 'warmupCache']);
-        Route::delete('/clear-cache', [PerformanceDashboardController::class, 'clearCache']);
-        Route::get('/query-analysis', [PerformanceDashboardController::class, 'queryAnalysis']);
-        Route::get('/real-time-metrics', [PerformanceDashboardController::class, 'realTimeMetrics']);
-    });
-
-    // Optimized Timeline Routes
+    // Optimized routes
     Route::prefix('optimized')->group(function () {
         Route::get('/timeline', [OptimizedTimelineController::class, 'index']);
-        Route::get('/timeline/live', [OptimizedTimelineController::class, 'liveTimeline']);
     });
 
-    // Monitoring routes (add admin middleware in production)
+    // Final Performance routes
+    Route::prefix('final-performance')->group(function () {
+        Route::get('/system-status', [FinalPerformanceController::class, 'systemStatus']);
+    });
+
+    // Monitoring routes
     Route::prefix('monitoring')->group(function () {
         Route::get('/dashboard', [MonitoringController::class, 'dashboard']);
-        Route::get('/metrics', [MonitoringController::class, 'metrics']);
-        Route::get('/errors', [MonitoringController::class, 'errors']);
-        Route::get('/performance', [MonitoringController::class, 'performance']);
-        Route::get('/database', [MonitoringController::class, 'database']);
         Route::get('/cache', [MonitoringController::class, 'cache']);
         Route::get('/queue', [MonitoringController::class, 'queue']);
     });
@@ -381,12 +337,9 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::delete('/delete', [MediaController::class, 'deleteMedia']);
     });
 
-    // Phase 3: Content Moderation
+    // Content Moderation (User reporting only)
     Route::prefix('moderation')->group(function () {
         Route::post('/report', [ModerationController::class, 'reportContent']);
-        Route::get('/reports', [ModerationController::class, 'getReports']); // Admin only
-        Route::put('/reports/{report}', [ModerationController::class, 'updateReportStatus']); // Admin only
-        Route::get('/stats', [ModerationController::class, 'getContentStats']); // Admin only
     });
 
     // Phase 3: Push Notifications
@@ -426,7 +379,7 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::delete('/{moment}/posts/{post}', [MomentController::class, 'removePost']);
     });
 
-    // A/B Testing Routes (Admin only in production)
+    // A/B Testing
     Route::prefix('ab-tests')->group(function () {
         Route::get('/', [ABTestController::class, 'index']);
         Route::post('/', [ABTestController::class, 'store']);
@@ -447,13 +400,12 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::get('/cohort-analysis', [ConversionController::class, 'cohortAnalysis']);
     });
 
-    // Auto-scaling Routes (Admin only in production)
+    // Auto-scaling
     Route::prefix('auto-scaling')->group(function () {
         Route::get('/status', [AutoScalingController::class, 'status']);
         Route::get('/metrics', [AutoScalingController::class, 'metrics']);
-        Route::get('/history', [AutoScalingController::class, 'history']);
-        Route::get('/predict', [AutoScalingController::class, 'predict']);
         Route::post('/force-scale', [AutoScalingController::class, 'forceScale']);
+        Route::get('/predict', [AutoScalingController::class, 'predict']);
     });
     // Monetization Routes
     Route::prefix('monetization')->group(function () {

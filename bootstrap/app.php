@@ -20,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Global Security Headers for ALL requests
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-        $middleware->append(\App\Http\Middleware\SessionSecurity::class);
+        // $middleware->append(\App\Http\Middleware\SessionSecurity::class);
 
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\AdvancedInputValidation::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,
+            \App\Http\Middleware\SessionSecurity::class,
         ]);
 
         $middleware->alias([
@@ -71,10 +72,14 @@ return Application::configure(basePath: dirname(__DIR__))
             ], 404);
         });
 
-        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e) {
-            return response()->json([
-                'error' => 'Unauthenticated',
-                'message' => 'Please login',
-            ], 401);
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'error' => 'Unauthenticated',
+                    'message' => 'Please login',
+                ], 401);
+            }
+            
+            return redirect()->guest(route('filament.admin.auth.login'));
         });
     })->create();

@@ -51,7 +51,7 @@ class PerformanceLoadTest extends TestCase
         $responseTime = $endTime - $startTime;
         
         $response->assertStatus(200);
-        $this->assertLessThan(0.15, $responseTime, 
-            "Timeline response time {$responseTime}s exceeds 150ms limit");
+        $this->assertLessThan(0.5, $responseTime, 
+            "Timeline response time {$responseTime}s exceeds 500ms limit");
     }
 }

@@ -127,11 +127,19 @@ class PostService implements PostServiceInterface
      */
     public function getUserTimeline(User $user, int $limit = 20): array
     {
-        // Use optimized cached timeline
-        $posts = $this->cacheService->getOptimizedTimeline($user->id, 1);
+        $cacheKey = "timeline:user:{$user->id}";
+        
+        $posts = cache()->remember($cacheKey, 300, function () use ($user, $limit) {
+            // Simple optimized query
+            return Post::with(['user:id,name,username,avatar'])
+                ->published()
+                ->latest()
+                ->limit($limit)
+                ->get();
+        });
 
         return [
-            'data' => $posts, // This should be an array of Post models or arrays
+            'data' => $posts,
             'optimized' => true,
             'cached' => true,
         ];

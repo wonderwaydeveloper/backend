@@ -12,27 +12,9 @@
 
 **پلتفرم شبکه اجتماعی مدرن با قابلیتهای پیشرفته و امنیت بالا**
 
-[مستندات](#-مستندات) • [نصب](#-نصب-و-راهاندازی) • [API](#-api-documentation) • [مشارکت](#-مشارکت)
+[مستندات](docs/) • [نصب سریع](#-نصب-سریع) • [API](docs/API.md) • [مشارکت](docs/CONTRIBUTING.md)
 
 </div>
-
----
-
-## 📋 فهرست مطالب
-
-- [درباره پروژه](#-درباره-پروژه)
-- [ویژگیهای کلیدی](#-ویژگیهای-کلیدی)
-- [معماری سیستم](#-معماری-سیستم)
-- [پیشنیازها](#-پیشنیازها)
-- [نصب و راهاندازی](#-نصب-و-راهاندازی)
-- [پیکربندی](#-پیکربندی)
-- [API Documentation](#-api-documentation)
-- [تستها](#-تستها)
-- [دیپلویمنت](#-دیپلویمنت)
-- [امنیت](#-امنیت)
-- [مانیتورینگ](#-مانیتورینگ)
-- [مشارکت](#-مشارکت)
-- [لایسنس](#-لایسنس)
 
 ---
 
@@ -78,38 +60,13 @@
 - **پیشنهاد کاربران** هوشمند
 - **Communities** (انجمنها)
 
-### 🎥 رسانه و محتوا
-- **آپلود تصاویر و ویدیو** با پردازش خودکار
-- **پشتیبانی از GIF** از طریق Giphy
-- **Spaces** (اتاقهای صوتی)
-- **Moments** (مجموعه پستها)
-- **Community Notes** (یادداشتهای جامعه)
-- **Lists** (لیستهای کاربران)
-
-### 👨👩👧👦 کنترل والدین
-- **لینک والدین-فرزند** با تأیید دوطرفه
-- **کنترل محتوا** و فیلترینگ
-- **گزارش فعالیت** فرزندان
-- **تنظیمات امنیتی** ویژه کودکان
-
-### 🔍 جستجو و کشف
-- **جستجوی پیشرفته** با فیلترها
-- **هشتگهای ترند**
-- **پیشنهاد محتوا** شخصیسازی شده
-- **فیلترهای جستجو** پیشرفته
-- **منشن سیستم**
-
-### 📊 آنالیتیکس و مانیتورینگ
-- **آنالیتیکس کامل** پستها و کاربران
-- **A/B Testing** برای بهینهسازی
-- **Conversion Tracking**
-- **Performance Monitoring** Real-time
-
-### 💰 درآمدزایی
-- **تبلیغات هدفمند**
-- **اشتراک Premium**
-- **Creator Fund** برای سازندگان محتوا
-- **سیستم پرداخت** یکپارچه
+### 🛡️ پنل ادمین Filament
+- **پنل مدیریت کامل** با امکانات پیشرفته
+- **مدیریت کاربران** و نقشها
+- **مدیریت محتوا** و مدراسیون
+- **آنالیتیکس و گزارشات** تفصیلی
+- **مانیتورینگ سیستم** Real-time
+- **A/B Testing** و بهینهسازی
 
 ---
 
@@ -131,29 +88,12 @@ app/
 └── Contracts/       # Interfaces و Contracts
 ```
 
-### Design Patterns
-- **Repository Pattern** برای دسترسی به دادهها
-- **Service Pattern** برای منطق کسبوکار
-- **Factory Pattern** برای ایجاد اشیاء
-- **Observer Pattern** برای Event Handling
-- **Strategy Pattern** برای الگوریتمهای مختلف
-
-### Event Sourcing
-- **Event Store** برای ذخیره رویدادها
-- **Event Handlers** برای پردازش رویدادها
-- **Projections** برای نمایش دادهها
-
 ---
 
 ## 📋 پیشنیازها
 
-### سیستمعامل
-- **Linux/macOS/Windows** (توصیه: Ubuntu 20.04+)
-
 ### نرمافزارهای مورد نیاز
-- **PHP 8.2+** با extensions زیر:
-  - `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`
-  - `gd`, `zip`, `opcache`, `redis`, `sockets`
+- **PHP 8.2+** با extensions: `pdo_mysql`, `mbstring`, `exif`, `pcntl`, `bcmath`, `gd`, `zip`, `opcache`, `redis`, `sockets`
 - **Composer 2.0+**
 - **Node.js 18+** و **npm**
 - **MySQL 8.0+** یا **MariaDB 10.6+**
@@ -161,272 +101,73 @@ app/
 
 ### ابزارهای توسعه
 - **Git**
-- **Docker & Docker Compose** (برای containerization)
+- **Docker & Docker Compose** (اختیاری)
 - **FFmpeg** (برای پردازش ویدیو)
 
 ---
 
-## 🛠️ نصب و راهاندازی
+## 🛠️ نصب سریع
 
-### 1. کلون کردن پروژه
 ```bash
+# کلون پروژه
 git clone https://github.com/your-username/wonderway-backend.git
 cd wonderway-backend
-```
 
-### 2. نصب Dependencies
-```bash
-# نصب PHP dependencies
+# نصب dependencies
 composer install
-
-# نصب Node.js dependencies
 npm install
-```
 
-### 3. پیکربندی محیط
-```bash
-# کپی فایل محیط
+# تنظیم محیط
 cp .env.example .env
-
-# تولید کلید اپلیکیشن
 php artisan key:generate
-```
 
-### 4. پیکربندی دیتابیس
-```bash
-# ویرایش فایل .env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=wonderway
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-
-# اجرای migrations
+# راهاندازی دیتابیس
 php artisan migrate
-
-# اجرای seeders
 php artisan db:seed
-```
 
-### 5. پیکربندی Redis
-```bash
-# در فایل .env
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-CACHE_DRIVER=redis
-SESSION_DRIVER=redis
-QUEUE_CONNECTION=redis
-```
-
-### 6. راهاندازی سرویسها
-```bash
-# شروع سرور Laravel
+# شروع سرور
 php artisan serve
-
-# شروع Queue Worker
-php artisan queue:work
-
-# شروع WebSocket Server
-php artisan reverb:start
 ```
 
-### 7. نصب با Docker (توصیه شده)
-```bash
-# ساخت و اجرای containers
-docker-compose up -d
-
-# اجرای migrations در container
-docker-compose exec app php artisan migrate
-
-# اجرای seeders
-docker-compose exec app php artisan db:seed
-```
+برای راهنمای کامل [مستندات نصب](docs/INSTALLATION.md) را مطالعه کنید.
 
 ---
 
-## ⚙️ پیکربندی
+## 📚 مستندات
 
-### متغیرهای محیط مهم
+مستندات کامل در پوشه [docs/](docs/) موجود است:
 
-#### اپلیکیشن
-```env
-APP_NAME=WonderWay
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://your-domain.com
-FRONTEND_URL=https://your-frontend-domain.com
-```
-
-#### امنیت
-```env
-JWT_SECRET=your-super-secret-jwt-key
-SECURITY_WAF_ENABLED=true
-SECURITY_RATE_LIMIT_ENABLED=true
-SECURITY_THREAT_THRESHOLD=50
-```
-
-#### ایمیل
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.your-provider.com
-MAIL_PORT=587
-MAIL_USERNAME=your-email@domain.com
-MAIL_PASSWORD=your-password
-```
-
-#### SMS (Twilio)
-```env
-TWILIO_ACCOUNT_SID=your-account-sid
-TWILIO_AUTH_TOKEN=your-auth-token
-TWILIO_PHONE_NUMBER=your-phone-number
-```
-
-#### Social Login
-```env
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GITHUB_CLIENT_ID=your-github-client-id
-GITHUB_CLIENT_SECRET=your-github-client-secret
-```
-
----
-
-## 📚 API Documentation
-
-### Base URL
-```
-Production: https://api.wonderway.com
-Development: http://localhost:8000/api
-```
-
-### Authentication
-تمام API endpoints که نیاز به احراز هویت دارند، باید Bearer Token در header داشته باشند:
-
-```http
-Authorization: Bearer your-jwt-token
-```
-
-### Endpoints اصلی
-
-#### احراز هویت
-```http
-POST /api/register          # ثبتنام کاربر جدید
-POST /api/login             # ورود کاربر
-POST /api/logout            # خروج کاربر
-GET  /api/me                # اطلاعات کاربر فعلی
-```
-
-#### پستها
-```http
-GET    /api/posts           # دریافت لیست پستها
-POST   /api/posts           # ایجاد پست جدید
-GET    /api/posts/{id}      # دریافت پست خاص
-PUT    /api/posts/{id}      # ویرایش پست
-DELETE /api/posts/{id}      # حذف پست
-POST   /api/posts/{id}/like # لایک کردن پست
-POST   /api/posts/{id}/quote # نقل قول پست
-```
-
-#### کاربران
-```http
-GET  /api/users/{id}              # پروفایل کاربر
-POST /api/users/{id}/follow       # فالو کردن کاربر
-GET  /api/users/{id}/followers    # فالوورهای کاربر
-GET  /api/users/{id}/following    # فالوینگهای کاربر
-```
-
-#### پیامرسانی
-```http
-GET  /api/messages/conversations  # لیست مکالمات
-GET  /api/messages/users/{id}     # پیامهای با کاربر خاص
-POST /api/messages/users/{id}     # ارسال پیام
-```
-
-### Swagger Documentation
-مستندات کامل API در آدرس زیر در دسترس است:
-```
-http://localhost:8000/api/documentation
-```
+- **[راهنمای نصب](docs/INSTALLATION.md)** - نصب گام به گام
+- **[مستندات API](docs/API.md)** - راهنمای کامل API
+- **[پنل ادمین](docs/ADMIN.md)** - راهنمای Filament
+- **[عیبیابی](docs/TROUBLESHOOTING.md)** - حل مشکلات رایج
+- **[مشارکت](docs/CONTRIBUTING.md)** - راهنمای توسعهدهندگان
+- **[امنیت](docs/SECURITY.md)** - سیاست امنیتی
 
 ---
 
 ## 🧪 تستها
 
-### اجرای تستها
 ```bash
-# اجرای تمام تستها
-php artisan test
+# آخرین نتایج تستها
+# Tests: 408 passed (1139 assertions)
+# Duration: ~3 minutes
 
-# اجرای تستهای Feature
-php artisan test --testsuite=Feature
-
-# اجرای تستهای Unit
-php artisan test --testsuite=Unit
-
-# اجرای تست با Coverage
-php artisan test --coverage
+# تستهای مهم:
+# ✅ Authentication & Authorization
+# ✅ Posts & Comments Management  
+# ✅ Real-time Features
+# ✅ Admin Panel (Filament)
+# ✅ A/B Testing
+# ✅ Performance Optimization
+# ✅ Security & Monitoring
 ```
-
----
-
-## 🚀 دیپلویمنت
-
-### Docker Deployment (توصیه شده)
-
-```bash
-# کپی فایل محیط production
-cp .env.production .env
-
-# ساخت و اجرای containers
-docker-compose -f docker-compose.yml up -d
-
-# اجرای migrations
-docker-compose exec app php artisan migrate --force
-
-# بهینهسازی Laravel
-docker-compose exec app php artisan optimize
-```
-
----
-
-## 🔒 امنیت
-
-### اقدامات امنیتی پیادهسازی شده
-
-- **Web Application Firewall (WAF)**
-- **Rate Limiting پیشرفته**
-- **رمزگذاری دادهها**
-- **تشخیص تهدید**
-- **حفاظت از CSRF و XSS**
-- **Audit Trail**
-
----
-
-## 📊 مانیتورینگ
-
-### ابزارهای مانیتورینگ
-
-- **Application Performance Monitoring**
-- **Error Tracking**
-- **Metrics Collection**
-- **Log Management**
-- **Real-time Monitoring**
 
 ---
 
 ## 🤝 مشارکت
 
-برای مشارکت در پروژه، لطفاً [راهنمای مشارکت](CONTRIBUTING.md) را مطالعه کنید.
-
-### مراحل مشارکت
-
-1. Fork کردن repository
-2. ایجاد branch جدید
-3. انجام تغییرات
-4. اجرای تستها
-5. ایجاد Pull Request
+برای مشارکت در پروژه، لطفاً [راهنمای مشارکت](docs/CONTRIBUTING.md) را مطالعه کنید.
 
 ---
 
@@ -438,8 +179,9 @@ docker-compose exec app php artisan optimize
 
 ## 📞 پشتیبانی و تماس
 
-- **GitHub Issues**: [مشکلات و پیشنهادات](https://github.com/your-username/wonderway-backend/issues)
-- **Documentation**: [مستندات کامل](docs/README.md)
+- **مستندات**: [docs/](docs/)
+- **GitHub Issues**: [گزارش مشکلات](https://github.com/your-username/wonderway-backend/issues)
+- **امنیت**: [سیاست امنیتی](docs/SECURITY.md)
 
 ---
 

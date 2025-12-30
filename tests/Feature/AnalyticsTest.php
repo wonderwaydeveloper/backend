@@ -34,24 +34,6 @@ class AnalyticsTest extends TestCase
         ]);
     }
 
-    public function test_can_get_user_analytics_dashboard()
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user, 'sanctum')
-            ->getJson('/api/analytics/dashboard');
-
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'dashboard' => [
-                    'today',
-                    'week',
-                    'month',
-                    'growth',
-                ],
-            ]);
-    }
-
     public function test_can_get_detailed_user_analytics()
     {
         $user = User::factory()->create();

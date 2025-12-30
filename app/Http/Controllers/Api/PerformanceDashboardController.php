@@ -17,9 +17,9 @@ class PerformanceDashboardController extends Controller
     public function dashboard(): JsonResponse
     {
         return response()->json([
-            'cache_stats' => $this->cacheService->getCacheStats(),
-            'database_stats' => $this->getDatabaseStats(),
-            'performance_metrics' => $this->getPerformanceMetrics(),
+            'cache' => $this->cacheService->getCacheStats(),
+            'database' => $this->getDatabaseStats(),
+            'performance' => $this->getPerformanceMetrics(),
             'optimization_status' => $this->getOptimizationStatus()
         ]);
     }
