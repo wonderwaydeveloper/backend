@@ -18,7 +18,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use App\Http\Middleware\AdminSecurityMiddleware;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -29,8 +28,6 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->authGuard('web')
-            ->emailVerification(false)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -44,15 +41,6 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
-            ->globalSearch(true)
-            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
-            ->sidebarWidth('20rem')
-            ->collapsedSidebarWidth('4rem')
-            ->favicon(asset('favicon.ico'))
-            ->brandName('WonderWay Admin')
-            ->darkMode(true)
-            ->topNavigation(false)
-            ->spa(true)
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -66,8 +54,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->maxContentWidth('full')
-            ->sidebarCollapsibleOnDesktop();
+            ]);
     }
 }
