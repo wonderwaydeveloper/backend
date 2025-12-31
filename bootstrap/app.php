@@ -11,9 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         then: function () {
-            Route::middleware('api')
-                ->prefix('api')
-                ->group(base_path('routes/security.php'));
+            // Security routes removed - using Filament admin panel instead
         },
         health: '/up',
     )
