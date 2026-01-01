@@ -24,14 +24,14 @@ class UpdatePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.required' => 'محتوای پست الزامی است',
-            'content.max' => 'محتوای پست نباید بیشتر از 280 کاراکتر باشد',
-            'content.min' => 'محتوای پست نباید خالی باشد',
-            'edit_reason.max' => 'دلیل ویرایش نباید بیشتر از 100 کاراکتر باشد',
-            'image.image' => 'فایل باید تصویر باشد',
-            'image.mimes' => 'فرمت تصویر باید jpeg، jpg، png، gif یا webp باشد',
-            'image.max' => 'حجم تصویر نباید بیشتر از 2MB باشد',
-            'gif_url.url' => 'آدرس GIF معتبر نیست',
+            'content.required' => 'Post content is required',
+            'content.max' => 'Post content must not exceed 280 characters',
+            'content.min' => 'Post content cannot be empty',
+            'edit_reason.max' => 'Edit reason must not exceed 100 characters',
+            'image.image' => 'File must be an image',
+            'image.mimes' => 'Image format must be jpeg, jpg, png, gif or webp',
+            'image.max' => 'Image size must not exceed 2MB',
+            'gif_url.url' => 'GIF URL is invalid',
         ];
     }
 

@@ -250,7 +250,7 @@ class PostService implements PostServiceInterface
                 $errorType = 'TOO_MANY_LINKS';
             }
 
-            throw new BusinessLogicException('پست شما به دلیل مشکوک بودن تأیید نشد', $errorType);
+            throw new BusinessLogicException('Your post was not approved due to suspicious content', $errorType);
         }
     }
 

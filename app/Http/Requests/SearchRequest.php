@@ -22,9 +22,9 @@ class SearchRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'q.required' => 'عبارت جستجو الزامی است',
-            'q.min' => 'عبارت جستجو باید حداقل 1 کاراکتر باشد',
-            'q.max' => 'عبارت جستجو نباید بیشتر از 100 کاراکتر باشد',
+            'q.required' => 'Search term is required',
+            'q.min' => 'Search term must be at least 1 character',
+            'q.max' => 'Search term must not exceed 100 characters',
         ];
     }
 }

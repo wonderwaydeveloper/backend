@@ -23,14 +23,14 @@ class CreateCommentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.required' => 'محتوای کامنت الزامی است',
-            'content.max' => 'محتوای کامنت نباید بیشتر از 280 کاراکتر باشد',
-            'content.min' => 'محتوای کامنت نباید خالی باشد',
-            'image.image' => 'فایل باید تصویر باشد',
-            'image.mimes' => 'فرمت تصویر باید jpeg، jpg، png، gif یا webp باشد',
-            'image.max' => 'حجم تصویر نباید بیشتر از 2MB باشد',
-            'gif_url.url' => 'آدرس GIF معتبر نیست',
-            'gif_url.max' => 'آدرس GIF خیلی طولانی است',
+            'content.required' => 'Comment content is required',
+            'content.max' => 'Comment content must not exceed 280 characters',
+            'content.min' => 'Comment content cannot be empty',
+            'image.image' => 'File must be an image',
+            'image.mimes' => 'Image format must be jpeg, jpg, png, gif or webp',
+            'image.max' => 'Image size must not exceed 2MB',
+            'gif_url.url' => 'GIF URL is invalid',
+            'gif_url.max' => 'GIF URL is too long',
         ];
     }
 

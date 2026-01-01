@@ -8,7 +8,7 @@ class ValidationException extends Exception
 {
     protected array $errors;
 
-    public function __construct(array $errors, string $message = 'داده‌های ارسالی معتبر نیست', int $code = 422)
+    public function __construct(array $errors, string $message = 'The submitted data is invalid', int $code = 422)
     {
         $this->errors = $errors;
         parent::__construct($message, $code);

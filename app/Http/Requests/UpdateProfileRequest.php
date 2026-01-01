@@ -27,34 +27,34 @@ class UpdateProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.string' => 'نام باید متن باشد',
-            'name.max' => 'نام نباید بیشتر از 255 کاراکتر باشد',
-            'name.min' => 'نام باید حداقل 2 کاراکتر باشد',
-            'bio.string' => 'بیوگرافی باید متن باشد',
-            'bio.max' => 'بیوگرافی نباید بیشتر از 500 کاراکتر باشد',
-            'avatar.url' => 'آدرس آواتار معتبر نیست',
-            'avatar.max' => 'آدرس آواتار خیلی طولانی است',
-            'cover_image.image' => 'تصویر کاور باید تصویر باشد',
-            'cover_image.mimes' => 'فرمت تصویر کاور باید jpeg، jpg، png یا webp باشد',
-            'cover_image.max' => 'حجم تصویر کاور نباید بیشتر از 5MB باشد',
-            'location.max' => 'موقعیت مکانی نباید بیشتر از 100 کاراکتر باشد',
-            'website.url' => 'آدرس وبسایت معتبر نیست',
-            'website.max' => 'آدرس وبسایت خیلی طولانی است',
-            'birth_date.date' => 'تاریخ تولد معتبر نیست',
-            'birth_date.before' => 'تاریخ تولد باید قبل از امروز باشد',
+            'name.string' => 'Name must be text',
+            'name.max' => 'Name must not exceed 255 characters',
+            'name.min' => 'Name must be at least 2 characters',
+            'bio.string' => 'Bio must be text',
+            'bio.max' => 'Bio must not exceed 500 characters',
+            'avatar.url' => 'Avatar URL is invalid',
+            'avatar.max' => 'Avatar URL is too long',
+            'cover_image.image' => 'Cover image must be an image',
+            'cover_image.mimes' => 'Cover image format must be jpeg, jpg, png or webp',
+            'cover_image.max' => 'Cover image size must not exceed 5MB',
+            'location.max' => 'Location must not exceed 100 characters',
+            'website.url' => 'Website URL is invalid',
+            'website.max' => 'Website URL is too long',
+            'birth_date.date' => 'Birth date is invalid',
+            'birth_date.before' => 'Birth date must be before today',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'name' => 'نام',
-            'bio' => 'بیوگرافی',
-            'avatar' => 'آواتار',
-            'cover_image' => 'تصویر کاور',
-            'location' => 'موقعیت مکانی',
-            'website' => 'وبسایت',
-            'birth_date' => 'تاریخ تولد',
+            'name' => 'Name',
+            'bio' => 'Bio',
+            'avatar' => 'Avatar',
+            'cover_image' => 'Cover image',
+            'location' => 'Location',
+            'website' => 'Website',
+            'birth_date' => 'Birth date',
         ];
     }
 

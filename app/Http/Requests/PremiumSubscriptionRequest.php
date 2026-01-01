@@ -25,10 +25,10 @@ class PremiumSubscriptionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'plan_id.required' => 'انتخاب پلن الزامی است',
-            'plan_id.in' => 'پلن انتخابی معتبر نیست',
-            'payment_method.required' => 'روش پرداخت الزامی است',
-            'billing_cycle.required' => 'دوره پرداخت الزامی است'
+            'plan_id.required' => 'Plan selection is required',
+            'plan_id.in' => 'Selected plan is invalid',
+            'payment_method.required' => 'Payment method is required',
+            'billing_cycle.required' => 'Billing cycle is required'
         ];
     }
 }

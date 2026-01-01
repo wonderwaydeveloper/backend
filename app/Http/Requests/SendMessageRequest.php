@@ -23,9 +23,9 @@ class SendMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.max' => 'پیام نباید بیشتر از 1000 کاراکتر باشد',
-            'media.max' => 'حجم فایل نباید بیشتر از 10MB باشد',
-            'gif_url.url' => 'آدرس GIF معتبر نیست',
+            'content.max' => 'Message must not exceed 1000 characters',
+            'media.max' => 'File size must not exceed 10MB',
+            'gif_url.url' => 'GIF URL is invalid',
         ];
     }
 }

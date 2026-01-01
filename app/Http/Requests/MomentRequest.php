@@ -29,10 +29,10 @@ class MomentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'title.required' => 'عنوان الزامی است',
-            'title.max' => 'عنوان نباید بیش از 100 کاراکتر باشد',
-            'cover_image.image' => 'فایل باید تصویر باشد',
-            'cover_image.max' => 'حجم تصویر نباید بیش از 2MB باشد'
+            'title.required' => 'Title is required',
+            'title.max' => 'Title must not exceed 100 characters',
+            'cover_image.image' => 'File must be an image',
+            'cover_image.max' => 'Image size must not exceed 2MB'
         ];
     }
 }

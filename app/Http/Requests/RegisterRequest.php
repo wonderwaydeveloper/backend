@@ -25,32 +25,32 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'نام الزامی است',
-            'name.max' => 'نام نباید بیشتر از 255 کاراکتر باشد',
-            'username.required' => 'نام کاربری الزامی است',
-            'username.unique' => 'این نام کاربری قبلاً استفاده شده است',
-            'username.regex' => 'نام کاربری فقط می‌تواند شامل حروف، اعداد و _ باشد',
-            'email.required' => 'ایمیل الزامی است',
-            'email.email' => 'فرمت ایمیل صحیح نیست',
-            'email.unique' => 'این ایمیل قبلاً ثبت شده است',
-            'password.required' => 'رمز عبور الزامی است',
-            'password.min' => 'رمز عبور باید حداقل 8 کاراکتر باشد',
-            'password.regex' => 'رمز عبور باید شامل حروف کوچک، بزرگ، عدد و کاراکتر خاص باشد',
-            'password.confirmed' => 'تأیید رمز عبور مطابقت ندارد',
-            'date_of_birth.required' => 'تاریخ تولد الزامی است',
-            'date_of_birth.date' => 'فرمت تاریخ تولد صحیح نیست',
-            'date_of_birth.before' => 'تاریخ تولد باید قبل از امروز باشد',
+            'name.required' => 'Name is required',
+            'name.max' => 'Name must not exceed 255 characters',
+            'username.required' => 'Username is required',
+            'username.unique' => 'This username has already been taken',
+            'username.regex' => 'Username can only contain letters, numbers and _',
+            'email.required' => 'Email is required',
+            'email.email' => 'Email format is invalid',
+            'email.unique' => 'This email has already been registered',
+            'password.required' => 'Password is required',
+            'password.min' => 'Password must be at least 8 characters',
+            'password.regex' => 'Password must contain lowercase, uppercase, number and special character',
+            'password.confirmed' => 'Password confirmation does not match',
+            'date_of_birth.required' => 'Date of birth is required',
+            'date_of_birth.date' => 'Date of birth format is invalid',
+            'date_of_birth.before' => 'Date of birth must be before today',
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'name' => 'نام',
-            'username' => 'نام کاربری',
-            'email' => 'ایمیل',
-            'password' => 'رمز عبور',
-            'date_of_birth' => 'تاریخ تولد',
+            'name' => 'Name',
+            'username' => 'Username',
+            'email' => 'Email',
+            'password' => 'Password',
+            'date_of_birth' => 'Date of birth',
         ];
     }
 

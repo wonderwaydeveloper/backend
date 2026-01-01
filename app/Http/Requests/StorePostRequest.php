@@ -28,18 +28,18 @@ class StorePostRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'content.required' => 'محتوای پست الزامی است',
-            'content.max' => 'محتوای پست نباید بیشتر از 280 کاراکتر باشد',
-            'image.image' => 'فایل باید تصویر باشد',
-            'image.mimes' => 'فرمت تصویر باید jpeg، jpg، png، gif یا webp باشد',
-            'image.max' => 'حجم تصویر نباید بیشتر از 2MB باشد',
-            'video.file' => 'فایل ویدیو معتبر نیست',
-            'video.mimes' => 'فرمت ویدیو باید mp4، mov، avi، mkv یا webm باشد',
-            'video.max' => 'حجم ویدیو نباید بیشتر از 100MB باشد',
-            'gif_url.url' => 'آدرس GIF معتبر نیست',
-            'gif_url.max' => 'آدرس GIF خیلی طولانی است',
-            'reply_settings.in' => 'تنظیمات پاسخ معتبر نیست',
-            'quoted_post_id.exists' => 'پست مورد نظر برای نقل قول وجود ندارد',
+            'content.required' => 'Post content is required',
+            'content.max' => 'Post content must not exceed 280 characters',
+            'image.image' => 'File must be an image',
+            'image.mimes' => 'Image format must be jpeg, jpg, png, gif or webp',
+            'image.max' => 'Image size must not exceed 2MB',
+            'video.file' => 'Video file is invalid',
+            'video.mimes' => 'Video format must be mp4, mov, avi, mkv or webm',
+            'video.max' => 'Video size must not exceed 100MB',
+            'gif_url.url' => 'GIF URL is invalid',
+            'gif_url.max' => 'GIF URL is too long',
+            'reply_settings.in' => 'Reply settings is invalid',
+            'quoted_post_id.exists' => 'Quoted post does not exist',
         ];
     }
 
@@ -49,12 +49,12 @@ class StorePostRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'content' => 'محتوای پست',
-            'image' => 'تصویر',
-            'gif_url' => 'آدرس GIF',
-            'reply_settings' => 'تنظیمات پاسخ',
-            'quoted_post_id' => 'پست نقل قول',
-            'is_draft' => 'حالت پیش‌نویس',
+            'content' => 'Post content',
+            'image' => 'Image',
+            'gif_url' => 'GIF URL',
+            'reply_settings' => 'Reply settings',
+            'quoted_post_id' => 'Quoted post',
+            'is_draft' => 'Draft mode',
         ];
     }
 

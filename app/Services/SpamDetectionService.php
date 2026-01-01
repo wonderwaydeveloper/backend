@@ -12,7 +12,6 @@ class SpamDetectionService
 {
     private $spamKeywords = [
         'spam', 'fake', 'scam', 'click here', 'free money', 'win now',
-        'اسپم', 'جعلی', 'کلاهبرداری', 'اینجا کلیک', 'پول رایگان',
     ];
 
     private $suspiciousPatterns = [
