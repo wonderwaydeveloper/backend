@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Post\{UpdatePostAction, DeletePostAction, LikePostAction};
 use App\DTOs\{PostDTO, QuotePostDTO};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\{StorePostRequest, UpdatePostRequest};
@@ -14,10 +13,7 @@ use Illuminate\Http\{JsonResponse, Request};
 class PostController extends Controller
 {
     public function __construct(
-        private PostService $postService,
-        private ?UpdatePostAction $updateAction = null,
-        private ?DeletePostAction $deleteAction = null,
-        private ?LikePostAction $likeAction = null
+        private PostService $postService
     ) {}
 
     public function index(): JsonResponse
@@ -56,32 +52,20 @@ class PostController extends Controller
     public function update(UpdatePostRequest $request, Post $post): JsonResponse
     {
         $this->authorize('update', $post);
-        if ($this->updateAction) {
-            $updatedPost = $this->updateAction->execute($post, $request->validated());
-        } else {
-            $updatedPost = $this->postService->updatePost($post, $request->validated());
-        }
+        $updatedPost = $this->postService->updatePost($post, $request->validated());
         return response()->json(new PostResource($updatedPost));
     }
 
     public function destroy(Post $post): JsonResponse
     {
         $this->authorize('delete', $post);
-        if ($this->deleteAction) {
-            $this->deleteAction->execute($post);
-        } else {
-            $this->postService->deletePost($post);
-        }
+        $this->postService->deletePost($post);
         return response()->json(['message' => 'Post deleted successfully']);
     }
 
     public function like(Post $post): JsonResponse
     {
-        if ($this->likeAction) {
-            $result = $this->likeAction->execute($post, auth()->user());
-        } else {
-            $result = $this->postService->toggleLike($post, auth()->user());
-        }
+        $result = $this->postService->toggleLike($post, auth()->user());
         return response()->json($result);
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\Notification\{SendNotificationAction, MarkAsReadAction};
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
@@ -12,8 +11,7 @@ use Illuminate\Http\{JsonResponse, Request};
 class NotificationController extends Controller
 {
     public function __construct(
-        private NotificationService $notificationService,
-        private MarkAsReadAction $markAsReadAction
+        private NotificationService $notificationService
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -34,7 +32,7 @@ class NotificationController extends Controller
     public function markAsRead(Notification $notification): JsonResponse
     {
         $this->authorize('update', $notification);
-        $this->markAsReadAction->execute($notification);
+        $this->notificationService->markAsRead($notification->id, auth()->user()->id);
         return response()->json(['message' => 'Marked as read']);
     }
 

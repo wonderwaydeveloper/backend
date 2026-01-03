@@ -2,14 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Contracts\Repositories\PostRepositoryInterface;
 use App\Models\Post;
 use App\Services\CacheOptimizationService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\{Cache, DB};
 
-class OptimizedPostRepository implements PostRepositoryInterface
+class OptimizedPostRepository
 {
     public function __construct(
         private CacheOptimizationService $cacheService

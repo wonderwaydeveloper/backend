@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Actions\User\{UpdateUserProfileAction, FollowUserAction, UnfollowUserAction};
 use App\DTOs\UserUpdateDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
@@ -14,10 +13,7 @@ use Illuminate\Http\{JsonResponse, Request};
 class ProfileController extends Controller
 {
     public function __construct(
-        private UserService $userService,
-        private UpdateUserProfileAction $updateAction,
-        private FollowUserAction $followAction,
-        private UnfollowUserAction $unfollowAction
+        private UserService $userService
     ) {}
 
     public function show(User $user): JsonResponse
@@ -34,19 +30,19 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $dto = UserUpdateDTO::fromRequest($request);
-        $user = $this->updateAction->execute($request->user(), $dto);
+        $user = $this->userService->updateUserProfile($request->user(), $dto);
         return response()->json(new UserResource($user));
     }
 
     public function follow(User $user): JsonResponse
     {
-        $result = $this->followAction->execute(auth()->user(), $user);
+        $result = $this->userService->followUser(auth()->user(), $user);
         return response()->json($result);
     }
 
     public function unfollow(User $user): JsonResponse
     {
-        $result = $this->unfollowAction->execute(auth()->user(), $user);
+        $result = $this->userService->unfollowUser(auth()->user(), $user);
         return response()->json($result);
     }
 
