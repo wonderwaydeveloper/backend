@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Api\ABTestController;
 use App\Http\Controllers\Api\AnalyticsController;
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UnifiedAuthController;
 use App\Http\Controllers\Api\AutoScalingController;
 use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\CommentController;
@@ -29,9 +29,7 @@ use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
-use App\Http\Controllers\Api\PerformanceOptimizationController;
 use App\Http\Controllers\Api\OptimizedTimelineController;
-use App\Http\Controllers\Api\PhoneAuthController;
 use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProfileController;
@@ -39,9 +37,7 @@ use App\Http\Controllers\Api\PushNotificationController;
 use App\Http\Controllers\Api\RepostController;
 use App\Http\Controllers\Api\ScheduledPostController;
 use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\SpaceController;
-
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SuggestionController;
 use App\Http\Controllers\Api\ThreadController;
@@ -74,13 +70,13 @@ Route::post('/upload', function () {
     return response()->json(['message' => 'Upload endpoint']);
 });
 
-Route::post('/login', [AuthController::class, 'login'])->middleware(['rate.limit:login']);
+Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware(['rate.limit:login']);
 
 // Multi-step registration
 Route::prefix('auth/register')->middleware(['rate.limit:api'])->group(function () {
-    Route::post('/step1', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step1']);
-    Route::post('/step2', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step2']);
-    Route::post('/step3', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step3']);
+    Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
+    Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
+    Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
 });
 
 // Email verification
@@ -96,10 +92,10 @@ Route::get('/user', function () {
 })->middleware('auth:sanctum');
 
 Route::prefix('auth/phone')->middleware(['rate.limit:api'])->group(function () {
-    Route::post('/send-code', [PhoneAuthController::class, 'sendCode']);
-    Route::post('/verify', [PhoneAuthController::class, 'verifyCode']);
-    Route::post('/register', [PhoneAuthController::class, 'register']);
-    Route::post('/login', [PhoneAuthController::class, 'login']);
+    Route::post('/send-code', [UnifiedAuthController::class, 'phoneSendCode']);
+    Route::post('/verify', [UnifiedAuthController::class, 'phoneVerifyCode']);
+    Route::post('/register', [UnifiedAuthController::class, 'phoneRegister']);
+    Route::post('/login', [UnifiedAuthController::class, 'phoneLogin']);
 });
 
 Route::middleware('auth:sanctum')->prefix('auth/2fa')->group(function () {
@@ -116,10 +112,8 @@ Route::prefix('auth/password')->group(function () {
 });
 
 Route::prefix('auth/social')->group(function () {
-    Route::get('/google', [SocialAuthController::class, 'redirectToGoogle']);
-    Route::get('/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
-    Route::get('/apple', [SocialAuthController::class, 'redirectToApple']);
-    Route::get('/apple/callback', [SocialAuthController::class, 'handleAppleCallback']);
+    Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google|apple');
+    Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
 });
 
 // GraphQL Endpoint
@@ -127,8 +121,8 @@ Route::post('/graphql', [GraphQLController::class, 'query'])
     ->middleware(['auth:sanctum']);
 
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', [AuthController::class, 'me']);
+    Route::post('/logout', [UnifiedAuthController::class, 'logout']);
+    Route::get('/me', [UnifiedAuthController::class, 'me']);
     
     // Password Management
     Route::prefix('password')->group(function () {
