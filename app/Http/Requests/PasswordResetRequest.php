@@ -16,6 +16,7 @@ class PasswordResetRequest extends FormRequest
         return [
             'email' => 'required|email|exists:users,email',
             'token' => 'sometimes|required|string',
+            'code' => 'sometimes|required|string|size:6',
             'password' => 'sometimes|required|string|min:8|confirmed'
         ];
     }

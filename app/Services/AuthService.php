@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Contracts\Services\AuthServiceInterface;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Exceptions\ValidationException;
 use App\DTOs\LoginDTO;
+use PragmaRX\Google2FA\Google2FA;
 
 class AuthService implements AuthServiceInterface
 {
@@ -83,49 +85,164 @@ class AuthService implements AuthServiceInterface
 
     public function refreshToken(string $refreshToken): array
     {
-        // Implementation needed
-        return [];
+        // Find all users and check refresh token
+        $users = User::whereNotNull('refresh_token')->get();
+        $user = null;
+        
+        foreach ($users as $u) {
+            if (Hash::check($refreshToken, $u->refresh_token)) {
+                $user = $u;
+                break;
+            }
+        }
+        
+        if (!$user) {
+            throw new ValidationException(['token' => ['Invalid refresh token']]);
+        }
+
+        // Generate new tokens
+        $newToken = $user->createToken('auth_token')->plainTextToken;
+        $newRefreshToken = Str::random(60);
+        
+        $user->update(['refresh_token' => Hash::make($newRefreshToken)]);
+
+        return [
+            'token' => $newToken,
+            'refresh_token' => $newRefreshToken
+        ];
     }
 
     public function forgotPassword(string $email): bool
     {
-        // Implementation needed
+        $user = User::where('email', $email)->first();
+        
+        if (!$user) {
+            return true; // Don't reveal if email exists
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        \DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $email],
+            ['token' => Hash::make($code), 'created_at' => now()]
+        );
+
+        $this->emailService->sendPasswordResetEmail($user, $code);
+        
         return true;
     }
 
-    public function resetPassword(string $token, string $password): bool
+    public function resetPassword(string $code, string $password): bool
     {
-        // Implementation needed
+        $tokenRecords = \DB::table('password_reset_tokens')->get();
+        $validRecord = null;
+        
+        foreach ($tokenRecords as $record) {
+            if (Hash::check($code, $record->token)) {
+                $validRecord = $record;
+                break;
+            }
+        }
+
+        if (!$validRecord || now()->diffInMinutes($validRecord->created_at) > 15) {
+            return false;
+        }
+
+        $user = User::where('email', $validRecord->email)->first();
+        if (!$user) {
+            return false;
+        }
+
+        $user->update(['password' => Hash::make($password)]);
+        \DB::table('password_reset_tokens')->where('email', $validRecord->email)->delete();
+        
         return true;
     }
 
     public function verifyEmail(string $token): bool
     {
-        // Implementation needed
+        $users = User::whereNotNull('email_verification_token')
+                    ->whereNull('email_verified_at')
+                    ->get();
+        
+        $user = null;
+        foreach ($users as $u) {
+            if (Hash::check($token, $u->email_verification_token)) {
+                $user = $u;
+                break;
+            }
+        }
+
+        if (!$user) {
+            return false;
+        }
+
+        $user->update([
+            'email_verified_at' => now(),
+            'email_verification_token' => null
+        ]);
+        
         return true;
     }
 
     public function resendVerification(User $user): bool
     {
-        // Implementation needed
+        if ($user->hasVerifiedEmail()) {
+            return false;
+        }
+
+        $token = Str::random(60);
+        $user->update(['email_verification_token' => Hash::make($token)]);
+        
+        $this->emailService->sendVerificationEmail($user, $token);
+        
         return true;
     }
 
     public function enable2FA(User $user): array
     {
-        // Implementation needed
-        return [];
+        $twoFactorService = app(\App\Services\TwoFactorService::class);
+        
+        $secret = $twoFactorService->generateSecret();
+        $qrCodeUrl = $twoFactorService->getQRCodeUrl(
+            config('app.name'),
+            $user->email,
+            $secret
+        );
+
+        $user->update(['two_factor_secret' => encrypt($secret)]);
+
+        return [
+            'secret' => $secret,
+            'qr_code_url' => $qrCodeUrl
+        ];
     }
 
     public function verify2FA(User $user, string $code): bool
     {
-        // Implementation needed
-        return true;
+        if (!$user->two_factor_secret) {
+            return false;
+        }
+
+        $twoFactorService = app(\App\Services\TwoFactorService::class);
+        $secret = decrypt($user->two_factor_secret);
+        
+        if ($twoFactorService->verifyCode($secret, $code)) {
+            $user->update(['two_factor_enabled' => true]);
+            return true;
+        }
+        
+        return false;
     }
 
     public function disable2FA(User $user): bool
     {
-        // Implementation needed
+        $user->update([
+            'two_factor_enabled' => false,
+            'two_factor_secret' => null,
+            'two_factor_backup_codes' => null
+        ]);
+        
         return true;
     }
 

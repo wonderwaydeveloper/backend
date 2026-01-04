@@ -25,16 +25,16 @@ class PasswordResetController extends Controller
     {
         $validated = $request->validated();
         $user = User::where('email', $validated['email'])->first();
-        $token = Str::random(60);
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         \DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $validated['email']],
-            ['token' => Hash::make($token), 'created_at' => now()]
+            ['token' => Hash::make($code), 'created_at' => now()]
         );
 
-        $this->emailService->sendPasswordResetEmail($user, $token);
+        $this->emailService->sendPasswordResetEmail($user, $code);
 
-        return response()->json(['message' => 'Password reset link sent to your email']);
+        return response()->json(['message' => 'Password reset code sent to your email']);
     }
 
     public function reset(PasswordResetRequest $request)
@@ -45,12 +45,12 @@ class PasswordResetController extends Controller
             ->where('email', $validated['email'])
             ->first();
 
-        if (! $tokenData || ! Hash::check($validated['token'], $tokenData->token)) {
-            throw ValidationException::withMessages(['token' => ['Invalid token']]);
+        if (! $tokenData || ! Hash::check($validated['code'], $tokenData->token)) {
+            throw ValidationException::withMessages(['code' => ['Invalid code']]);
         }
 
-        if (now()->diffInMinutes($tokenData->created_at) > 60) {
-            throw ValidationException::withMessages(['token' => ['Token expired']]);
+        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+            throw ValidationException::withMessages(['code' => ['Code expired']]);
         }
 
         $user = User::where('email', $validated['email'])->first();
@@ -59,6 +59,53 @@ class PasswordResetController extends Controller
         \DB::table('password_reset_tokens')->where('email', $validated['email'])->delete();
 
         return response()->json(['message' => 'Password reset successfully']);
+    }
+
+    public function verifyCode(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|size:6',
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $tokenData = \DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if (! $tokenData) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Invalid code',
+            ], 400);
+        }
+
+        if (! Hash::check($request->code, $tokenData->token)) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Invalid code',
+            ], 400);
+        }
+
+        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+            return response()->json([
+                'valid' => false,
+                'message' => 'Code expired',
+            ], 400);
+        }
+
+        return response()->json([
+            'valid' => true,
+            'message' => 'Code is valid',
+        ]);
     }
 
     public function verifyToken(Request $request)

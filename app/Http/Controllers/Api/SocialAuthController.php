@@ -28,39 +28,21 @@ class SocialAuthController extends Controller
         }
     }
 
-    public function redirectToGithub()
+    public function redirectToApple()
     {
         return response()->json([
-            'url' => Socialite::driver('github')->stateless()->redirect()->getTargetUrl(),
+            'url' => Socialite::driver('apple')->stateless()->redirect()->getTargetUrl(),
         ]);
     }
 
-    public function handleGithubCallback(Request $request)
+    public function handleAppleCallback(Request $request)
     {
         try {
-            $githubUser = Socialite::driver('github')->stateless()->user();
+            $appleUser = Socialite::driver('apple')->stateless()->user();
 
-            return $this->createOrUpdateUser($githubUser, 'github');
+            return $this->createOrUpdateUser($appleUser, 'apple');
         } catch (\Exception $e) {
-            return response()->json(['error' => 'GitHub authentication failed'], 401);
-        }
-    }
-
-    public function redirectToFacebook()
-    {
-        return response()->json([
-            'url' => Socialite::driver('facebook')->stateless()->redirect()->getTargetUrl(),
-        ]);
-    }
-
-    public function handleFacebookCallback(Request $request)
-    {
-        try {
-            $facebookUser = Socialite::driver('facebook')->stateless()->user();
-
-            return $this->createOrUpdateUser($facebookUser, 'facebook');
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Facebook authentication failed'], 401);
+            return response()->json(['error' => 'Apple authentication failed'], 401);
         }
     }
 
@@ -77,7 +59,12 @@ class SocialAuthController extends Controller
                 'email_verified_at' => now(),
                 'avatar' => $socialUser->getAvatar(),
             ]);
-            $user->assignRole('user');
+            
+            try {
+                $user->assignRole('user');
+            } catch (\Exception $e) {
+                // Role might not exist, continue without role
+            }
         }
 
         $user->update([

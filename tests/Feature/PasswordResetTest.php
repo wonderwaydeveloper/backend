@@ -36,20 +36,20 @@ class PasswordResetTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
-    public function test_user_can_verify_reset_token(): void
+    public function test_user_can_verify_reset_code(): void
     {
         $user = User::factory()->create(['email' => 'test@example.com']);
 
-        // Create a password reset token
+        // Create a password reset code
         \DB::table('password_reset_tokens')->insert([
             'email' => 'test@example.com',
-            'token' => Hash::make('test-token'),
+            'token' => Hash::make('123456'),
             'created_at' => now(),
         ]);
 
-        $response = $this->postJson('/api/auth/password/verify-token', [
+        $response = $this->postJson('/api/auth/password/verify-code', [
             'email' => 'test@example.com',
-            'token' => 'test-token',
+            'code' => '123456',
         ]);
 
         $response->assertStatus(200)
@@ -60,16 +60,16 @@ class PasswordResetTest extends TestCase
     {
         $user = User::factory()->create(['email' => 'test@example.com']);
 
-        // Create a password reset token
+        // Create a password reset code
         \DB::table('password_reset_tokens')->insert([
             'email' => 'test@example.com',
-            'token' => Hash::make('test-token'),
+            'token' => Hash::make('123456'),
             'created_at' => now(),
         ]);
 
         $response = $this->postJson('/api/auth/password/reset', [
             'email' => 'test@example.com',
-            'token' => 'test-token',
+            'code' => '123456',
             'password' => 'newpassword123',
             'password_confirmation' => 'newpassword123',
         ]);
@@ -80,32 +80,32 @@ class PasswordResetTest extends TestCase
         $user->refresh();
         $this->assertTrue(Hash::check('newpassword123', $user->password));
 
-        // Verify token was deleted
+        // Verify code was deleted
         $this->assertDatabaseMissing('password_reset_tokens', [
             'email' => 'test@example.com',
         ]);
     }
 
-    public function test_password_reset_requires_valid_token(): void
+    public function test_password_reset_requires_valid_code(): void
     {
         $user = User::factory()->create(['email' => 'test@example.com']);
 
         $response = $this->postJson('/api/auth/password/reset', [
             'email' => 'test@example.com',
-            'token' => 'invalid-token',
+            'code' => 'invalid-code',
             'password' => 'newpassword123',
             'password_confirmation' => 'newpassword123',
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors(['token']);
+            ->assertJsonValidationErrors(['code']);
     }
 
     public function test_password_reset_requires_password_confirmation(): void
     {
         $response = $this->postJson('/api/auth/password/reset', [
             'email' => 'test@example.com',
-            'token' => 'test-token',
+            'code' => '123456',
             'password' => 'newpassword123',
         ]);
 

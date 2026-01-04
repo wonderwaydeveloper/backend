@@ -13,11 +13,19 @@ class DeviceToken extends Model
         'device_name',
         'active',
         'last_used_at',
+        'browser',
+        'os',
+        'push_token',
+        'ip_address',
+        'user_agent',
+        'fingerprint',
+        'is_trusted'
     ];
 
     protected $casts = [
         'active' => 'boolean',
         'last_used_at' => 'datetime',
+        'is_trusted' => 'boolean'
     ];
 
     public function user()

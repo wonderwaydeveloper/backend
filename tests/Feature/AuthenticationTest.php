@@ -12,20 +12,17 @@ class AuthenticationTest extends TestCase
 
     public function test_user_can_register()
     {
+        // Test multi-step registration instead
         $response = $this->withoutMiddleware([
                 \Illuminate\Routing\Middleware\ThrottleRequests::class,
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
-            ->postJson('/api/register', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-                'username' => 'testuser',
-                'password' => 'Password123!',
-                'password_confirmation' => 'Password123!',
-                'date_of_birth' => '2000-01-01',
+            ->postJson('/api/auth/register/step1', [
+                'contact' => 'test@example.com',
+                'contact_type' => 'email',
             ]);
 
-        $response->assertStatus(201);
+        $response->assertStatus(200);
     }
 
     public function test_user_cannot_register_with_existing_email()
@@ -36,13 +33,9 @@ class AuthenticationTest extends TestCase
                 \Illuminate\Routing\Middleware\ThrottleRequests::class,
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
-            ->postJson('/api/register', [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-                'username' => 'testuser2',
-                'password' => 'Password123!',
-                'password_confirmation' => 'Password123!',
-                'date_of_birth' => '2000-01-01',
+            ->postJson('/api/auth/register/step1', [
+                'contact' => 'test@example.com',
+                'contact_type' => 'email',
             ]);
 
         $response->assertStatus(422);

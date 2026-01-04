@@ -38,13 +38,15 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_premium',
         'is_private',
         'google_id',
-        'github_id',
-        'facebook_id',
+        'apple_id',
         'two_factor_enabled',
         'two_factor_secret',
         'two_factor_backup_codes',
         'is_online',
         'last_seen_at',
+        'email_verification_token',
+        'refresh_token',
+        'password_changed_at'
     ];
 
     /**
@@ -57,6 +59,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
         'two_factor_secret',
         'two_factor_backup_codes',
+        'email_verification_token',
+        'refresh_token',
     ];
 
     /**

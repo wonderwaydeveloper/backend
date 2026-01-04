@@ -40,6 +40,7 @@ class DeviceTest extends TestCase
             'user_id' => $user->id,
             'token' => $token,
             'device_type' => 'ios',
+            'fingerprint' => hash('sha256', $user->id . $token . 'ios' . time()),
         ]);
 
         $response = $this->actingAs($user, 'sanctum')

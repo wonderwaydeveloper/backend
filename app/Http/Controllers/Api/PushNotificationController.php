@@ -28,7 +28,8 @@ class PushNotificationController extends Controller
                 'token' => $validated['device_token'],
             ], [
                 'device_type' => $validated['device_type'],
-                'device_name' => $validated['app_version'] ?? null,
+                'device_name' => $validated['device_name'] ?? null,
+                'fingerprint' => hash('sha256', auth()->id() . $validated['device_token'] . $validated['device_type'] . time()),
                 'active' => true,
                 'last_used_at' => now(),
             ]);

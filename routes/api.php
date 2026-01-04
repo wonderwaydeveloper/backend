@@ -74,8 +74,21 @@ Route::post('/upload', function () {
     return response()->json(['message' => 'Upload endpoint']);
 });
 
-Route::post('/register', [AuthController::class, 'register'])->middleware(['rate.limit:login']);
 Route::post('/login', [AuthController::class, 'login'])->middleware(['rate.limit:login']);
+
+// Multi-step registration
+Route::prefix('auth/register')->middleware(['rate.limit:api'])->group(function () {
+    Route::post('/step1', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step1']);
+    Route::post('/step2', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step2']);
+    Route::post('/step3', [\App\Http\Controllers\Api\MultiStepAuthController::class, 'step3']);
+});
+
+// Email verification
+Route::prefix('auth/email')->group(function () {
+    Route::post('/verify', [\App\Http\Controllers\Api\EmailVerificationController::class, 'verify']);
+    Route::post('/resend', [\App\Http\Controllers\Api\EmailVerificationController::class, 'resend']);
+    Route::get('/status', [\App\Http\Controllers\Api\EmailVerificationController::class, 'status'])->middleware('auth:sanctum');
+});
 
 // Add user route for testing
 Route::get('/user', function () {
@@ -99,16 +112,14 @@ Route::middleware('auth:sanctum')->prefix('auth/2fa')->group(function () {
 Route::prefix('auth/password')->group(function () {
     Route::post('/forgot', [PasswordResetController::class, 'forgot']);
     Route::post('/reset', [PasswordResetController::class, 'reset']);
-    Route::post('/verify-token', [PasswordResetController::class, 'verifyToken']);
+    Route::post('/verify-code', [PasswordResetController::class, 'verifyCode']);
 });
 
 Route::prefix('auth/social')->group(function () {
     Route::get('/google', [SocialAuthController::class, 'redirectToGoogle']);
     Route::get('/google/callback', [SocialAuthController::class, 'handleGoogleCallback']);
-    Route::get('/github', [SocialAuthController::class, 'redirectToGithub']);
-    Route::get('/github/callback', [SocialAuthController::class, 'handleGithubCallback']);
-    Route::get('/facebook', [SocialAuthController::class, 'redirectToFacebook']);
-    Route::get('/facebook/callback', [SocialAuthController::class, 'handleFacebookCallback']);
+    Route::get('/apple', [SocialAuthController::class, 'redirectToApple']);
+    Route::get('/apple/callback', [SocialAuthController::class, 'handleAppleCallback']);
 });
 
 // GraphQL Endpoint
@@ -206,6 +217,17 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
 
     Route::post('/devices/register', [DeviceController::class, 'register']);
     Route::delete('/devices/{token}', [DeviceController::class, 'unregister']);
+    
+    // Advanced device management
+    Route::prefix('devices')->group(function () {
+        Route::post('/advanced/register', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'registerDevice']);
+        Route::get('/list', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'listDevices']);
+        Route::post('/{device}/trust', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'trustDevice']);
+        Route::delete('/{device}/revoke', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'revokeDevice']);
+        Route::post('/revoke-all', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'revokeAllDevices']);
+        Route::get('/{device}/activity', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'deviceActivity']);
+        Route::get('/security-check', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'checkSuspiciousActivity']);
+    });
 
 
     Route::prefix('messages')->group(function () {

@@ -15,6 +15,9 @@ class DeviceController extends Controller
             'platform' => 'required|in:ios,android,web',
         ]);
 
+        // Generate a simple fingerprint for basic device registration
+        $fingerprint = hash('sha256', $request->user()->id . $request->input('token') . $request->input('platform') . time());
+
         DeviceToken::updateOrCreate(
             [
                 'user_id' => $request->user()->id,
@@ -22,6 +25,7 @@ class DeviceController extends Controller
             ],
             [
                 'device_type' => $request->input('platform'),
+                'fingerprint' => $fingerprint,
             ]
         );
 

@@ -14,12 +14,12 @@ class PasswordResetEmail extends Mailable
     use SerializesModels;
 
     public $user;
-    public $token;
+    public $code;
 
-    public function __construct($user, $token)
+    public function __construct($user, $code)
     {
         $this->user = $user;
-        $this->token = $token;
+        $this->code = $code;
     }
 
     public function envelope(): Envelope
@@ -33,7 +33,7 @@ class PasswordResetEmail extends Mailable
     {
         return new Content(
             view: 'emails.password-reset',
-            with: ['user' => $this->user, 'token' => $this->token],
+            with: ['user' => $this->user, 'code' => $this->code],
         );
     }
 }

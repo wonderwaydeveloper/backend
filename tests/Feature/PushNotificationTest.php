@@ -42,6 +42,7 @@ class PushNotificationTest extends TestCase
             'user_id' => $user->id,
             'token' => $token,
             'device_type' => 'android',
+            'fingerprint' => hash('sha256', $user->id . $token . 'android' . time()),
             'active' => true,
         ]);
 
@@ -65,6 +66,7 @@ class PushNotificationTest extends TestCase
             'user_id' => $user->id,
             'token' => 'token1',
             'device_type' => 'android',
+            'fingerprint' => hash('sha256', $user->id . 'token1' . 'android' . time()),
             'active' => true,
         ]);
 
@@ -72,6 +74,7 @@ class PushNotificationTest extends TestCase
             'user_id' => $user->id,
             'token' => 'token2',
             'device_type' => 'ios',
+            'fingerprint' => hash('sha256', $user->id . 'token2' . 'ios' . time()),
             'active' => false,
         ]);
 

@@ -31,7 +31,7 @@ class PhoneAuthController extends Controller
         PhoneVerificationCode::create([
             'phone' => $validated['phone'],
             'code' => $code,
-            'expires_at' => now()->addMinutes(5),
+            'expires_at' => now()->addMinutes(15),
         ]);
 
         $this->smsService->sendVerificationCode($validated['phone'], $code);
