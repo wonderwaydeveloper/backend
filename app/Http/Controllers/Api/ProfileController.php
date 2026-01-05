@@ -48,8 +48,26 @@ class ProfileController extends Controller
 
     public function updatePrivacy(Request $request): JsonResponse
     {
+        $request->validate([
+            'is_private' => 'required|boolean',
+            'email_notifications_enabled' => 'sometimes|boolean'
+        ]);
+        
         $user = $request->user();
-        $user->update($request->only(['is_private']));
+        $user->update($request->only(['is_private', 'email_notifications_enabled']));
+        return response()->json(new UserResource($user));
+    }
+
+    public function updateVerification(Request $request, User $user): JsonResponse
+    {
+        // Only admins can verify users
+        if (!$request->user()->hasRole('admin')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        $request->validate(['verified' => 'required|boolean']);
+        $user->update(['verified' => $request->verified]);
+        
         return response()->json(new UserResource($user));
     }
 }

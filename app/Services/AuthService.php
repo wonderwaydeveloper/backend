@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use App\Exceptions\ValidationException;
 use App\DTOs\LoginDTO;
+use App\DTOs\UserRegistrationDTO;
 use PragmaRX\Google2FA\Google2FA;
 
 class AuthService implements AuthServiceInterface
@@ -20,7 +21,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Register a new user
      */
-    public function register(\App\DTOs\UserRegistrationDTO $dto): array
+    public function register(UserRegistrationDTO $dto): array
     {
         $user = User::create([
             'name' => $dto->name,
@@ -29,6 +30,11 @@ class AuthService implements AuthServiceInterface
             'password' => Hash::make($dto->password),
             'date_of_birth' => $dto->dateOfBirth,
         ]);
+
+        // Check if user is under 18
+        if ($user->date_of_birth && $user->date_of_birth->age < 18) {
+            $user->update(['is_child' => true]);
+        }
 
         $user->assignRole('user');
 
@@ -49,7 +55,10 @@ class AuthService implements AuthServiceInterface
      */
     public function login(LoginDTO $loginDTO): array
     {
-        $user = User::where('email', $loginDTO->email)->first();
+        // Find user by email or username
+        $user = User::where('email', $loginDTO->login)
+                   ->orWhere('username', $loginDTO->login)
+                   ->first();
         
         // Use hash_equals to prevent timing attacks
         $validCredentials = $user && Hash::check($loginDTO->password, $user->password);
@@ -61,8 +70,23 @@ class AuthService implements AuthServiceInterface
 
         if (!$validCredentials) {
             throw new ValidationException([
-                'email' => ['Invalid login credentials'],
+                'login' => ['Invalid login credentials'],
             ]);
+        }
+
+        // Check 2FA requirement
+        if ($user->two_factor_enabled && !$loginDTO->twoFactorCode) {
+            $tempToken = $user->createToken('temp_2fa')->plainTextToken;
+            return [
+                'requires_2fa' => true,
+                'temp_token' => $tempToken,
+                'message' => 'Two-factor authentication required',
+            ];
+        }
+
+        // Verify 2FA if provided
+        if ($user->two_factor_enabled && $loginDTO->twoFactorCode) {
+            return $this->handle2FA($user, $loginDTO->twoFactorCode);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

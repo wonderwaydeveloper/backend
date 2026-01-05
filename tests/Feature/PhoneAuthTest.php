@@ -104,7 +104,7 @@ class PhoneAuthTest extends TestCase
             'phone' => '+1234567890',
             'code' => '123456',
             'expires_at' => now()->addMinutes(5),
-            'verified' => true,
+            'verified' => false, // Should be false for fresh login
         ]);
 
         $response = $this->postJson('/api/auth/phone/login', [

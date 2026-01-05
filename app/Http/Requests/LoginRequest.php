@@ -14,7 +14,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
+            'login' => 'required|string',
             'password' => 'required|string',
             'two_factor_code' => 'nullable|string|size:6|regex:/^[0-9]+$/',
         ];
@@ -23,8 +23,7 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Email is required',
-            'email.email' => 'Email format is invalid',
+            'login.required' => 'Email or username is required',
             'password.required' => 'Password is required',
             'two_factor_code.size' => 'Two-factor code must be 6 digits',
             'two_factor_code.regex' => 'Two-factor code must contain only numbers',
@@ -34,7 +33,7 @@ class LoginRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'email' => 'Email',
+            'login' => 'Email or Username',
             'password' => 'Password',
             'two_factor_code' => 'Two-factor code',
         ];
@@ -42,10 +41,10 @@ class LoginRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Normalize email
-        if ($this->has('email')) {
+        // Normalize login field
+        if ($this->has('login')) {
             $this->merge([
-                'email' => strtolower(trim($this->input('email'))),
+                'login' => strtolower(trim($this->input('login'))),
             ]);
         }
 

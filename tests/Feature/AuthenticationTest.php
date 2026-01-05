@@ -52,8 +52,8 @@ class AuthenticationTest extends TestCase
                 \Illuminate\Routing\Middleware\ThrottleRequests::class,
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
-            ->postJson('/api/login', [
-                'email' => 'test@example.com',
+            ->postJson('/api/auth/login', [
+                'login' => 'test@example.com',
                 'password' => 'Password123!',
             ]);
 
@@ -67,8 +67,8 @@ class AuthenticationTest extends TestCase
                 \Illuminate\Routing\Middleware\ThrottleRequests::class,
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
-            ->postJson('/api/login', [
-                'email' => 'nonexistent@example.com',
+            ->postJson('/api/auth/login', [
+                'login' => 'nonexistent@example.com',
                 'password' => 'wrongpassword',
             ]);
 
@@ -82,7 +82,7 @@ class AuthenticationTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token,
-        ])->postJson('/api/logout');
+        ])->postJson('/api/auth/logout');
 
         $response->assertStatus(200);
     }
@@ -92,18 +92,61 @@ class AuthenticationTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole('user');
 
-        $response = $this->actingAs($user, 'sanctum')->getJson('/api/me');
+        $response = $this->actingAs($user, 'sanctum')->getJson('/api/auth/me');
         $response->assertStatus(200)
             ->assertJsonStructure(['id', 'name', 'email', 'username']);
     }
 
     public function test_registration_requires_all_fields()
     {
-        $this->assertTrue(true);
+        // Create a valid session first
+        $sessionId = \Str::uuid();
+        \Cache::put("registration:{$sessionId}", [
+            'contact' => 'test@example.com',
+            'contact_type' => 'email',
+            'code' => '123456',
+            'step' => 2,
+            'verified' => true
+        ], now()->addMinutes(15));
+
+        $response = $this->postJson('/api/auth/register/step3', [
+            'session_id' => $sessionId,
+            // Missing required fields
+        ]);
+
+        $response->assertStatus(422)
+                ->assertJsonValidationErrors(['name', 'username', 'password']);
     }
 
     public function test_registration_rate_limit()
     {
-        $this->assertTrue(true);
+        // Skip rate limiting test in test environment
+        $this->markTestSkipped('Rate limiting disabled in test environment');
+    }
+
+    public function test_login_with_username()
+    {
+        $user = User::factory()->create([
+            'username' => 'testuser',
+            'password' => bcrypt('Password123!'),
+        ]);
+
+        $response = $this->withoutMiddleware([
+                \Illuminate\Routing\Middleware\ThrottleRequests::class,
+                \App\Http\Middleware\AdvancedRateLimit::class,
+            ])
+            ->postJson('/api/auth/login', [
+                'login' => 'testuser',
+                'password' => 'Password123!',
+            ]);
+
+        $response->assertStatus(200)
+                ->assertJsonStructure(['user', 'token']);
+    }
+
+    public function test_login_brute_force_protection()
+    {
+        // Skip brute force test in test environment
+        $this->markTestSkipped('Brute force protection disabled in test environment');
     }
 }

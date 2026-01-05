@@ -5,7 +5,7 @@ namespace App\DTOs;
 class LoginDTO
 {
     public function __construct(
-        public readonly string $email,
+        public readonly string $login,
         public readonly string $password,
         public readonly ?string $twoFactorCode = null
     ) {}
@@ -13,7 +13,7 @@ class LoginDTO
     public static function fromRequest(array $data): self
     {
         return new self(
-            email: $data['email'],
+            login: $data['login'],
             password: $data['password'],
             twoFactorCode: $data['two_factor_code'] ?? null
         );
@@ -22,7 +22,7 @@ class LoginDTO
     public function toArray(): array
     {
         return [
-            'email' => $this->email,
+            'login' => $this->login,
             'password' => $this->password,
             'two_factor_code' => $this->twoFactorCode,
         ];

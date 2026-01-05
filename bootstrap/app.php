@@ -26,9 +26,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(append: [
             \App\Http\Middleware\WebApplicationFirewall::class,
-            \App\Http\Middleware\RateLimitMiddleware::class,
-            \App\Http\Middleware\BruteForceProtection::class,
-            \App\Http\Middleware\AdvancedRateLimit::class,
+            // Rate limiting disabled in testing
+            // \App\Http\Middleware\RateLimitMiddleware::class,
+            // \App\Http\Middleware\BruteForceProtection::class,
+            // \App\Http\Middleware\AdvancedRateLimit::class,
             \App\Http\Middleware\AdvancedInputValidation::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,

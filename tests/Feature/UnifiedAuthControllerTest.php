@@ -18,8 +18,8 @@ class UnifiedAuthControllerTest extends TestCase
             'password' => bcrypt('password123')
         ]);
 
-        $response = $this->postJson('/api/login', [
-            'email' => 'test@example.com',
+        $response = $this->postJson('/api/auth/login', [
+            'login' => 'test@example.com',
             'password' => 'password123'
         ]);
 
@@ -71,7 +71,7 @@ class UnifiedAuthControllerTest extends TestCase
 
         $response = $this->withHeaders([
             'Authorization' => 'Bearer ' . $token
-        ])->postJson('/api/logout');
+        ])->postJson('/api/auth/logout');
 
         $response->assertStatus(200)
                 ->assertJson(['message' => 'Logout successful']);

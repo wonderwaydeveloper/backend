@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\DTOs\{LoginDTO, UserRegistrationDTO};
+use App\DTOs\LoginDTO;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\{LoginRequest, RegisterRequest, PhoneVerificationRequest, PhoneLoginRequest, PhoneRegisterRequest};
+use App\Http\Requests\{LoginRequest, PhoneVerificationRequest, PhoneLoginRequest, PhoneRegisterRequest};
 use App\Models\{User, PhoneVerificationCode};
-use App\Services\{AuthService, EmailService, SmsService};
+use App\Services\{AuthService, EmailService, SmsService, TwoFactorService, PasswordSecurityService};
+use App\Rules\StrongPassword;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Cache, Hash};
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Laravel\Socialite\Facades\Socialite;
 
 class UnifiedAuthController extends Controller
@@ -17,7 +19,9 @@ class UnifiedAuthController extends Controller
     public function __construct(
         private AuthService $authService,
         private EmailService $emailService,
-        private SmsService $smsService
+        private SmsService $smsService,
+        private TwoFactorService $twoFactorService,
+        private PasswordSecurityService $passwordService
     ) {}
 
     // === Basic Authentication ===
@@ -28,25 +32,20 @@ class UnifiedAuthController extends Controller
         return response()->json($result);
     }
 
-    public function register(RegisterRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-        $dto = new UserRegistrationDTO(
-            name: $validated['name'],
-            username: $validated['username'],
-            email: $validated['email'],
-            password: $validated['password'],
-            dateOfBirth: $validated['date_of_birth']
-        );
-        
-        $result = $this->authService->register($dto);
-        return response()->json($result, 201);
-    }
-
     public function logout(Request $request): JsonResponse
     {
         $this->authService->logout($request->user());
         return response()->json(['message' => 'Logout successful']);
+    }
+
+    public function logoutAll(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        // Delete all tokens for this user
+        $user->tokens()->delete();
+        
+        return response()->json(['message' => 'Logged out from all devices']);
     }
 
     public function me(Request $request): JsonResponse
@@ -141,6 +140,11 @@ class UnifiedAuthController extends Controller
 
         $user = User::create($userData);
         
+        // Check if user is under 18
+        if ($user->date_of_birth && $user->date_of_birth->age < 18) {
+            $user->update(['is_child' => true]);
+        }
+        
         try {
             $user->assignRole('user');
         } catch (\Exception $e) {
@@ -165,7 +169,7 @@ class UnifiedAuthController extends Controller
         }
 
         return response()->json([
-            'url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl()
+            'redirect_url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl()
         ]);
     }
 
@@ -240,6 +244,11 @@ class UnifiedAuthController extends Controller
             'date_of_birth' => $validated['date_of_birth'],
         ]);
 
+        // Check if user is under 18
+        if ($user->date_of_birth && $user->date_of_birth->age < 18) {
+            $user->update(['is_child' => true]);
+        }
+
         try {
             $user->assignRole('user');
         } catch (\Exception $e) {
@@ -254,20 +263,24 @@ class UnifiedAuthController extends Controller
     {
         $validated = $request->validated();
 
+        // Find fresh verification code
         $verification = PhoneVerificationCode::where('phone', $validated['phone'])
             ->where('code', $validated['verification_code'])
-            ->where('verified', true)
+            ->where('verified', false)
             ->latest()
             ->first();
 
-        if (!$verification) {
-            return response()->json(['error' => 'Invalid credentials'], 422);
+        if (!$verification || $verification->isExpired()) {
+            return response()->json(['error' => 'Invalid or expired verification code'], 422);
         }
 
         $user = User::where('phone', $validated['phone'])->first();
         if (!$user) {
-            return response()->json(['error' => 'Invalid credentials'], 422);
+            return response()->json(['error' => 'User not found'], 422);
         }
+
+        // Mark as used and delete
+        $verification->delete();
 
         $token = $user->createToken('auth_token')->plainTextToken;
         return response()->json(['user' => $user, 'token' => $token]);
@@ -306,5 +319,239 @@ class UnifiedAuthController extends Controller
         $username = str_replace(' ', '', strtolower($name));
         $count = User::where('username', 'like', $username . '%')->count();
         return $count > 0 ? $username . $count : $username;
+    }
+
+    // === Email Verification ===
+    public function verifyEmail(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6'
+        ]);
+
+        $user = User::where('email', $request->email)
+                   ->whereNotNull('email_verification_token')
+                   ->whereNull('email_verified_at')
+                   ->first();
+        
+        if (!$user || !Hash::check($request->code, $user->email_verification_token)) {
+            return response()->json(['error' => 'Invalid or expired code'], 422);
+        }
+
+        $user->update([
+            'email_verified_at' => now(),
+            'email_verification_token' => null
+        ]);
+
+        return response()->json(['message' => 'Email verified successfully']);
+    }
+
+    public function resendEmailVerification(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)
+                   ->whereNull('email_verified_at')
+                   ->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'User not found or already verified'], 422);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $user->update(['email_verification_token' => Hash::make($code)]);
+
+        $this->emailService->sendVerificationEmail($user, $code);
+
+        return response()->json(['message' => 'Verification code sent']);
+    }
+
+    public function emailVerificationStatus(Request $request): JsonResponse
+    {
+        return response()->json([
+            'verified' => $request->user()->hasVerifiedEmail()
+        ]);
+    }
+
+    // === Password Reset ===
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+        
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['message' => 'Password reset code sent to your email']);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        \DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            ['token' => Hash::make($code), 'created_at' => now()]
+        );
+
+        $this->emailService->sendPasswordResetEmail($user, $code);
+        
+        return response()->json(['message' => 'Password reset code sent to your email']);
+    }
+
+    public function verifyResetCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6'
+        ]);
+
+        $tokenData = \DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if (!$tokenData || !Hash::check($request->code, $tokenData->token)) {
+            return response()->json(['valid' => false, 'message' => 'Invalid code'], 422);
+        }
+
+        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+            return response()->json(['valid' => false, 'message' => 'Code expired'], 422);
+        }
+
+        return response()->json(['valid' => true, 'message' => 'Code is valid']);
+    }
+
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|string|size:6',
+            'password' => 'required|string|min:8|confirmed'
+        ]);
+
+        $tokenData = \DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if (!$tokenData || !Hash::check($request->code, $tokenData->token)) {
+            return response()->json(['error' => 'Invalid code'], 422);
+        }
+
+        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+            return response()->json(['error' => 'Code expired'], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $user->update(['password' => Hash::make($request->password)]);
+
+        \DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        return response()->json(['message' => 'Password reset successfully']);
+    }
+
+    // === Password Management ===
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => ['required', 'string', 'confirmed', new StrongPassword()],
+        ]);
+        
+        $user = $request->user();
+        
+        if (!Hash::check($request->current_password, $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['Current password is incorrect']
+            ]);
+        }
+        
+        $this->passwordService->updatePassword($user, $request->password);
+        
+        return response()->json([
+            'message' => 'Password changed successfully',
+            'password_strength' => $this->passwordService->getPasswordStrengthScore($request->password)
+        ]);
+    }
+
+    // === Two Factor Authentication ===
+    public function enable2FA(Request $request): JsonResponse
+    {
+        $request->validate(['password' => 'required|string']);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Incorrect password'],
+            ]);
+        }
+
+        if ($user->two_factor_enabled) {
+            return response()->json(['message' => '2FA is already enabled'], 400);
+        }
+
+        $secret = $this->twoFactorService->generateSecret();
+        $qrCodeUrl = $this->twoFactorService->getQRCodeUrl(
+            config('app.name'),
+            $user->email,
+            $secret
+        );
+
+        $user->update(['two_factor_secret' => encrypt($secret)]);
+
+        return response()->json([
+            'secret' => $secret,
+            'qr_code_url' => $qrCodeUrl,
+            'message' => 'Scan QR code with Google Authenticator and verify',
+        ]);
+    }
+
+    public function verify2FA(Request $request): JsonResponse
+    {
+        $request->validate(['code' => 'required|string|size:6']);
+
+        $user = $request->user();
+
+        if (!$user->two_factor_secret) {
+            return response()->json(['message' => '2FA not initialized'], 400);
+        }
+
+        $secret = decrypt($user->two_factor_secret);
+        $valid = $this->twoFactorService->verifyCode($secret, $request->code);
+
+        if (!$valid) {
+            throw ValidationException::withMessages([
+                'code' => ['Invalid verification code'],
+            ]);
+        }
+
+        $backupCodes = $this->twoFactorService->generateBackupCodes();
+
+        $user->update([
+            'two_factor_enabled' => true,
+            'two_factor_backup_codes' => encrypt(json_encode($backupCodes)),
+        ]);
+
+        return response()->json([
+            'message' => '2FA enabled successfully',
+            'backup_codes' => $backupCodes,
+        ]);
+    }
+
+    public function disable2FA(Request $request): JsonResponse
+    {
+        $request->validate(['password' => 'required|string']);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Incorrect password'],
+            ]);
+        }
+
+        $user->update([
+            'two_factor_enabled' => false,
+            'two_factor_secret' => null,
+            'two_factor_backup_codes' => null,
+        ]);
+
+        return response()->json(['message' => '2FA disabled successfully']);
     }
 }

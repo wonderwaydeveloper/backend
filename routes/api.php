@@ -1,18 +1,23 @@
 <?php
 
-use App\Http\Controllers\Api\ABTestController;
-use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AdvancedDeviceController;
+use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\UnifiedAuthController;
-use App\Http\Controllers\Api\AutoScalingController;
-use App\Http\Controllers\Api\BookmarkController;
+use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\CommentController;
-use App\Http\Controllers\Api\CommunityNoteController;
-use App\Http\Controllers\Api\ConversionController;
-use App\Http\Controllers\Api\DeviceController;
+use App\Http\Controllers\Api\BookmarkController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FollowRequestController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\VideoController;
 use App\Http\Controllers\Api\GifController;
-use App\Http\Controllers\Api\GraphQLController;
+use App\Http\Controllers\Api\RepostController;
+use App\Http\Controllers\Api\ThreadController;
+use App\Http\Controllers\Api\ScheduledPostController;
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\CommunityNoteController;
+use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\HashtagController;
 use App\Http\Controllers\Api\ListController;
 use App\Http\Controllers\Api\MediaController;
@@ -31,23 +36,20 @@ use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
 use App\Http\Controllers\Api\OptimizedTimelineController;
 use App\Http\Controllers\Api\PollController;
-use App\Http\Controllers\Api\PostController;
-use App\Http\Controllers\Api\ProfileController;
-use App\Http\Controllers\Api\PushNotificationController;
-use App\Http\Controllers\Api\RepostController;
-use App\Http\Controllers\Api\ScheduledPostController;
-use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\SpaceController;
-use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\ConversionController;
 use App\Http\Controllers\Api\SuggestionController;
-use App\Http\Controllers\Api\ThreadController;
-use App\Http\Controllers\Api\TimelineController;
+use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\TrendingController;
-use App\Http\Controllers\Api\TwoFactorController;
-use App\Http\Controllers\Api\VideoController;
+use App\Http\Controllers\Api\SpaceController;
+use App\Http\Controllers\Api\PushNotificationController;
+use App\Http\Controllers\Api\TimelineController;
+use App\Http\Controllers\Api\ABTestController;
+use App\Http\Controllers\Api\AutoScalingController;
+use App\Http\Controllers\Api\GraphQLController;
 use App\Monetization\Controllers\AdvertisementController;
 use App\Monetization\Controllers\CreatorFundController;
 use App\Monetization\Controllers\PremiumController;
+
 use Illuminate\Support\Facades\Route;
 
 // Health Check endpoint
@@ -70,66 +72,65 @@ Route::post('/upload', function () {
     return response()->json(['message' => 'Upload endpoint']);
 });
 
-Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware(['rate.limit:login']);
+// GraphQL endpoint
+Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:sanctum');
 
-// Multi-step registration
-Route::prefix('auth/register')->middleware(['rate.limit:api'])->group(function () {
-    Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
-    Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
-    Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
-});
+// Me endpoint (for auth testing)
+Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
-// Email verification
-Route::prefix('auth/email')->group(function () {
-    Route::post('/verify', [\App\Http\Controllers\Api\EmailVerificationController::class, 'verify']);
-    Route::post('/resend', [\App\Http\Controllers\Api\EmailVerificationController::class, 'resend']);
-    Route::get('/status', [\App\Http\Controllers\Api\EmailVerificationController::class, 'status'])->middleware('auth:sanctum');
-});
+// === Authentication Routes ===
+Route::prefix('auth')->group(function () {
+    // Login & Basic Auth
+    Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware(['rate.limit:login']);
+    Route::post('/logout', [UnifiedAuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::post('/logout-all', [UnifiedAuthController::class, 'logoutAll'])->middleware('auth:sanctum');
+    Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
-// Add user route for testing
-Route::get('/user', function () {
-    return response()->json(['user' => auth()->user()]);
-})->middleware('auth:sanctum');
+    // Multi-step Registration
+    Route::prefix('register')->middleware(['rate.limit:api'])->group(function () {
+        Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
+        Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
+        Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
+    });
 
-Route::prefix('auth/phone')->middleware(['rate.limit:api'])->group(function () {
-    Route::post('/send-code', [UnifiedAuthController::class, 'phoneSendCode']);
-    Route::post('/verify', [UnifiedAuthController::class, 'phoneVerifyCode']);
-    Route::post('/register', [UnifiedAuthController::class, 'phoneRegister']);
-    Route::post('/login', [UnifiedAuthController::class, 'phoneLogin']);
-});
+    // Email Verification
+    Route::prefix('email')->group(function () {
+        Route::post('/verify', [UnifiedAuthController::class, 'verifyEmail']);
+        Route::post('/resend', [UnifiedAuthController::class, 'resendEmailVerification']);
+        Route::get('/status', [UnifiedAuthController::class, 'emailVerificationStatus'])->middleware('auth:sanctum');
+    });
 
-Route::middleware('auth:sanctum')->prefix('auth/2fa')->group(function () {
-    Route::post('/enable', [TwoFactorController::class, 'enable']);
-    Route::post('/verify', [TwoFactorController::class, 'verify']);
-    Route::post('/disable', [TwoFactorController::class, 'disable']);
-    Route::get('/backup-codes', [TwoFactorController::class, 'backupCodes']);
-});
+    // Phone Authentication
+    Route::prefix('phone')->middleware(['rate.limit:api'])->group(function () {
+        Route::post('/send-code', [UnifiedAuthController::class, 'phoneSendCode']);
+        Route::post('/verify', [UnifiedAuthController::class, 'phoneVerifyCode']);
+        Route::post('/register', [UnifiedAuthController::class, 'phoneRegister']);
+        Route::post('/login', [UnifiedAuthController::class, 'phoneLogin']);
+    });
 
-Route::prefix('auth/password')->group(function () {
-    Route::post('/forgot', [PasswordResetController::class, 'forgot']);
-    Route::post('/reset', [PasswordResetController::class, 'reset']);
-    Route::post('/verify-code', [PasswordResetController::class, 'verifyCode']);
-});
-
-Route::prefix('auth/social')->group(function () {
-    Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google|apple');
-    Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
-});
-
-// GraphQL Endpoint
-Route::post('/graphql', [GraphQLController::class, 'query'])
-    ->middleware(['auth:sanctum']);
-
-Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
-    Route::post('/logout', [UnifiedAuthController::class, 'logout']);
-    Route::get('/me', [UnifiedAuthController::class, 'me']);
-    
     // Password Management
     Route::prefix('password')->group(function () {
-        Route::post('/change', [\App\Http\Controllers\Api\PasswordController::class, 'change']);
-        Route::post('/check-strength', [\App\Http\Controllers\Api\PasswordController::class, 'checkStrength']);
-        Route::get('/check-expiry', [\App\Http\Controllers\Api\PasswordController::class, 'checkExpiry']);
+        Route::post('/forgot', [UnifiedAuthController::class, 'forgotPassword']);
+        Route::post('/verify-code', [UnifiedAuthController::class, 'verifyResetCode']);
+        Route::post('/reset', [UnifiedAuthController::class, 'resetPassword']);
+        Route::post('/change', [UnifiedAuthController::class, 'changePassword'])->middleware('auth:sanctum');
     });
+
+    // Two Factor Authentication
+    Route::prefix('2fa')->middleware('auth:sanctum')->group(function () {
+        Route::post('/enable', [UnifiedAuthController::class, 'enable2FA']);
+        Route::post('/verify', [UnifiedAuthController::class, 'verify2FA']);
+        Route::post('/disable', [UnifiedAuthController::class, 'disable2FA']);
+    });
+
+    // Social Authentication
+    Route::prefix('social')->group(function () {
+        Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google|apple');
+        Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
+    });
+});
+
+Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
 
     Route::apiResource('posts', PostController::class);
     Route::put('/posts/{post}', [PostController::class, 'update']);
@@ -214,13 +215,13 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
     
     // Advanced device management
     Route::prefix('devices')->group(function () {
-        Route::post('/advanced/register', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'registerDevice']);
-        Route::get('/list', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'listDevices']);
-        Route::post('/{device}/trust', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'trustDevice']);
-        Route::delete('/{device}/revoke', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'revokeDevice']);
-        Route::post('/revoke-all', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'revokeAllDevices']);
-        Route::get('/{device}/activity', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'deviceActivity']);
-        Route::get('/security-check', [\App\Http\Controllers\Api\AdvancedDeviceController::class, 'checkSuspiciousActivity']);
+        Route::post('/advanced/register', [AdvancedDeviceController::class, 'registerDevice']);
+        Route::get('/list', [AdvancedDeviceController::class, 'listDevices']);
+        Route::post('/{device}/trust', [AdvancedDeviceController::class, 'trustDevice']);
+        Route::delete('/{device}/revoke', [AdvancedDeviceController::class, 'revokeDevice']);
+        Route::post('/revoke-all', [AdvancedDeviceController::class, 'revokeAllDevices']);
+        Route::get('/{device}/activity', [AdvancedDeviceController::class, 'deviceActivity']);
+        Route::get('/security-check', [AdvancedDeviceController::class, 'checkSuspiciousActivity']);
     });
 
 
@@ -297,13 +298,13 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
 
     Route::prefix('parental')->group(function () {
         Route::post('/link-child', [ParentalControlController::class, 'linkChild']);
-        Route::post('/links/{link}/approve', [ParentalControlController::class, 'approveLink']);
+        Route::post('/approve-link', [ParentalControlController::class, 'approveLink']);
         Route::post('/links/{link}/reject', [ParentalControlController::class, 'rejectLink']);
         Route::get('/settings', [ParentalControlController::class, 'getSettings']);
         Route::put('/children/{child}/settings', [ParentalControlController::class, 'updateSettings']);
         Route::get('/children', [ParentalControlController::class, 'getChildren']);
         Route::get('/parents', [ParentalControlController::class, 'getParents']);
-        Route::get('/child/{child}/activity', [ParentalControlController::class, 'childActivity']);
+        Route::get('/child-activity/{child}', [ParentalControlController::class, 'childActivity']);
         Route::post('/child/{child}/block-content', [ParentalControlController::class, 'blockContent']);
     });
 
@@ -454,18 +455,18 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
 
     // Communities Routes
     Route::prefix('communities')->group(function () {
-        Route::get('/', [\App\Http\Controllers\Api\CommunityController::class, 'index']);
-        Route::post('/', [\App\Http\Controllers\Api\CommunityController::class, 'store']);
-        Route::get('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'show']);
-        Route::put('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'update']);
-        Route::delete('/{community}', [\App\Http\Controllers\Api\CommunityController::class, 'destroy']);
-        Route::post('/{community}/join', [\App\Http\Controllers\Api\CommunityController::class, 'join']);
-        Route::post('/{community}/leave', [\App\Http\Controllers\Api\CommunityController::class, 'leave']);
-        Route::get('/{community}/posts', [\App\Http\Controllers\Api\CommunityController::class, 'posts']);
-        Route::get('/{community}/members', [\App\Http\Controllers\Api\CommunityController::class, 'members']);
-        Route::get('/{community}/join-requests', [\App\Http\Controllers\Api\CommunityController::class, 'joinRequests']);
-        Route::post('/{community}/join-requests/{request}/approve', [\App\Http\Controllers\Api\CommunityController::class, 'approveJoinRequest']);
-        Route::post('/{community}/join-requests/{request}/reject', [\App\Http\Controllers\Api\CommunityController::class, 'rejectJoinRequest']);
+        Route::get('/', [CommunityController::class, 'index']);
+        Route::post('/', [CommunityController::class, 'store']);
+        Route::get('/{community}', [CommunityController::class, 'show']);
+        Route::put('/{community}', [CommunityController::class, 'update']);
+        Route::delete('/{community}', [CommunityController::class, 'destroy']);
+        Route::post('/{community}/join', [CommunityController::class, 'join']);
+        Route::post('/{community}/leave', [CommunityController::class, 'leave']);
+        Route::get('/{community}/posts', [CommunityController::class, 'posts']);
+        Route::get('/{community}/members', [CommunityController::class, 'members']);
+        Route::get('/{community}/join-requests', [CommunityController::class, 'joinRequests']);
+        Route::post('/{community}/join-requests/{request}/approve', [CommunityController::class, 'approveJoinRequest']);
+        Route::post('/{community}/join-requests/{request}/reject', [CommunityController::class, 'rejectJoinRequest']);
     });
 });
 
