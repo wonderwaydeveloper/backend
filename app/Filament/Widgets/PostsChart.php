@@ -6,7 +6,7 @@ use Filament\Widgets\ChartWidget;
 
 class PostsChart extends ChartWidget
 {
-    protected ?string $heading = 'نمودار پستها';
+    protected ?string $heading = 'Posts Chart';
     protected static ?int $sort = 2;
     
     public ?string $filter = '7days';
@@ -14,11 +14,11 @@ class PostsChart extends ChartWidget
     protected function getFilters(): ?array
     {
         return [
-            '7days' => '7 روز گذشته',
-            '30days' => '30 روز گذشته',
-            '3months' => '3 ماه گذشته',
-            '6months' => '6 ماه گذشته',
-            '1year' => '1 سال گذشته',
+            '7days' => 'Last 7 days',
+            '30days' => 'Last 30 days',
+            '3months' => 'Last 3 months',
+            '6months' => 'Last 6 months',
+            '1year' => 'Last 1 year',
         ];
     }
 
@@ -74,7 +74,7 @@ class PostsChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'پستهای جدید',
+                    'label' => 'New Posts',
                     'data' => $data,
                     'borderColor' => '#3b82f6',
                     'backgroundColor' => 'rgba(59, 130, 246, 0.1)',

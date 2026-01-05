@@ -6,10 +6,10 @@ use App\Models\User;
 use App\Monetization\Services\CreatorFundService;
 use Illuminate\Console\Command;
 
-class Phase3ManagementCommand extends Command
+class EnterpriseManagementCommand extends Command
 {
-    protected $signature = 'wonderway:phase3 {action} {--month=} {--year=}';
-    protected $description = 'Manage Phase 3 Enterprise Excellence features';
+    protected $signature = 'microblogging:enterprise {action} {--month=} {--year=}';
+    protected $description = 'Manage Enterprise Excellence features';
 
     public function handle()
     {
@@ -89,7 +89,7 @@ class Phase3ManagementCommand extends Command
 
     private function showStatus()
     {
-        $this->info('WonderWay Phase 3 Status:');
+        $this->info('Microblogging Enterprise Status:');
 
         $features = [
             'Domain-Driven Design' => '✅ Active',
@@ -102,7 +102,7 @@ class Phase3ManagementCommand extends Command
 
         $this->table(['Feature', 'Status'], collect($features)->map(fn ($status, $feature) => [$feature, $status]));
 
-        $this->info('🚀 Phase 3 Enterprise Excellence: COMPLETE');
+        $this->info('🚀 Enterprise Excellence: COMPLETE');
         $this->info('📊 Overall Score: 95/100');
         $this->info('🎯 Ready for Enterprise Scale!');
     }

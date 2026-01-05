@@ -39,7 +39,7 @@ class SecurityAlert extends Notification implements ShouldQueue
 
         $message->line('Please investigate this security event immediately.')
                 ->action('View Security Dashboard', url('/admin/security'))
-                ->line('This is an automated security alert from WonderWay.');
+                ->line('This is an automated security alert from ' . config('app.name') . '.');
 
         return $message;
     }

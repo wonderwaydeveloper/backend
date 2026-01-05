@@ -97,26 +97,26 @@ class PushNotificationService
     private function getNotificationTitle($type)
     {
         $titles = [
-            'like' => 'پسند جدید',
-            'comment' => 'نظر جدید',
-            'follow' => 'دنبال کننده جدید',
-            'mention' => 'منشن جدید',
-            'repost' => 'بازنشر جدید',
+            'like' => 'New Like',
+            'comment' => 'New Comment',
+            'follow' => 'New Follower',
+            'mention' => 'New Mention',
+            'repost' => 'New Repost',
         ];
 
-        return $titles[$type] ?? 'اعلان جدید';
+        return $titles[$type] ?? 'New Notification';
     }
 
     private function getNotificationBody($type, $data)
     {
         $bodies = [
-            'like' => "{$data['user_name']} پست شما را پسند کرد",
-            'comment' => "{$data['user_name']} روی پست شما نظر داد",
-            'follow' => "{$data['user_name']} شما را دنبال کرد",
-            'mention' => "{$data['user_name']} شما را منشن کرد",
-            'repost' => "{$data['user_name']} پست شما را بازنشر کرد",
+            'like' => "{$data['user_name']} liked your post",
+            'comment' => "{$data['user_name']} commented on your post",
+            'follow' => "{$data['user_name']} followed you",
+            'mention' => "{$data['user_name']} mentioned you",
+            'repost' => "{$data['user_name']} reposted your post",
         ];
 
-        return $bodies[$type] ?? 'اعلان جدید';
+        return $bodies[$type] ?? 'New notification';
     }
 }

@@ -37,8 +37,8 @@ class SubscriptionController extends Controller
         $plans = Subscription::plans();
         $plan = $plans[$request->plan];
 
-        // در اینجا باید پرداخت انجام شود
-        // برای MVP فقط اشتراک را فعال میکنیم
+        // Payment should be processed here
+        // For MVP, we just activate the subscription
 
         $subscription = Subscription::create([
             'user_id' => $user->id,
@@ -55,7 +55,7 @@ class SubscriptionController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'اشتراک با موفقیت فعال شد',
+            'message' => 'Subscription activated successfully',
             'subscription' => $subscription,
         ], 201);
     }
@@ -65,7 +65,7 @@ class SubscriptionController extends Controller
         $subscription = $request->user()->activeSubscription;
 
         if (! $subscription) {
-            return response()->json(['message' => 'اشتراک فعالی وجود ندارد'], 404);
+            return response()->json(['message' => 'No active subscription found'], 404);
         }
 
         $subscription->cancel();
@@ -75,7 +75,7 @@ class SubscriptionController extends Controller
             'is_premium' => false,
         ]);
 
-        return response()->json(['message' => 'اشتراک لغو شد']);
+        return response()->json(['message' => 'Subscription cancelled']);
     }
 
     public function history(Request $request)

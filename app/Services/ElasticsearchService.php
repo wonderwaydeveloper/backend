@@ -14,7 +14,7 @@ class ElasticsearchService
     public function __construct()
     {
         $this->host = config('services.elasticsearch.host', 'localhost:9200');
-        $this->index = config('services.elasticsearch.index', 'wonderway');
+        $this->index = config('services.elasticsearch.index', 'microblogging');
     }
 
     public function indexPost(Post $post): bool

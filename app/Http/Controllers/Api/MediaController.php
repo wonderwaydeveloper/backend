@@ -44,7 +44,7 @@ class MediaController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در آپلود فایل',
+                'message' => 'File upload error',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -73,7 +73,7 @@ class MediaController extends Controller
             $size = $file->getSize();
 
             return response()->json([
-                'message' => 'ویدیو با موفقیت آپلود شد',
+                'message' => 'Video uploaded successfully',
                 'data' => [
                     'url' => $url,
                     'path' => $fullPath,
@@ -86,7 +86,7 @@ class MediaController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در آپلود ویدیو',
+                'message' => 'Video upload error',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -113,7 +113,7 @@ class MediaController extends Controller
             $size = $file->getSize();
 
             return response()->json([
-                'message' => 'سند با موفقیت آپلود شد',
+                'message' => 'Document uploaded successfully',
                 'data' => [
                     'url' => $url,
                     'path' => $fullPath,
@@ -125,7 +125,7 @@ class MediaController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در آپلود سند',
+                'message' => 'Document upload error',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -149,14 +149,14 @@ class MediaController extends Controller
                     Storage::disk('public')->delete($thumbnailPath);
                 }
 
-                return response()->json(['message' => 'فایل با موفقیت حذف شد']);
+                return response()->json(['message' => 'File deleted successfully']);
             }
 
-            return response()->json(['message' => 'فایل یافت نشد'], 404);
+            return response()->json(['message' => 'File not found'], 404);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در حذف فایل',
+                'message' => 'File deletion error',
                 'error' => $e->getMessage(),
             ], 500);
         }

@@ -10,10 +10,10 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        // ایجاد نقش ادمین اگر وجود نداشته باشد
+        // Create admin role if it doesn't exist
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         
-        // ایجاد کاربر ادمین
+        // Create admin user
         $admin = User::firstOrCreate(
             ['email' => 'wonderwaydeveloper@gmail.com'],
             [
@@ -25,7 +25,7 @@ class AdminSeeder extends Seeder
             ]
         );
         
-        // اختصاص نقش ادمین
+        // Assign admin role
         if (!$admin->hasRole('admin')) {
             $admin->assignRole('admin');
         }

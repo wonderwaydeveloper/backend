@@ -12,7 +12,7 @@ class AdvancedInputValidation
         // Check for XSS patterns BEFORE sanitizing
         if ($this->detectXss($request)) {
             return response()->json([
-                'message' => 'محتوای مشکوک شناسایی شد',
+                'message' => 'Suspicious content detected',
                 'error' => 'SUSPICIOUS_CONTENT',
             ], 400);
         }
@@ -20,7 +20,7 @@ class AdvancedInputValidation
         // Check for SQL injection patterns
         if ($this->detectSqlInjection($request)) {
             return response()->json([
-                'message' => 'درخواست نامعتبر شناسایی شد',
+                'message' => 'Invalid request detected',
                 'error' => 'INVALID_REQUEST',
             ], 400);
         }

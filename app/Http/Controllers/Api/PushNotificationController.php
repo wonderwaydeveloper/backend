@@ -34,10 +34,10 @@ class PushNotificationController extends Controller
                 'last_used_at' => now(),
             ]);
 
-            return response()->json(['message' => 'دستگاه با موفقیت ثبت شد', 'device_id' => $device->id]);
+            return response()->json(['message' => 'Device registered successfully', 'device_id' => $device->id]);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطا در ثبت دستگاه'], 500);
+            return response()->json(['message' => 'Device registration error'], 500);
         }
     }
 
@@ -48,11 +48,11 @@ class PushNotificationController extends Controller
                 ->where('token', $token)
                 ->update(['active' => false]);
 
-            return response()->json(['message' => 'دستگاه غیرفعال شد']);
+            return response()->json(['message' => 'Device deactivated']);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در غیرفعال کردن دستگاه',
+                'message' => 'Device deactivation error',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -66,7 +66,7 @@ class PushNotificationController extends Controller
             $devices = auth()->user()->devices()->where('active', true)->get();
 
             if ($devices->isEmpty()) {
-                return response()->json(['message' => 'هیچ دستگاه فعالی یافت نشد'], 404);
+                return response()->json(['message' => 'No active devices found'], 404);
             }
 
             $successCount = 0;
@@ -83,13 +83,13 @@ class PushNotificationController extends Controller
             }
 
             return response()->json([
-                'message' => 'اعلان تست ارسال شد',
+                'message' => 'Test notification sent',
                 'sent_to' => $successCount,
                 'total_devices' => $devices->count(),
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'خطا در ارسال اعلان تست'], 500);
+            return response()->json(['message' => 'Test notification error'], 500);
         }
     }
 

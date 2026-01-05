@@ -31,7 +31,7 @@ class CDNServiceTest extends TestCase
         $this->assertArrayHasKey('url', $result);
         $this->assertArrayHasKey('thumbnail', $result);
         $this->assertStringContainsString('posts/', $result['path']);
-        $this->assertStringContainsString('cdn-images.wonderway.com', $result['url']);
+        $this->assertStringContainsString('cdn-images.microblogging.com', $result['url']);
     }
 
     public function test_can_upload_video_to_cdn(): void
@@ -64,7 +64,7 @@ class CDNServiceTest extends TestCase
         
         $url = $this->cdnService->getCDNUrl($path, 'images');
         
-        $this->assertEquals('https://cdn-images.wonderway.com/posts/2024/12/test.jpg', $url);
+        $this->assertEquals('https://cdn-images.microblogging.com/posts/2024/12/test.jpg', $url);
     }
 
     public function test_upload_failure_throws_exception(): void

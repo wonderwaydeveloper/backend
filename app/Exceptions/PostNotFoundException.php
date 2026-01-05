@@ -10,7 +10,7 @@ class PostNotFoundException extends Exception
     public function render(): JsonResponse
     {
         return response()->json([
-            'message' => 'پست مورد نظر یافت نشد',
+            'message' => 'Post not found',
             'error' => 'POST_NOT_FOUND',
         ], 404);
     }

@@ -345,8 +345,8 @@ class WebApplicationFirewall
     {
         $allowedDomains = [
             config('app.url'),
-            'https://wonderway.com',
-            'https://www.wonderway.com'
+            'https://microblogging.com',
+            'https://www.microblogging.com'
         ];
         
         foreach ($allowedDomains as $domain) {

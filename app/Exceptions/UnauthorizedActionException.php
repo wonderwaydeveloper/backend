@@ -6,7 +6,7 @@ use Exception;
 
 class UnauthorizedActionException extends Exception
 {
-    public function __construct(string $message = 'شما مجاز به انجام این عمل نیستید', int $code = 403)
+    public function __construct(string $message = 'You are not authorized to perform this action', int $code = 403)
     {
         parent::__construct($message, $code);
     }

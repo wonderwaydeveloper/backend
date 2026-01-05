@@ -45,33 +45,33 @@ class Subscription extends Model
     {
         return [
             'basic' => [
-                'name' => 'رایگان',
+                'name' => 'Free',
                 'price' => 0,
                 'features' => [
-                    '10 پست در روز',
-                    '5 عکس در پست',
-                    'تبلیغات دارد',
+                    '10 posts per day',
+                    '5 images per post',
+                    'Contains ads',
                 ],
             ],
             'premium' => [
-                'name' => 'پرمیوم',
+                'name' => 'Premium',
                 'price' => 4.99,
                 'features' => [
-                    'پست نامحدود',
-                    'بدون تبلیغات',
-                    'ویرایش پست',
-                    'آپلود ویدیو تا 10 دقیقه',
-                    'نشان Premium',
+                    'Unlimited posts',
+                    'No ads',
+                    'Edit posts',
+                    'Upload videos up to 10 minutes',
+                    'Premium badge',
                 ],
             ],
             'creator' => [
-                'name' => 'سازنده محتوا',
+                'name' => 'Content Creator',
                 'price' => 9.99,
                 'features' => [
-                    'همه امکانات Premium',
-                    'آمار پیشرفته',
-                    'مونتایز محتوا',
-                    'لایو استریم',
+                    'All Premium features',
+                    'Advanced analytics',
+                    'Monetize content',
+                    'Live streaming',
                     'API access',
                 ],
             ],

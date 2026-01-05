@@ -12,7 +12,7 @@ class EnsureEmailIsVerified
     {
         if (! $request->user() || ! $request->user()->hasVerifiedEmail()) {
             return response()->json([
-                'message' => 'ایمیل شما تایید نشده است',
+                'message' => 'Your email is not verified',
                 'error' => 'EMAIL_NOT_VERIFIED',
             ], 403);
         }

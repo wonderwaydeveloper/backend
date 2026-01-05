@@ -39,7 +39,7 @@ class SmsService
                 $phoneNumber,
                 [
                     'from' => $this->fromNumber,
-                    'body' => "کد تایید WonderWay: $otp",
+                    'body' => "Verification code for " . config('app.name') . ": $otp",
                 ]
             );
 

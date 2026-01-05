@@ -48,7 +48,7 @@ class NotificationPreferenceController extends Controller
         $user->notification_preferences = $validated['preferences'];
         $user->save();
 
-        return response()->json(['message' => 'تنظیمات اطلاعرسانی بروزرسانی شد', 'preferences' => $user->notification_preferences]);
+        return response()->json(['message' => 'Notification preferences updated', 'preferences' => $user->notification_preferences]);
     }
 
     public function updateType(Request $request, $type)
@@ -58,7 +58,7 @@ class NotificationPreferenceController extends Controller
         ]);
 
         if (! in_array($type, ['email', 'push', 'in_app'])) {
-            return response()->json(['message' => 'نوع اطلاعرسانی نامعتبر'], 400);
+            return response()->json(['message' => 'Invalid notification type'], 400);
         }
 
         $user = $request->user();
@@ -73,7 +73,7 @@ class NotificationPreferenceController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => "اطلاعرسانی {$type} " . ($request->enabled ? 'فعال' : 'غیرفعال') . ' شد',
+            'message' => "Notification {$type} " . ($request->enabled ? 'enabled' : 'disabled'),
             'preferences' => $user->notification_preferences,
         ]);
     }
@@ -88,7 +88,7 @@ class NotificationPreferenceController extends Controller
         $validCategories = ['likes', 'comments', 'follows', 'mentions', 'reposts', 'messages'];
 
         if (! in_array($type, $validTypes) || ! in_array($category, $validCategories)) {
-            return response()->json(['message' => 'نوع یا دسته اطلاعرسانی نامعتبر'], 400);
+            return response()->json(['message' => 'Invalid notification type or category'], 400);
         }
 
         $user = $request->user();
@@ -103,7 +103,7 @@ class NotificationPreferenceController extends Controller
         $user->save();
 
         return response()->json([
-            'message' => "تنظیمات {$category} برای {$type} بروزرسانی شد",
+            'message' => "Settings for {$category} in {$type} updated",
             'preferences' => $user->notification_preferences,
         ]);
     }

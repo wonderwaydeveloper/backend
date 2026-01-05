@@ -113,5 +113,11 @@ return [
     'loading' => 'Loading...',
     'please_wait' => 'Please wait...',
     'no_results' => 'No results found',
-    'empty_state' => 'No content available',
+    // Bulk email messages
+    'hello' => 'Hello',
+    'dear' => 'dear',
+    'regards' => 'Best regards,',
+    'team' => 'Team',
+    'bulk_email_default' => 'This is an informational email.',
+    'email_disclaimer' => 'If you received this email by mistake, please ignore it.',
 ];

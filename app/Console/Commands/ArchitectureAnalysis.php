@@ -13,7 +13,7 @@ class ArchitectureAnalysis extends Command
 
     public function handle()
     {
-        $this->info('🏗️ Analyzing WonderWay Backend Architecture...');
+        $this->info('🏗️ Analyzing Microblogging Backend Architecture...');
         
         $this->analyzeLayerSeparation();
         $this->analyzeDependencyInjection();

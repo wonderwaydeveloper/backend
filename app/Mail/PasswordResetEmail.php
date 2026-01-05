@@ -25,7 +25,7 @@ class PasswordResetEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'بازیابی رمز عبور WonderWay',
+            subject: 'Password Reset - ' . config('app.name'),
         );
     }
 

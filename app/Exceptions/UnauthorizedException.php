@@ -10,7 +10,7 @@ class UnauthorizedException extends Exception
     public function render(): JsonResponse
     {
         return response()->json([
-            'message' => $this->message ?: 'شما مجاز به انجام این عملیات نیستید',
+            'message' => $this->message ?: 'You are not authorized to perform this operation',
             'error' => 'UNAUTHORIZED',
         ], 403);
     }

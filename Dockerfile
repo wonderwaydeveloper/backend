@@ -1,4 +1,4 @@
-# WonderWay Backend - Production Docker Configuration
+# Microblogging Backend - Production Docker Configuration
 FROM php:8.2-fpm-alpine
 
 # Set working directory
@@ -52,7 +52,7 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/bootstrap/cache
 
 # Copy configuration files
-COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY docker/php.ini /usr/local/etc/php/php.ini
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
@@ -61,10 +61,10 @@ RUN mkdir -p /var/log/supervisor \
     && mkdir -p /var/log/nginx \
     && mkdir -p /run/nginx
 
-# Optimize Laravel
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
+# Optimize Laravel (skip in development)
+# RUN php artisan config:cache \
+#     && php artisan route:cache \
+#     && php artisan view:cache
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "wonderway/backend",
+    "name": "microblogging/backend",
     "type": "project",
-    "description": "WonderWay - Advanced Social Media Platform Backend",
+    "description": "Microblogging - Advanced Social Media Platform Backend",
     "keywords": [
         "laravel",
         "social-media",

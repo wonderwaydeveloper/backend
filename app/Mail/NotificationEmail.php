@@ -25,7 +25,7 @@ class NotificationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Notification from WonderWay',
+            subject: 'New Notification from ' . config('app.name'),
         );
     }
 

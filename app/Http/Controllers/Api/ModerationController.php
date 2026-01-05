@@ -24,7 +24,7 @@ class ModerationController extends Controller
                 ->first();
 
             if ($existingReport) {
-                return response()->json(['message' => 'شما قبلاً این محتوا را گزارش کرده‌اید'], 400);
+                return response()->json(['message' => 'You have already reported this content'], 400);
             }
 
             DB::table('reports')->insert([
@@ -40,11 +40,11 @@ class ModerationController extends Controller
 
             $this->autoModerate($validated['reportable_type'], $validated['reportable_id']);
 
-            return response()->json(['message' => 'گزارش شما ثبت شد و بررسی خواهد شد']);
+            return response()->json(['message' => 'Your report has been submitted and will be reviewed']);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در ثبت گزارش',
+                'message' => 'Error submitting report',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -98,7 +98,7 @@ class ModerationController extends Controller
             $report = DB::table('reports')->where('id', $reportId)->first();
 
             if (! $report) {
-                return response()->json(['message' => 'گزارش یافت نشد'], 404);
+                return response()->json(['message' => 'Report not found'], 404);
             }
 
             // Update report status
@@ -118,11 +118,11 @@ class ModerationController extends Controller
                 $this->takeAction($report, $request->action_taken);
             }
 
-            return response()->json(['message' => 'وضعیت گزارش بروزرسانی شد']);
+            return response()->json(['message' => 'Report status updated']);
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در بروزرسانی گزارش',
+                'message' => 'Error updating report',
                 'error' => $e->getMessage(),
             ], 500);
         }
@@ -150,7 +150,7 @@ class ModerationController extends Controller
 
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'خطا در دریافت آمار',
+                'message' => 'Error retrieving statistics',
                 'error' => $e->getMessage(),
             ], 500);
         }

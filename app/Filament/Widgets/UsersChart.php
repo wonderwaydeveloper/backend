@@ -6,7 +6,7 @@ use Filament\Widgets\ChartWidget;
 
 class UsersChart extends ChartWidget
 {
-    protected ?string $heading = 'نمودار کاربران';
+    protected ?string $heading = 'Users Chart';
     protected static ?int $sort = 1;
     
     public ?string $filter = '7days';
@@ -14,11 +14,11 @@ class UsersChart extends ChartWidget
     protected function getFilters(): ?array
     {
         return [
-            '7days' => '7 روز گذشته',
-            '30days' => '30 روز گذشته',
-            '3months' => '3 ماه گذشته',
-            '6months' => '6 ماه گذشته',
-            '1year' => '1 سال گذشته',
+            '7days' => 'Last 7 days',
+            '30days' => 'Last 30 days',
+            '3months' => 'Last 3 months',
+            '6months' => 'Last 6 months',
+            '1year' => 'Last 1 year',
         ];
     }
 
@@ -74,7 +74,7 @@ class UsersChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'کاربران جدید',
+                    'label' => 'New Users',
                     'data' => $data,
                     'borderColor' => '#10b981',
                     'backgroundColor' => 'rgba(16, 185, 129, 0.1)',

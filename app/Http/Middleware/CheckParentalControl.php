@@ -25,7 +25,7 @@ class CheckParentalControl
             $now = now()->format('H:i');
             if ($now < $control->usage_start_time || $now > $control->usage_end_time) {
                 return response()->json([
-                    'message' => 'خارج از ساعات مجاز استفاده',
+                    'message' => 'Outside allowed usage hours',
                 ], 403);
             }
         }
@@ -34,7 +34,7 @@ class CheckParentalControl
             $todayPosts = $user->posts()->whereDate('created_at', today())->count();
             if ($todayPosts >= $control->daily_post_limit) {
                 return response()->json([
-                    'message' => 'به حد مجاز پست روزانه رسیدهاید',
+                    'message' => 'Daily post limit reached',
                 ], 403);
             }
         }

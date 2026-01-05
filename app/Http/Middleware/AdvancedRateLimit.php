@@ -75,7 +75,7 @@ class AdvancedRateLimit
         $retryAfter = Redis::ttl($key);
 
         return response()->json([
-            'message' => 'تعداد درخواست‌های شما از حد مجاز گذشته است',
+            'message' => 'Too many requests. Please try again later.',
             'error' => 'TOO_MANY_REQUESTS',
             'retry_after' => $retryAfter,
         ], 429)->header('Retry-After', $retryAfter);

@@ -25,7 +25,7 @@ class VerificationEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'تایید ایمیل WonderWay',
+            subject: 'Email Verification - ' . config('app.name'),
         );
     }
 

@@ -11,7 +11,7 @@ use App\Models\Post;
 
 class RecentActivities extends TableWidget
 {
-    protected static ?string $heading = 'فعالیتهای اخیر';
+    protected static ?string $heading = 'Recent Activities';
     
     protected int | string | array $columnSpan = 'full';
 
@@ -21,17 +21,17 @@ class RecentActivities extends TableWidget
             ->query(Post::with('user')->latest())
             ->columns([
                 TextColumn::make('user.name')
-                    ->label('کاربر')
+                    ->label('User')
                     ->searchable()
                     ->sortable(),
                     
                 TextColumn::make('content')
-                    ->label('محتوا')
+                    ->label('Content')
                     ->limit(50)
                     ->searchable(),
                     
                 TextColumn::make('created_at')
-                    ->label('زمان')
+                    ->label('Time')
                     ->dateTime('Y/m/d H:i')
                     ->sortable(),
             ])

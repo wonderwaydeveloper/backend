@@ -71,8 +71,8 @@ class RealTimeNotificationTest extends TestCase
             'notifiable_type' => 'App\\Models\\User',
             'notifiable_id' => $user->id,
             'type' => 'like',
-            'title' => 'پسند جدید',
-            'message' => 'پست شما را پسند کرد',
+            'title' => 'New Like',
+            'message' => 'Someone liked your post',
             'data' => json_encode(['user_id' => 1]),
         ]);
 
