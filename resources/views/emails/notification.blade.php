@@ -25,7 +25,7 @@
             </p>
         </div>
         <div class="footer">
-            <p>© {{ date('Y') }} WonderWay. All rights reserved.</p>
+            <p>© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
         </div>
     </div>
 </body>

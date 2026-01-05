@@ -7,20 +7,6 @@ use Illuminate\Support\Facades\Mail;
 
 class EmailService
 {
-    public function sendWelcomeEmail($user)
-    {
-        try {
-            Mail::to($user->email)->queue(new \App\Mail\WelcomeEmail($user));
-            Log::info('Welcome email queued', ['user_id' => $user->id]);
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Welcome email failed', ['error' => $e->getMessage()]);
-
-            return false;
-        }
-    }
-
     public function sendVerificationEmail($user, $code)
     {
         try {

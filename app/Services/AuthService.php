@@ -38,9 +38,6 @@ class AuthService implements AuthServiceInterface
 
         $user->assignRole('user');
 
-        // Send welcome email
-        $this->emailService->sendWelcomeEmail($user);
-
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return [
