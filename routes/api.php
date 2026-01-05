@@ -30,7 +30,6 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\OnlineStatusController;
 use App\Http\Controllers\Api\ParentalControlController;
-use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
