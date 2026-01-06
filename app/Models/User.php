@@ -153,34 +153,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query->orderBy('created_at', 'desc');
     }
 
-    public function parentalControl()
-    {
-        return $this->hasOne(ParentalControl::class, 'child_id');
-    }
 
-    public function parents()
-    {
-        return $this->belongsToMany(User::class, 'parental_links', 'child_id', 'parent_id')
-            ->withPivot('status')
-            ->withTimestamps();
-    }
-
-    public function children()
-    {
-        return $this->belongsToMany(User::class, 'parental_links', 'parent_id', 'child_id')
-            ->withPivot('status')
-            ->withTimestamps();
-    }
 
     public function getAgeAttribute()
     {
         return $this->date_of_birth?->age;
     }
 
-    public function isUnder18()
-    {
-        return $this->age < 18;
-    }
+
 
     public function notifications()
     {

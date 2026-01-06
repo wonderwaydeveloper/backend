@@ -31,6 +31,8 @@ class PhoneAuthTest extends TestCase
 
         $response = $this->postJson('/api/auth/phone/send-code', [
             'phone' => '+1234567890',
+            'name' => 'John Doe',
+            'date_of_birth' => '1990-01-01'
         ]);
 
         $response->assertStatus(200)

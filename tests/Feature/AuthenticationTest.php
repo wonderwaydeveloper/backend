@@ -18,6 +18,8 @@ class AuthenticationTest extends TestCase
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
             ->postJson('/api/auth/register/step1', [
+                'name' => 'Test User',
+                'date_of_birth' => '1990-01-01',
                 'contact' => 'test@example.com',
                 'contact_type' => 'email',
             ]);
@@ -34,6 +36,8 @@ class AuthenticationTest extends TestCase
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
             ->postJson('/api/auth/register/step1', [
+                'name' => 'Test User',
+                'date_of_birth' => '1990-01-01',
                 'contact' => 'test@example.com',
                 'contact_type' => 'email',
             ]);
@@ -102,6 +106,8 @@ class AuthenticationTest extends TestCase
         // Create a valid session first
         $sessionId = \Str::uuid();
         \Cache::put("registration:{$sessionId}", [
+            'name' => 'Test User',
+            'date_of_birth' => '1990-01-01',
             'contact' => 'test@example.com',
             'contact_type' => 'email',
             'code' => '123456',
@@ -115,7 +121,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                ->assertJsonValidationErrors(['name', 'username', 'password']);
+                ->assertJsonValidationErrors(['username', 'password']);
     }
 
     public function test_registration_rate_limit()

@@ -29,7 +29,7 @@ use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\OnlineStatusController;
-use App\Http\Controllers\Api\ParentalControlController;
+
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
@@ -126,6 +126,7 @@ Route::prefix('auth')->group(function () {
     Route::prefix('social')->group(function () {
         Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google|apple');
         Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
+        Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
     });
 });
 
@@ -295,17 +296,7 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     });
 
-    Route::prefix('parental')->group(function () {
-        Route::post('/link-child', [ParentalControlController::class, 'linkChild']);
-        Route::post('/approve-link', [ParentalControlController::class, 'approveLink']);
-        Route::post('/links/{link}/reject', [ParentalControlController::class, 'rejectLink']);
-        Route::get('/settings', [ParentalControlController::class, 'getSettings']);
-        Route::put('/children/{child}/settings', [ParentalControlController::class, 'updateSettings']);
-        Route::get('/children', [ParentalControlController::class, 'getChildren']);
-        Route::get('/parents', [ParentalControlController::class, 'getParents']);
-        Route::get('/child-activity/{child}', [ParentalControlController::class, 'childActivity']);
-        Route::post('/child/{child}/block-content', [ParentalControlController::class, 'blockContent']);
-    });
+
 
     // Performance & Monitoring (User-level only)
     Route::prefix('performance')->group(function () {

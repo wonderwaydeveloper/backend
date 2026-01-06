@@ -7,7 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\{LoginRequest, PhoneVerificationRequest, PhoneLoginRequest, PhoneRegisterRequest};
 use App\Models\{User, PhoneVerificationCode};
 use App\Services\{AuthService, EmailService, SmsService, TwoFactorService, PasswordSecurityService};
-use App\Rules\StrongPassword;
+use App\Rules\{StrongPassword, MinimumAge};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Cache, Hash};
 use Illuminate\Support\Str;
@@ -58,6 +58,8 @@ class UnifiedAuthController extends Controller
     public function multiStepStep1(Request $request): JsonResponse
     {
         $request->validate([
+            'name' => 'required|string|max:255',
+            'date_of_birth' => ['required', 'date', 'before:today', new MinimumAge()],
             'contact' => 'required|string',
             'contact_type' => 'required|in:email,phone'
         ]);
@@ -70,6 +72,8 @@ class UnifiedAuthController extends Controller
         }
 
         Cache::put("registration:{$sessionId}", [
+            'name' => $request->name,
+            'date_of_birth' => $request->date_of_birth,
             'contact' => $request->contact,
             'contact_type' => $request->contact_type,
             'code' => $code,
@@ -113,10 +117,8 @@ class UnifiedAuthController extends Controller
     {
         $request->validate([
             'session_id' => 'required|uuid',
-            'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'date_of_birth' => 'required|date|before:today'
+            'password' => 'required|string|min:8|confirmed'
         ]);
 
         $session = Cache::get("registration:{$request->session_id}");
@@ -125,10 +127,10 @@ class UnifiedAuthController extends Controller
         }
 
         $userData = [
-            'name' => $request->name,
+            'name' => $session['name'],
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'date_of_birth' => $request->date_of_birth,
+            'date_of_birth' => $session['date_of_birth'],
             $session['contact_type'] => $session['contact']
         ];
 
@@ -292,6 +294,8 @@ class UnifiedAuthController extends Controller
         $user = User::where('email', $socialUser->getEmail())->first();
 
         if (!$user) {
+            // Check if we have date of birth info (usually we don't from social providers)
+            // For social auth, we'll create user but mark as needing age verification
             $user = User::create([
                 'name' => $socialUser->getName(),
                 'email' => $socialUser->getEmail(),
@@ -299,6 +303,7 @@ class UnifiedAuthController extends Controller
                 'password' => Hash::make(uniqid()),
                 'email_verified_at' => now(),
                 'avatar' => $socialUser->getAvatar(),
+                'date_of_birth' => null, // Will need to be filled later
             ]);
             
             try {
@@ -310,6 +315,16 @@ class UnifiedAuthController extends Controller
 
         $user->update(["{$provider}_id" => $socialUser->getId()]);
         $token = $user->createToken('auth_token')->plainTextToken;
+
+        // If user doesn't have date_of_birth, require it
+        if (!$user->date_of_birth) {
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'requires_age_verification' => true,
+                'message' => 'Please provide your date of birth to complete registration'
+            ]);
+        }
 
         return response()->json(['user' => $user, 'token' => $token]);
     }
@@ -553,5 +568,31 @@ class UnifiedAuthController extends Controller
         ]);
 
         return response()->json(['message' => '2FA disabled successfully']);
+    }
+
+    // === Age Verification for Social Auth ===
+    public function completeAgeVerification(Request $request): JsonResponse
+    {
+        $request->validate([
+            'date_of_birth' => ['required', 'date', 'before:today', new MinimumAge()]
+        ]);
+
+        $user = $request->user();
+        
+        if ($user->date_of_birth) {
+            return response()->json(['message' => 'Age already verified'], 400);
+        }
+
+        $user->update(['date_of_birth' => $request->date_of_birth]);
+
+        // Check if user is under 18
+        if ($user->date_of_birth && $user->date_of_birth->age < config('age_restrictions.child_age_threshold', 18)) {
+            $user->update(['is_child' => true]);
+        }
+
+        return response()->json([
+            'message' => 'Age verification completed',
+            'user' => $user
+        ]);
     }
 }

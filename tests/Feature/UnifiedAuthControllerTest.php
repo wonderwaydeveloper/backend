@@ -31,6 +31,8 @@ class UnifiedAuthControllerTest extends TestCase
     {
         // Step 1
         $response = $this->postJson('/api/auth/register/step1', [
+            'name' => 'Test User',
+            'date_of_birth' => '1990-01-01',
             'contact' => 'test@example.com',
             'contact_type' => 'email'
         ]);
@@ -53,11 +55,9 @@ class UnifiedAuthControllerTest extends TestCase
         // Step 3
         $response = $this->postJson('/api/auth/register/step3', [
             'session_id' => $sessionId,
-            'name' => 'Test User',
             'username' => 'testuser',
             'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'date_of_birth' => '1990-01-01'
+            'password_confirmation' => 'password123'
         ]);
 
         $response->assertStatus(201)

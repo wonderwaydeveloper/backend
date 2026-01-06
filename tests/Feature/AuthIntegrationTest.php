@@ -18,6 +18,8 @@ class AuthIntegrationTest extends TestCase
     {
         // Step 1: Start registration
         $response = $this->postJson('/api/auth/register/step1', [
+            'name' => 'Test User',
+            'date_of_birth' => '1990-01-01',
             'contact' => 'test@example.com',
             'contact_type' => 'email'
         ]);
@@ -38,11 +40,9 @@ class AuthIntegrationTest extends TestCase
         // Step 3: Complete registration
         $response = $this->postJson('/api/auth/register/step3', [
             'session_id' => $sessionId,
-            'name' => 'Test User',
             'username' => 'testuser',
             'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
-            'date_of_birth' => '1990-01-01'
+            'password_confirmation' => 'Password123!'
         ]);
 
         $response->assertStatus(201)
@@ -64,7 +64,9 @@ class AuthIntegrationTest extends TestCase
 
         // Step 1: Send phone verification
         $response = $this->postJson('/api/auth/phone/send-code', [
-            'phone' => '+1234567890'
+            'phone' => '+1234567890',
+            'name' => 'Phone User',
+            'date_of_birth' => '1990-01-01'
         ]);
 
         $response->assertStatus(200);
@@ -254,41 +256,7 @@ class AuthIntegrationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_parental_control_complete_flow()
-    {
-        $parent = User::factory()->create(['date_of_birth' => '1980-01-01']);
-        $child = User::factory()->create([
-            'is_child' => true,
-            'date_of_birth' => '2010-01-01'
-        ]);
 
-        // Parent requests to link child
-        $response = $this->actingAs($parent)->postJson('/api/parental/link-child', [
-            'child_email' => $child->email
-        ]);
-
-        $response->assertStatus(201);
-
-        // Child approves the link
-        $response = $this->actingAs($child)->postJson('/api/parental/approve-link', [
-            'parent_id' => $parent->id
-        ]);
-
-        $response->assertStatus(200);
-
-        // Parent can now monitor child activity
-        $response = $this->actingAs($parent)->getJson("/api/parental/child-activity/{$child->id}");
-
-        $response->assertStatus(200)
-                ->assertJsonStructure(['child', 'activity']);
-
-        // Verify link exists in database
-        $this->assertDatabaseHas('parental_links', [
-            'parent_id' => $parent->id,
-            'child_id' => $child->id,
-            'status' => 'approved'
-        ]);
-    }
 
     public function test_session_management_flow()
     {

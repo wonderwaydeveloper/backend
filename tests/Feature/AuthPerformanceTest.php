@@ -42,6 +42,8 @@ class AuthPerformanceTest extends TestCase
                 \App\Http\Middleware\AdvancedRateLimit::class,
             ])
             ->postJson('/api/auth/register/step1', [
+                'name' => 'Test User',
+                'date_of_birth' => '1990-01-01',
                 'contact' => 'test@example.com',
                 'contact_type' => 'email'
             ]);

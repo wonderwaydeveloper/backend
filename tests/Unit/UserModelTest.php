@@ -54,19 +54,7 @@ class UserModelTest extends TestCase
         $this->assertTrue($user->isFollowing($targetUser->id));
     }
 
-    public function test_is_under_18_method(): void
-    {
-        $adult = User::factory()->create([
-            'date_of_birth' => now()->subYears(20),
-        ]);
 
-        $child = User::factory()->create([
-            'date_of_birth' => now()->subYears(15),
-        ]);
-
-        $this->assertFalse($adult->isUnder18());
-        $this->assertTrue($child->isUnder18());
-    }
 
     public function test_password_is_hashed(): void
     {
