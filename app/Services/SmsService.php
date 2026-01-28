@@ -58,6 +58,30 @@ class SmsService
         return $this->sendOtp($phoneNumber, $code);
     }
 
+    public function sendLoginCode($phoneNumber, $code)
+    {
+        // Fallback mode when no Twilio client
+        if (!$this->client) {
+            Log::info('SMS Login Code Fallback', ['phone' => $phoneNumber, 'code' => $code]);
+            return true;
+        }
+        
+        try {
+            $message = $this->client->messages->create(
+                $phoneNumber,
+                [
+                    'from' => $this->fromNumber,
+                    'body' => "Login code for " . config('app.name') . ": $code. This code expires in 5 minutes.",
+                ]
+            );
+
+            Log::info('SMS login code sent', ['phone' => $phoneNumber, 'sid' => $message->sid]);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('SMS login code failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
+            return false;
+        }
+    }
     public function sendNotification($phoneNumber, $message)
     {
         // Fallback mode when no Twilio client

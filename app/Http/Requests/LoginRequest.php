@@ -23,7 +23,7 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'login.required' => 'Email or username is required',
+            'login.required' => 'Email, username, or phone number is required',
             'password.required' => 'Password is required',
             'two_factor_code.size' => 'Two-factor code must be 6 digits',
             'two_factor_code.regex' => 'Two-factor code must contain only numbers',
@@ -33,7 +33,7 @@ class LoginRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'login' => 'Email or Username',
+            'login' => 'Email, Username, or Phone',
             'password' => 'Password',
             'two_factor_code' => 'Two-factor code',
         ];

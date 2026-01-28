@@ -90,6 +90,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
         Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
         Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
+        Route::post('/resend-code', [UnifiedAuthController::class, 'multiStepResendCode']);
     });
 
     // Email Verification
@@ -101,15 +102,15 @@ Route::prefix('auth')->group(function () {
 
     // Phone Authentication
     Route::prefix('phone')->middleware(['rate.limit:api'])->group(function () {
-        Route::post('/send-code', [UnifiedAuthController::class, 'phoneSendCode']);
-        Route::post('/verify', [UnifiedAuthController::class, 'phoneVerifyCode']);
-        Route::post('/register', [UnifiedAuthController::class, 'phoneRegister']);
-        Route::post('/login', [UnifiedAuthController::class, 'phoneLogin']);
+        Route::post('/login/send-code', [UnifiedAuthController::class, 'phoneLoginSendCode']);
+        Route::post('/login/verify-code', [UnifiedAuthController::class, 'phoneLoginVerifyCode']);
+        Route::post('/login/resend-code', [UnifiedAuthController::class, 'phoneLoginResendCode']);
     });
 
     // Password Management
     Route::prefix('password')->group(function () {
         Route::post('/forgot', [UnifiedAuthController::class, 'forgotPassword']);
+        Route::post('/resend', [UnifiedAuthController::class, 'resendResetCode']);
         Route::post('/verify-code', [UnifiedAuthController::class, 'verifyResetCode']);
         Route::post('/reset', [UnifiedAuthController::class, 'resetPassword']);
         Route::post('/change', [UnifiedAuthController::class, 'changePassword'])->middleware('auth:sanctum');

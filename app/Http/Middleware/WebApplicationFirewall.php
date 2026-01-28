@@ -84,6 +84,11 @@ class WebApplicationFirewall
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip WAF if disabled in config
+        if (!config('security.waf_enabled', true)) {
+            return $next($request);
+        }
+        
         // Skip WAF in testing environment
         if (app()->environment('testing')) {
             return $next($request);

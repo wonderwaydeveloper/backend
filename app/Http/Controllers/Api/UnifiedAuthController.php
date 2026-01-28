@@ -78,11 +78,13 @@ class UnifiedAuthController extends Controller
             'contact_type' => $request->contact_type,
             'code' => $code,
             'step' => 1,
-            'verified' => false
+            'verified' => false,
+            'code_sent_at' => now()->timestamp,
+            'code_expires_at' => now()->addMinutes((int) config('auth_emails.verification.expire', 15))->timestamp
         ], now()->addMinutes(15));
 
         if ($request->contact_type === 'email') {
-            $this->emailService->sendVerificationEmail((object)['email' => $request->contact], $code);
+            $this->emailService->sendVerificationEmail((object)['email' => $request->contact, 'name' => $request->name], $code);
         } else {
             $this->smsService->sendVerificationCode($request->contact, $code);
         }
@@ -90,7 +92,9 @@ class UnifiedAuthController extends Controller
         return response()->json([
             'session_id' => $sessionId,
             'message' => 'Verification code sent',
-            'next_step' => 2
+            'next_step' => 2,
+            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'code_expires_at' => now()->addMinutes((int) config('auth_emails.verification.expire', 15))->timestamp
         ]);
     }
 
@@ -102,9 +106,41 @@ class UnifiedAuthController extends Controller
         ]);
 
         $session = Cache::get("registration:{$request->session_id}");
-        if (!$session || $session['step'] !== 1 || $session['code'] !== $request->code) {
-            return response()->json(['error' => 'Invalid session or code'], 422);
+        if (!$session || $session['step'] !== 1) {
+            \Log::error('Step2 validation failed', [
+                'session_id' => $request->session_id,
+                'session_exists' => !!$session,
+                'session_step' => $session['step'] ?? 'null'
+            ]);
+            return response()->json(['error' => 'Invalid session'], 422);
         }
+
+        // Check if code is expired
+        $codeExpiresAt = $session['code_expires_at'] ?? 0;
+        if (now()->timestamp > $codeExpiresAt) {
+            \Log::error('Code expired', [
+                'session_id' => $request->session_id,
+                'code_expires_at' => $codeExpiresAt,
+                'current_time' => now()->timestamp,
+                'expired_by' => now()->timestamp - $codeExpiresAt
+            ]);
+            return response()->json(['error' => 'Verification code has expired'], 422);
+        }
+
+        // Check if code matches
+        if ($session['code'] !== $request->code) {
+            \Log::error('Code mismatch', [
+                'session_id' => $request->session_id,
+                'expected_code' => $session['code'],
+                'provided_code' => $request->code
+            ]);
+            return response()->json(['error' => 'Invalid verification code'], 422);
+        }
+
+        \Log::info('Code verified successfully', [
+            'session_id' => $request->session_id,
+            'code' => $request->code
+        ]);
 
         $session['verified'] = true;
         $session['step'] = 2;
@@ -117,7 +153,7 @@ class UnifiedAuthController extends Controller
     {
         $request->validate([
             'session_id' => 'required|uuid',
-            'username' => 'required|string|max:255|unique:users',
+            'username' => ['required', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
             'password' => 'required|string|min:8|confirmed'
         ]);
 
@@ -163,6 +199,102 @@ class UnifiedAuthController extends Controller
         ], 201);
     }
 
+    public function multiStepResendCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'session_id' => 'required|uuid'
+        ]);
+
+        $session = Cache::get("registration:{$request->session_id}");
+        if (!$session || $session['step'] !== 1) {
+            return response()->json(['error' => 'Invalid session'], 422);
+        }
+
+        $email = $session['contact'];
+        $ip = $request->ip();
+        
+        // Check hourly limit (5 per hour)
+        $hourlyKey = "resend_hourly:{$email}:" . now()->format('Y-m-d-H');
+        $hourlyCount = Cache::get($hourlyKey, 0);
+        if ($hourlyCount >= 5) {
+            return response()->json([
+                'error' => 'Too many requests. Try again in ' . (60 - now()->minute) . ' minutes.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        // Check daily limit (10 per day)
+        $dailyKey = "resend_daily:{$email}:" . now()->format('Y-m-d');
+        $dailyCount = Cache::get($dailyKey, 0);
+        if ($dailyCount >= 10) {
+            return response()->json([
+                'error' => 'Daily limit exceeded. Contact support if you need help.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+        
+        // Check IP daily limit (15 per day)
+        $ipDailyKey = "resend_ip_daily:{$ip}:" . now()->format('Y-m-d');
+        $ipDailyCount = Cache::get($ipDailyKey, 0);
+        if ($ipDailyCount >= 15) {
+            return response()->json([
+                'error' => 'Too many requests from this location. Try again tomorrow.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+
+        // Progressive delay after 3 attempts
+        $attemptCount = $session['resend_count'] ?? 0;
+        $baseDelay = 60;
+        if ($attemptCount >= 3) {
+            $baseDelay = min(300, 60 * pow(2, $attemptCount - 3)); // Max 5 minutes
+        }
+
+        // Check rate limiting
+        $lastSentAt = $session['code_sent_at'] ?? 0;
+        $timeSinceLastSent = now()->timestamp - $lastSentAt;
+        
+        if ($timeSinceLastSent < $baseDelay) {
+            $remainingTime = $baseDelay - $timeSinceLastSent;
+            return response()->json([
+                'error' => 'Please wait before requesting another code',
+                'remaining_seconds' => $remainingTime,
+                'resend_available_at' => $lastSentAt + $baseDelay
+            ], 429);
+        }
+
+        // Generate new code
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $session['code'] = $code;
+        $session['code_sent_at'] = now()->timestamp;
+        $session['code_expires_at'] = now()->addMinutes((int) config('auth_emails.verification.expire', 15))->timestamp;
+        $session['resend_count'] = $attemptCount + 1;
+        
+        // Update cache with new code and timestamp
+        Cache::put("registration:{$request->session_id}", $session, now()->addMinutes(15));
+        
+        // Increment counters
+        Cache::put($hourlyKey, $hourlyCount + 1, now()->addHour()->startOfHour());
+        Cache::put($dailyKey, $dailyCount + 1, now()->addDay()->startOfDay());
+        Cache::put($ipDailyKey, $ipDailyCount + 1, now()->addDay()->startOfDay());
+
+        if ($session['contact_type'] === 'email') {
+            $this->emailService->sendVerificationEmail((object)['email' => $session['contact'], 'name' => $session['name']], $code);
+        } else {
+            $this->smsService->sendVerificationCode($session['contact'], $code);
+        }
+
+        $nextDelay = $attemptCount >= 2 ? min(300, 60 * pow(2, $attemptCount - 2)) : 60;
+        
+        return response()->json([
+            'message' => 'New verification code sent',
+            'session_id' => $request->session_id,
+            'resend_available_at' => now()->addSeconds($nextDelay)->timestamp,
+            'code_expires_at' => now()->addMinutes((int) config('auth_emails.verification.expire', 15))->timestamp,
+            'attempts_remaining' => max(0, 5 - ($hourlyCount + 1))
+        ]);
+    }
+
     // === Social Authentication ===
     public function socialRedirect(string $provider): JsonResponse
     {
@@ -187,105 +319,6 @@ class UnifiedAuthController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => ucfirst($provider) . ' authentication failed'], 401);
         }
-    }
-
-    // === Phone Authentication ===
-    public function phoneSendCode(PhoneVerificationRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
-
-        PhoneVerificationCode::create([
-            'phone' => $validated['phone'],
-            'code' => $code,
-            'expires_at' => now()->addMinutes(15),
-        ]);
-
-        $this->smsService->sendVerificationCode($validated['phone'], $code);
-        return response()->json(['message' => 'Verification code sent successfully']);
-    }
-
-    public function phoneVerifyCode(PhoneLoginRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
-            ->where('code', $validated['verification_code'])
-            ->where('verified', false)
-            ->latest()
-            ->first();
-
-        if (!$verification || $verification->isExpired()) {
-            return response()->json(['errors' => ['code' => ['Invalid or expired verification code']]], 422);
-        }
-
-        $verification->update(['verified' => true]);
-        return response()->json(['message' => 'Phone verified successfully', 'verified' => true]);
-    }
-
-    public function phoneRegister(PhoneRegisterRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
-            ->where('verified', true)
-            ->latest()
-            ->first();
-
-        if (!$verification) {
-            return response()->json(['errors' => ['phone' => ['Phone number not verified']]], 422);
-        }
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'username' => $validated['username'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'phone_verified_at' => now(),
-            'password' => Hash::make($validated['password']),
-            'date_of_birth' => $validated['date_of_birth'],
-        ]);
-
-        // Check if user is under 18
-        if ($user->date_of_birth && $user->date_of_birth->age < 18) {
-            $user->update(['is_child' => true]);
-        }
-
-        try {
-            $user->assignRole('user');
-        } catch (\Exception $e) {
-            // Continue without role
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-        return response()->json(['user' => $user, 'token' => $token], 201);
-    }
-
-    public function phoneLogin(PhoneLoginRequest $request): JsonResponse
-    {
-        $validated = $request->validated();
-
-        // Find fresh verification code
-        $verification = PhoneVerificationCode::where('phone', $validated['phone'])
-            ->where('code', $validated['verification_code'])
-            ->where('verified', false)
-            ->latest()
-            ->first();
-
-        if (!$verification || $verification->isExpired()) {
-            return response()->json(['error' => 'Invalid or expired verification code'], 422);
-        }
-
-        $user = User::where('phone', $validated['phone'])->first();
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 422);
-        }
-
-        // Mark as used and delete
-        $verification->delete();
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-        return response()->json(['user' => $user, 'token' => $token]);
     }
 
     // === Private Methods ===
@@ -331,9 +364,33 @@ class UnifiedAuthController extends Controller
 
     private function generateUsername($name): string
     {
-        $username = str_replace(' ', '', strtolower($name));
-        $count = User::where('username', 'like', $username . '%')->count();
-        return $count > 0 ? $username . $count : $username;
+        // Clean name: remove spaces, special chars, keep only alphanumeric
+        $username = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($name));
+        
+        // Ensure it starts with letter (Twitter standard)
+        if (empty($username) || is_numeric($username[0])) {
+            $username = 'user' . $username;
+        }
+        
+        // Limit to 15 characters max
+        $username = substr($username, 0, 15);
+        
+        // Ensure minimum 4 characters
+        if (strlen($username) < 4) {
+            $username = $username . str_repeat('x', 4 - strlen($username));
+        }
+        
+        // Check uniqueness and add number if needed
+        $originalUsername = $username;
+        $count = 1;
+        while (User::where('username', $username)->exists()) {
+            $suffix = (string)$count;
+            $maxBase = 15 - strlen($suffix);
+            $username = substr($originalUsername, 0, $maxBase) . $suffix;
+            $count++;
+        }
+        
+        return $username;
     }
 
     // === Email Verification ===
@@ -400,14 +457,112 @@ class UnifiedAuthController extends Controller
 
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
-        \DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $request->email],
-            ['token' => Hash::make($code), 'created_at' => now()]
-        );
+        Cache::put("password_reset:{$request->email}", [
+            'email' => $request->email,
+            'code' => $code,
+            'code_sent_at' => now()->timestamp,
+            'code_expires_at' => now()->addMinutes(15)->timestamp
+        ], now()->addMinutes(15));
 
         $this->emailService->sendPasswordResetEmail($user, $code);
         
-        return response()->json(['message' => 'Password reset code sent to your email']);
+        return response()->json([
+            'message' => 'Password reset code sent to your email',
+            'resend_available_at' => now()->addSeconds(60)->timestamp
+        ]);
+    }
+
+    public function resendResetCode(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+        
+        $resetData = Cache::get("password_reset:{$request->email}");
+        if (!$resetData) {
+            return response()->json(['error' => 'No reset request found'], 422);
+        }
+
+        $email = $request->email;
+        $ip = $request->ip();
+        
+        // Check hourly limit (5 per hour)
+        $hourlyKey = "reset_hourly:{$email}:" . now()->format('Y-m-d-H');
+        $hourlyCount = Cache::get($hourlyKey, 0);
+        if ($hourlyCount >= 5) {
+            return response()->json([
+                'error' => 'Too many requests. Try again in ' . (60 - now()->minute) . ' minutes.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        // Check daily limit (10 per day)
+        $dailyKey = "reset_daily:{$email}:" . now()->format('Y-m-d');
+        $dailyCount = Cache::get($dailyKey, 0);
+        if ($dailyCount >= 10) {
+            return response()->json([
+                'error' => 'Daily limit exceeded. Contact support if you need help.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+        
+        // Check IP daily limit (15 per day)
+        $ipDailyKey = "reset_ip_daily:{$ip}:" . now()->format('Y-m-d');
+        $ipDailyCount = Cache::get($ipDailyKey, 0);
+        if ($ipDailyCount >= 15) {
+            return response()->json([
+                'error' => 'Too many requests from this location. Try again tomorrow.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+
+        // Progressive delay after 3 attempts
+        $attemptCount = $resetData['resend_count'] ?? 0;
+        $baseDelay = 60;
+        if ($attemptCount >= 3) {
+            $baseDelay = min(300, 60 * pow(2, $attemptCount - 3)); // Max 5 minutes
+        }
+
+        // Check rate limiting
+        $lastSentAt = $resetData['code_sent_at'] ?? 0;
+        $timeSinceLastSent = now()->timestamp - $lastSentAt;
+        
+        if ($timeSinceLastSent < $baseDelay) {
+            $remainingTime = $baseDelay - $timeSinceLastSent;
+            return response()->json([
+                'error' => 'Please wait before requesting another code',
+                'remaining_seconds' => $remainingTime,
+                'resend_available_at' => $lastSentAt + $baseDelay
+            ], 429);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 422);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        Cache::put("password_reset:{$request->email}", [
+            'email' => $request->email,
+            'code' => $code,
+            'code_sent_at' => now()->timestamp,
+            'code_expires_at' => now()->addMinutes(15)->timestamp,
+            'resend_count' => $attemptCount + 1
+        ], now()->addMinutes(15));
+        
+        // Increment counters
+        Cache::put($hourlyKey, $hourlyCount + 1, now()->addHour()->startOfHour());
+        Cache::put($dailyKey, $dailyCount + 1, now()->addDay()->startOfDay());
+        Cache::put($ipDailyKey, $ipDailyCount + 1, now()->addDay()->startOfDay());
+
+        $this->emailService->sendPasswordResetEmail($user, $code);
+        
+        $nextDelay = $attemptCount >= 2 ? min(300, 60 * pow(2, $attemptCount - 2)) : 60;
+        
+        return response()->json([
+            'message' => 'New password reset code sent',
+            'resend_available_at' => now()->addSeconds($nextDelay)->timestamp,
+            'attempts_remaining' => max(0, 5 - ($hourlyCount + 1))
+        ]);
     }
 
     public function verifyResetCode(Request $request): JsonResponse
@@ -417,15 +572,12 @@ class UnifiedAuthController extends Controller
             'code' => 'required|string|size:6'
         ]);
 
-        $tokenData = \DB::table('password_reset_tokens')
-            ->where('email', $request->email)
-            ->first();
-
-        if (!$tokenData || !Hash::check($request->code, $tokenData->token)) {
+        $resetData = Cache::get("password_reset:{$request->email}");
+        if (!$resetData || $resetData['code'] !== $request->code) {
             return response()->json(['valid' => false, 'message' => 'Invalid code'], 422);
         }
 
-        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+        if (now()->timestamp > $resetData['code_expires_at']) {
             return response()->json(['valid' => false, 'message' => 'Code expired'], 422);
         }
 
@@ -440,22 +592,25 @@ class UnifiedAuthController extends Controller
             'password' => 'required|string|min:8|confirmed'
         ]);
 
-        $tokenData = \DB::table('password_reset_tokens')
-            ->where('email', $request->email)
-            ->first();
-
-        if (!$tokenData || !Hash::check($request->code, $tokenData->token)) {
+        $resetData = Cache::get("password_reset:{$request->email}");
+        if (!$resetData || $resetData['code'] !== $request->code) {
             return response()->json(['error' => 'Invalid code'], 422);
         }
 
-        if (now()->diffInMinutes($tokenData->created_at) > 15) {
+        if (now()->timestamp > $resetData['code_expires_at']) {
             return response()->json(['error' => 'Code expired'], 422);
         }
 
         $user = User::where('email', $request->email)->first();
+        
+        // Check if new password is same as current password
+        if (Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'New password must be different from current password'], 422);
+        }
+        
         $user->update(['password' => Hash::make($request->password)]);
 
-        \DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        Cache::forget("password_reset:{$request->email}");
 
         return response()->json(['message' => 'Password reset successfully']);
     }
@@ -570,7 +725,176 @@ class UnifiedAuthController extends Controller
         return response()->json(['message' => '2FA disabled successfully']);
     }
 
-    // === Age Verification for Social Auth ===
+    // === Phone Login with OTP ===
+    public function phoneLoginSendCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'phone' => 'required|string|regex:/^09[0-9]{9}$/'
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+        if (!$user) {
+            return response()->json(['error' => 'Phone number not registered'], 422);
+        }
+
+        $phone = $request->phone;
+        $ip = $request->ip();
+        
+        // Rate limiting
+        $hourlyKey = "phone_login_hourly:{$phone}:" . now()->format('Y-m-d-H');
+        $hourlyCount = Cache::get($hourlyKey, 0);
+        if ($hourlyCount >= 5) {
+            return response()->json([
+                'error' => 'Too many requests. Try again in ' . (60 - now()->minute) . ' minutes.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $sessionId = Str::uuid();
+
+        Cache::put("phone_login:{$sessionId}", [
+            'phone' => $phone,
+            'user_id' => $user->id,
+            'code' => $code,
+            'code_sent_at' => now()->timestamp,
+            'code_expires_at' => now()->addMinutes(5)->timestamp
+        ], now()->addMinutes(5));
+
+        $this->smsService->sendLoginCode($phone, $code);
+        
+        Cache::put($hourlyKey, $hourlyCount + 1, now()->addHour()->startOfHour());
+
+        return response()->json([
+            'session_id' => $sessionId,
+            'message' => 'Login code sent to your phone',
+            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'code_expires_at' => now()->addMinutes(5)->timestamp
+        ]);
+    }
+
+    public function phoneLoginVerifyCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'session_id' => 'required|uuid',
+            'code' => 'required|string|size:6'
+        ]);
+
+        $session = Cache::get("phone_login:{$request->session_id}");
+        if (!$session) {
+            return response()->json(['error' => 'Invalid or expired session'], 422);
+        }
+
+        if (now()->timestamp > $session['code_expires_at']) {
+            return response()->json(['error' => 'Code has expired'], 422);
+        }
+
+        if ($session['code'] !== $request->code) {
+            return response()->json(['error' => 'Invalid code'], 422);
+        }
+
+        $user = User::find($session['user_id']);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 422);
+        }
+
+        // Check 2FA requirement
+        if ($user->two_factor_enabled) {
+            $tempToken = $user->createToken('temp_2fa')->plainTextToken;
+            Cache::forget("phone_login:{$request->session_id}");
+            return response()->json([
+                'requires_2fa' => true,
+                'temp_token' => $tempToken,
+                'message' => 'Two-factor authentication required'
+            ]);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+        Cache::forget("phone_login:{$request->session_id}");
+
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token
+        ]);
+    }
+
+    public function phoneLoginResendCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'session_id' => 'required|uuid'
+        ]);
+
+        $session = Cache::get("phone_login:{$request->session_id}");
+        if (!$session) {
+            return response()->json(['error' => 'Invalid session'], 422);
+        }
+
+        $phone = $session['phone'];
+        $ip = $request->ip();
+        
+        // Rate limiting
+        $hourlyKey = "phone_login_hourly:{$phone}:" . now()->format('Y-m-d-H');
+        $hourlyCount = Cache::get($hourlyKey, 0);
+        if ($hourlyCount >= 5) {
+            return response()->json([
+                'error' => 'Too many requests. Try again in ' . (60 - now()->minute) . ' minutes.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+
+        // Check daily limit (10 per day)
+        $dailyKey = "phone_login_daily:{$phone}:" . now()->format('Y-m-d');
+        $dailyCount = Cache::get($dailyKey, 0);
+        if ($dailyCount >= 10) {
+            return response()->json([
+                'error' => 'Daily limit exceeded. Contact support if you need help.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+        
+        // Check IP daily limit (15 per day)
+        $ipDailyKey = "phone_login_ip_daily:{$ip}:" . now()->format('Y-m-d');
+        $ipDailyCount = Cache::get($ipDailyKey, 0);
+        if ($ipDailyCount >= 15) {
+            return response()->json([
+                'error' => 'Too many requests from this location. Try again tomorrow.',
+                'retry_after' => now()->addDay()->startOfDay()->timestamp
+            ], 429);
+        }
+
+        // Check resend timing
+        $lastSentAt = $session['code_sent_at'] ?? 0;
+        $timeSinceLastSent = now()->timestamp - $lastSentAt;
+        
+        if ($timeSinceLastSent < 60) {
+            $remainingTime = 60 - $timeSinceLastSent;
+            return response()->json([
+                'error' => 'Please wait before requesting another code',
+                'remaining_seconds' => $remainingTime,
+                'resend_available_at' => $lastSentAt + 60
+            ], 429);
+        }
+
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $session['code'] = $code;
+        $session['code_sent_at'] = now()->timestamp;
+        $session['code_expires_at'] = now()->addMinutes(5)->timestamp;
+        
+        Cache::put("phone_login:{$request->session_id}", $session, now()->addMinutes(5));
+        Cache::put($hourlyKey, $hourlyCount + 1, now()->addHour()->startOfHour());
+        Cache::put($dailyKey, $dailyCount + 1, now()->addDay()->startOfDay());
+        Cache::put($ipDailyKey, $ipDailyCount + 1, now()->addDay()->startOfDay());
+
+        $this->smsService->sendLoginCode($phone, $code);
+
+        return response()->json([
+            'message' => 'New login code sent',
+            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'code_expires_at' => now()->addMinutes(5)->timestamp,
+            'attempts_remaining' => max(0, 5 - ($hourlyCount + 1))
+        ]);
+    }
     public function completeAgeVerification(Request $request): JsonResponse
     {
         $request->validate([

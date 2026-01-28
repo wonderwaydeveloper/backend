@@ -15,8 +15,8 @@ class PhoneRegisterRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users|regex:/^[a-zA-Z0-9_]+$/',
-            'email' => 'required|string|email|max:255|unique:users',
+            'username' => ['required', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
+            'email' => 'nullable|string|email|max:255|unique:users',
             'phone' => 'required|string|unique:users',
             'password' => 'required|string|min:8|confirmed|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
             'date_of_birth' => 'required|date|before:today',

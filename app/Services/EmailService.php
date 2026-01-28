@@ -10,12 +10,20 @@ class EmailService
     public function sendVerificationEmail($user, $code)
     {
         try {
-            Mail::to($user->email)->queue(new \App\Mail\VerificationEmail($user, $code));
-            Log::info('Verification email queued', ['user_id' => $user->id]);
+            Mail::to($user->email)->send(new \App\Mail\VerificationEmail($user, $code));
+            Log::info('Verification email sent successfully', [
+                'user_email' => $user->email, 
+                'code' => $code,
+                'mailer' => config('mail.default')
+            ]);
 
             return true;
         } catch (\Exception $e) {
-            Log::error('Verification email failed', ['error' => $e->getMessage()]);
+            Log::error('Verification email failed', [
+                'error' => $e->getMessage(), 
+                'user_email' => $user->email,
+                'mailer' => config('mail.default')
+            ]);
 
             return false;
         }

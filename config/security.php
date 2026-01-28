@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'waf_enabled' => env('SECURITY_WAF_ENABLED', true),
+    
     'admin_allowed_ips' => [
         '127.0.0.1',
         '::1',

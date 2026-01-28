@@ -52,9 +52,10 @@ class AuthService implements AuthServiceInterface
      */
     public function login(LoginDTO $loginDTO): array
     {
-        // Find user by email or username
+        // Find user by email, username, or phone
         $user = User::where('email', $loginDTO->login)
                    ->orWhere('username', $loginDTO->login)
+                   ->orWhere('phone', $loginDTO->login)
                    ->first();
         
         // Use hash_equals to prevent timing attacks

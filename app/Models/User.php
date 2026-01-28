@@ -50,6 +50,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'last_active_at',
         'email_notifications_enabled',
         'email_verification_token',
+        'email_verified_at',
+        'phone_verified_at',
         'refresh_token',
         'password_changed_at'
     ];
