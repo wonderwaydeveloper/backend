@@ -129,6 +129,12 @@ Route::prefix('auth')->group(function () {
         Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
         Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
     });
+    
+    // Device Verification
+    Route::post('/verify-device', [UnifiedAuthController::class, 'verifyDevice'])->middleware('auth:sanctum');
+    
+    // Security Events
+    Route::get('/security/events', [UnifiedAuthController::class, 'getSecurityEvents'])->middleware('auth:sanctum');
 });
 
 Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {

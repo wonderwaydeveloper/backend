@@ -20,30 +20,10 @@ return new class () extends Migration {
 
             $table->index(['user_id', 'privacy']);
         });
-
-        Schema::create('list_members', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('list_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-
-            $table->unique(['list_id', 'user_id']);
-        });
-
-        Schema::create('list_subscribers', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('list_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
-
-            $table->unique(['list_id', 'user_id']);
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('list_subscribers');
-        Schema::dropIfExists('list_members');
         Schema::dropIfExists('lists');
     }
 };

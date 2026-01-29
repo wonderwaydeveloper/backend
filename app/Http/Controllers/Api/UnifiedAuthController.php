@@ -28,8 +28,133 @@ class UnifiedAuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $loginDTO = LoginDTO::fromRequest($request->validated());
+        
+        // Check if 2FA code is provided
+        if ($request->has('two_factor_code')) {
+            return $this->verify2FALogin($loginDTO, $request->two_factor_code);
+        }
+        
         $result = $this->authService->login($loginDTO);
+        
+        // Check if user has 2FA enabled
+        if (isset($result['user']) && $result['user']->two_factor_enabled) {
+            return response()->json([
+                'requires_2fa' => true,
+                'message' => 'Two-factor authentication required'
+            ]);
+        }
+        
+        // Check device verification
+        if (isset($result['user'])) {
+            $deviceCheck = $this->checkDeviceVerification($request, $result['user']);
+            if ($deviceCheck) {
+                // Log suspicious login attempt
+                $this->logSecurityEvent($result['user'], 'suspicious_login_attempt', [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'device_fingerprint' => $this->generateFingerprint($request)
+                ]);
+                return response()->json($deviceCheck);
+            }
+            
+            // Log successful login
+            $this->logSecurityEvent($result['user'], 'successful_login', [
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+        }
+        
         return response()->json($result);
+    }
+    
+    private function verify2FALogin(LoginDTO $loginDTO, string $twoFactorCode): JsonResponse
+    {
+        // First verify credentials
+        $result = $this->authService->login($loginDTO, false); // Don't create token yet
+        
+        if (!isset($result['user'])) {
+            return response()->json(['error' => 'Invalid credentials'], 401);
+        }
+        
+        $user = $result['user'];
+        
+        if (!$user->two_factor_enabled) {
+            return response()->json(['error' => '2FA not enabled'], 400);
+        }
+        
+        $secret = decrypt($user->two_factor_secret);
+        $valid = $this->twoFactorService->verifyCode($secret, $twoFactorCode);
+        
+        if (!$valid) {
+            return response()->json(['error' => 'Invalid 2FA code'], 422);
+        }
+        
+        // Create token after successful 2FA
+        $token = $user->createToken('auth_token')->plainTextToken;
+        
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'message' => 'Login successful'
+        ]);
+    }
+    
+    private function checkDeviceVerification(Request $request, $user): ?array
+    {
+        $fingerprint = $this->generateFingerprint($request);
+        
+        // Check if device exists and is trusted
+        $device = $user->devices()->where('fingerprint', $fingerprint)->first();
+        
+        if (!$device || !$device->is_trusted) {
+            // Send verification email for new/untrusted device
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            Cache::put("device_verification:{$user->id}:{$fingerprint}", [
+                'code' => $code,
+                'user_id' => $user->id,
+                'fingerprint' => $fingerprint,
+                'device_info' => [
+                    'ip' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                    'location' => $this->getLocationFromIP($request->ip())
+                ],
+                'expires_at' => now()->addMinutes(15)->timestamp
+            ], now()->addMinutes(15));
+            
+            $this->emailService->sendDeviceVerificationEmail($user, $code, [
+                'device_info' => $request->userAgent(),
+                'location' => $this->getLocationFromIP($request->ip()),
+                'ip' => $request->ip()
+            ]);
+            
+            return [
+                'requires_device_verification' => true,
+                'message' => 'New device detected. Please check your email for verification code.',
+                'fingerprint' => $fingerprint
+            ];
+        }
+        
+        // Update device last used
+        $device->update(['last_used_at' => now()]);
+        
+        return null;
+    }
+    
+    private function generateFingerprint(Request $request): string
+    {
+        return hash('sha256', implode('|', [
+            $request->userAgent(),
+            $request->header('accept-language', ''),
+            $request->header('accept-encoding', ''),
+            $request->ip()
+        ]));
+    }
+    
+    private function getLocationFromIP(string $ip): string
+    {
+        // Simplified location detection
+        return 'Unknown Location';
     }
 
     public function logout(Request $request): JsonResponse
@@ -450,24 +575,60 @@ class UnifiedAuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
         
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['message' => 'Password reset code sent to your email']);
-        }
-
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $email = $request->email;
+        $ip = $request->ip();
         
-        Cache::put("password_reset:{$request->email}", [
-            'email' => $request->email,
-            'code' => $code,
-            'code_sent_at' => now()->timestamp,
-            'code_expires_at' => now()->addMinutes(15)->timestamp
-        ], now()->addMinutes(15));
+        // Rate limiting per IP (3 attempts per hour)
+        $ipHourlyKey = "forgot_ip_hourly:{$ip}:" . now()->format('Y-m-d-H');
+        $ipHourlyCount = Cache::get($ipHourlyKey, 0);
+        if ($ipHourlyCount >= 3) {
+            return response()->json([
+                'error' => 'Too many password reset attempts. Try again later.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        // Rate limiting per email (2 attempts per hour)
+        $emailHourlyKey = "forgot_email_hourly:{$email}:" . now()->format('Y-m-d-H');
+        $emailHourlyCount = Cache::get($emailHourlyKey, 0);
+        if ($emailHourlyCount >= 2) {
+            return response()->json([
+                'error' => 'Too many requests for this email. Try again later.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        $user = User::where('email', $email)->first();
+        
+        // Always increment counters to prevent enumeration
+        Cache::put($ipHourlyKey, $ipHourlyCount + 1, now()->addHour()->startOfHour());
+        Cache::put($emailHourlyKey, $emailHourlyCount + 1, now()->addHour()->startOfHour());
+        
+        // Log suspicious activity
+        if (!$user) {
+            \Log::warning('Password reset attempt for non-existent email', [
+                'email' => $email,
+                'ip' => $ip,
+                'user_agent' => $request->userAgent()
+            ]);
+        }
+        
+        // Always return success message to prevent enumeration
+        if ($user) {
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            Cache::put("password_reset:{$email}", [
+                'email' => $email,
+                'code' => $code,
+                'code_sent_at' => now()->timestamp,
+                'code_expires_at' => now()->addMinutes(15)->timestamp
+            ], now()->addMinutes(15));
 
-        $this->emailService->sendPasswordResetEmail($user, $code);
+            $this->emailService->sendPasswordResetEmail($user, $code);
+        }
         
         return response()->json([
-            'message' => 'Password reset code sent to your email',
+            'message' => 'If this email is registered, a password reset code has been sent.',
             'resend_available_at' => now()->addSeconds(60)->timestamp
         ]);
     }
@@ -476,9 +637,13 @@ class UnifiedAuthController extends Controller
     {
         $request->validate(['email' => 'required|email']);
         
-        $resetData = Cache::get("password_reset:{$request->email}");
-        if (!$resetData) {
-            return response()->json(['error' => 'No reset request found'], 422);
+        $email = $request->email;
+        $resetData = Cache::get("password_reset:{$email}");
+        
+        // Check if user exists first
+        $user = User::where('email', $email)->first();
+        if (!$user || !$resetData) {
+            return response()->json(['error' => 'Invalid reset request'], 422);
         }
 
         $email = $request->email;
@@ -532,11 +697,6 @@ class UnifiedAuthController extends Controller
                 'remaining_seconds' => $remainingTime,
                 'resend_available_at' => $lastSentAt + $baseDelay
             ], 429);
-        }
-
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return response()->json(['error' => 'User not found'], 422);
         }
 
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -633,6 +793,12 @@ class UnifiedAuthController extends Controller
         
         $this->passwordService->updatePassword($user, $request->password);
         
+        // Log password change event
+        $this->logSecurityEvent($user, 'password_changed', [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent()
+        ]);
+        
         return response()->json([
             'message' => 'Password changed successfully',
             'password_strength' => $this->passwordService->getPasswordStrengthScore($request->password)
@@ -720,6 +886,12 @@ class UnifiedAuthController extends Controller
             'two_factor_enabled' => false,
             'two_factor_secret' => null,
             'two_factor_backup_codes' => null,
+        ]);
+        
+        // Log 2FA disable event
+        $this->logSecurityEvent($user, '2fa_disabled', [
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent()
         ]);
 
         return response()->json(['message' => '2FA disabled successfully']);
@@ -917,6 +1089,134 @@ class UnifiedAuthController extends Controller
         return response()->json([
             'message' => 'Age verification completed',
             'user' => $user
+        ]);
+    }
+    
+    public function verifyDevice(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code' => 'required|string|size:6',
+            'fingerprint' => 'required|string'
+        ]);
+        
+        $verificationData = Cache::get("device_verification:{$request->user()->id}:{$request->fingerprint}");
+        
+        if (!$verificationData || $verificationData['code'] !== $request->code) {
+            return response()->json(['error' => 'Invalid verification code'], 422);
+        }
+        
+        if (now()->timestamp > $verificationData['expires_at']) {
+            return response()->json(['error' => 'Verification code expired'], 422);
+        }
+        
+        // Create or update device as trusted
+        $user = $request->user();
+        $device = $user->devices()->where('fingerprint', $request->fingerprint)->first();
+        
+        if (!$device) {
+            $device = $user->devices()->create([
+                'fingerprint' => $request->fingerprint,
+                'device_name' => $this->getDeviceNameFromUserAgent($verificationData['device_info']['user_agent']),
+                'device_type' => $this->getDeviceTypeFromUserAgent($verificationData['device_info']['user_agent']),
+                'browser' => $this->getBrowserFromUserAgent($verificationData['device_info']['user_agent']),
+                'os' => $this->getOSFromUserAgent($verificationData['device_info']['user_agent']),
+                'ip_address' => $verificationData['device_info']['ip'],
+                'user_agent' => $verificationData['device_info']['user_agent'],
+                'location' => $verificationData['device_info']['location'],
+                'is_trusted' => true,
+                'last_used_at' => now()
+            ]);
+        } else {
+            $device->update(['is_trusted' => true, 'last_used_at' => now()]);
+        }
+        
+        // Clear verification cache
+        Cache::forget("device_verification:{$request->user()->id}:{$request->fingerprint}");
+        
+        // Create auth token
+        $token = $user->createToken('auth_token')->plainTextToken;
+        
+        return response()->json([
+            'user' => $user,
+            'token' => $token,
+            'message' => 'Device verified and login successful'
+        ]);
+    }
+    
+    private function getDeviceNameFromUserAgent(string $userAgent): string
+    {
+        if (str_contains($userAgent, 'Mobile')) return 'Mobile Device';
+        if (str_contains($userAgent, 'Tablet')) return 'Tablet';
+        return 'Desktop';
+    }
+    
+    private function getDeviceTypeFromUserAgent(string $userAgent): string
+    {
+        if (str_contains($userAgent, 'Mobile')) return 'mobile';
+        if (str_contains($userAgent, 'Tablet')) return 'tablet';
+        return 'desktop';
+    }
+    
+    private function getBrowserFromUserAgent(string $userAgent): string
+    {
+        if (str_contains($userAgent, 'Chrome')) return 'Chrome';
+        if (str_contains($userAgent, 'Firefox')) return 'Firefox';
+        if (str_contains($userAgent, 'Safari')) return 'Safari';
+        return 'Unknown';
+    }
+    
+    private function getOSFromUserAgent(string $userAgent): string
+    {
+        if (str_contains($userAgent, 'Windows')) return 'Windows';
+        if (str_contains($userAgent, 'Mac')) return 'macOS';
+        if (str_contains($userAgent, 'Linux')) return 'Linux';
+        if (str_contains($userAgent, 'Android')) return 'Android';
+        if (str_contains($userAgent, 'iOS')) return 'iOS';
+        return 'Unknown';
+    }
+    
+    private function logSecurityEvent($user, string $eventType, array $data = []): void
+    {
+        \DB::table('security_logs')->insert([
+            'user_id' => $user->id,
+            'event_type' => $eventType,
+            'ip_address' => $data['ip'] ?? request()->ip(),
+            'user_agent' => $data['user_agent'] ?? request()->userAgent(),
+            'metadata' => json_encode($data),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        // Send notification for critical events
+        if (in_array($eventType, ['suspicious_login_attempt', 'password_changed', '2fa_disabled'])) {
+            $this->sendSecurityNotification($user, $eventType, $data);
+        }
+    }
+    
+    public function getSecurityEvents(Request $request): JsonResponse
+    {
+        $events = \DB::table('security_logs')
+            ->where('user_id', $request->user()->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+            
+        return response()->json($events);
+    }
+    
+    private function sendSecurityNotification($user, string $eventType, array $data): void
+    {
+        $messages = [
+            'suspicious_login_attempt' => 'New device login detected',
+            'password_changed' => 'Your password was changed',
+            '2fa_disabled' => 'Two-factor authentication was disabled'
+        ];
+        
+        $this->emailService->sendSecurityAlert($user, [
+            'event' => $eventType,
+            'message' => $messages[$eventType] ?? 'Security event detected',
+            'data' => $data,
+            'timestamp' => now()->toDateTimeString()
         ]);
     }
 }

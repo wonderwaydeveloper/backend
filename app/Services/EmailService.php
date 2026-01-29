@@ -72,4 +72,32 @@ class EmailService
             return false;
         }
     }
+    
+    public function sendDeviceVerificationEmail($user, $code, $deviceInfo)
+    {
+        try {
+            Mail::to($user->email)->send(new \App\Mail\DeviceVerificationEmail($user, $code, $deviceInfo));
+            Log::info('Device verification email sent', ['user_id' => $user->id]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Device verification email failed', ['error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
+    
+    public function sendSecurityAlert($user, $alertData)
+    {
+        try {
+            Mail::to($user->email)->send(new \App\Mail\SecurityAlertEmail($user, $alertData));
+            Log::info('Security alert email sent', ['user_id' => $user->id, 'event' => $alertData['event']]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Security alert email failed', ['error' => $e->getMessage()]);
+
+            return false;
+        }
+    }
 }

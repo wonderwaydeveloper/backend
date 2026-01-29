@@ -18,18 +18,10 @@ return new class () extends Migration {
 
             $table->index(['post_id', 'edited_at']);
         });
-
-        Schema::table('posts', function (Blueprint $table) {
-            $table->timestamp('last_edited_at')->nullable();
-            $table->boolean('is_edited')->default(false);
-        });
     }
 
     public function down(): void
     {
         Schema::dropIfExists('post_edits');
-        Schema::table('posts', function (Blueprint $table) {
-            $table->dropColumn(['last_edited_at', 'is_edited']);
-        });
     }
 };

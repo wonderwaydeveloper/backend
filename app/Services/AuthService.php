@@ -50,7 +50,7 @@ class AuthService implements AuthServiceInterface
     /**
      * Login user with credentials
      */
-    public function login(LoginDTO $loginDTO): array
+    public function login(LoginDTO $loginDTO, bool $createToken = true): array
     {
         // Find user by email, username, or phone
         $user = User::where('email', $loginDTO->login)
@@ -72,19 +72,8 @@ class AuthService implements AuthServiceInterface
             ]);
         }
 
-        // Check 2FA requirement
-        if ($user->two_factor_enabled && !$loginDTO->twoFactorCode) {
-            $tempToken = $user->createToken('temp_2fa')->plainTextToken;
-            return [
-                'requires_2fa' => true,
-                'temp_token' => $tempToken,
-                'message' => 'Two-factor authentication required',
-            ];
-        }
-
-        // Verify 2FA if provided
-        if ($user->two_factor_enabled && $loginDTO->twoFactorCode) {
-            return $this->handle2FA($user, $loginDTO->twoFactorCode);
+        if (!$createToken) {
+            return ['user' => $user];
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;

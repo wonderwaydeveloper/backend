@@ -31,6 +31,8 @@ return new class () extends Migration {
             $table->foreignId('community_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_pinned')->default(false);
             $table->timestamp('published_at')->nullable();
+            $table->timestamp('last_edited_at')->nullable();
+            $table->boolean('is_edited')->default(false);
             $table->timestamps();
 
             $table->index(['user_id', 'published_at']);
