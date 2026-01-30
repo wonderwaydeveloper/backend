@@ -14,14 +14,15 @@ class AdvancedDeviceController extends Controller
     public function registerDevice(Request $request)
     {
         $request->validate([
-            'device_name' => 'required|string|max:255',
-            'device_type' => 'required|in:mobile,desktop,tablet',
+            'fingerprint' => 'required|string',
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:mobile,desktop,tablet',
             'browser' => 'nullable|string',
             'os' => 'nullable|string',
             'push_token' => 'nullable|string'
         ]);
 
-        $fingerprint = $this->generateFingerprint($request);
+        $fingerprint = $request->fingerprint;
         
         // Check if device already exists for this user
         $existingDevice = DeviceToken::where('user_id', $request->user()->id)
@@ -30,8 +31,8 @@ class AdvancedDeviceController extends Controller
         
         if ($existingDevice) {
             $existingDevice->update([
-                'device_name' => $request->device_name,
-                'device_type' => $request->device_type,
+                'device_name' => $request->name,
+                'device_type' => $request->type,
                 'browser' => $request->browser,
                 'os' => $request->os,
                 'push_token' => $request->push_token,
@@ -50,8 +51,8 @@ class AdvancedDeviceController extends Controller
         $device = DeviceToken::create([
             'user_id' => $request->user()->id,
             'fingerprint' => $fingerprint,
-            'device_name' => $request->device_name,
-            'device_type' => $request->device_type,
+            'device_name' => $request->name,
+            'device_type' => $request->type,
             'browser' => $request->browser,
             'os' => $request->os,
             'push_token' => $request->push_token,

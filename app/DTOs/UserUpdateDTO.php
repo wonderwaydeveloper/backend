@@ -28,6 +28,19 @@ class UserUpdateDTO
             dateOfBirth: $request->date_of_birth
         );
     }
+    
+    public static function fromArray(array $data): self
+    {
+        return new self(
+            name: $data['name'] ?? null,
+            bio: $data['bio'] ?? null,
+            location: $data['location'] ?? null,
+            website: $data['website'] ?? null,
+            avatar: $data['avatar'] ?? null,
+            cover: $data['cover'] ?? null,
+            dateOfBirth: $data['date_of_birth'] ?? null
+        );
+    }
 
     public function toArray(): array
     {

@@ -9,11 +9,15 @@ return new class () extends Migration {
     {
         Schema::create('security_logs', function (Blueprint $table) {
             $table->id();
-            $table->string('event');
-            $table->json('data');
-            $table->timestamp('created_at');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('event_type');
+            $table->string('ip_address')->nullable();
+            $table->text('user_agent')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamps();
 
-            $table->index(['event', 'created_at']);
+            $table->index(['user_id', 'created_at']);
+            $table->index(['event_type', 'created_at']);
             $table->index('created_at');
         });
     }

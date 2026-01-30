@@ -14,7 +14,7 @@ class PhoneRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:50',
             'username' => ['required', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
             'email' => 'nullable|string|email|max:255|unique:users',
             'phone' => 'required|string|unique:users',

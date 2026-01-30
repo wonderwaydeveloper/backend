@@ -130,8 +130,9 @@ Route::prefix('auth')->group(function () {
         Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
     });
     
-    // Device Verification
-    Route::post('/verify-device', [UnifiedAuthController::class, 'verifyDevice'])->middleware('auth:sanctum');
+    // Device Verification (without auth middleware since user is logging in)
+    Route::post('/verify-device', [UnifiedAuthController::class, 'verifyDevice']);
+    Route::post('/resend-device-code', [UnifiedAuthController::class, 'resendDeviceCode']);
     
     // Security Events
     Route::get('/security/events', [UnifiedAuthController::class, 'getSecurityEvents'])->middleware('auth:sanctum');

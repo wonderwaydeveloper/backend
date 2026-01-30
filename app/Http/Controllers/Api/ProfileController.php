@@ -29,9 +29,24 @@ class ProfileController extends Controller
 
     public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $dto = UserUpdateDTO::fromRequest($request);
-        $user = $this->userService->updateUserProfile($request->user(), $dto);
-        return response()->json(new UserResource($user));
+        $user = $request->user();
+        $data = $request->validated();
+        
+        // Handle file uploads
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $data['avatar'] = asset('storage/' . $avatarPath);
+        }
+        
+        if ($request->hasFile('cover')) {
+            $coverPath = $request->file('cover')->store('covers', 'public');
+            $data['cover'] = asset('storage/' . $coverPath);
+        }
+        
+        $dto = UserUpdateDTO::fromArray($data);
+        $updatedUser = $this->userService->updateUserProfile($user, $dto);
+        
+        return response()->json(new UserResource($updatedUser));
     }
 
     public function follow(User $user): JsonResponse

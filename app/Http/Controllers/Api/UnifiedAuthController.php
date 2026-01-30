@@ -183,7 +183,7 @@ class UnifiedAuthController extends Controller
     public function multiStepStep1(Request $request): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:50',
             'date_of_birth' => ['required', 'date', 'before:today', new MinimumAge()],
             'contact' => 'required|string',
             'contact_type' => 'required|in:email,phone'
@@ -1092,6 +1092,94 @@ class UnifiedAuthController extends Controller
         ]);
     }
     
+    public function resendDeviceCode(Request $request): JsonResponse
+    {
+        $request->validate([
+            'fingerprint' => 'required|string'
+        ]);
+        
+        // Find existing verification data
+        $cacheKeys = Cache::getRedis()->keys("*device_verification:*:{$request->fingerprint}*");
+        if (empty($cacheKeys)) {
+            return response()->json(['error' => 'No verification session found'], 422);
+        }
+        
+        $verificationData = Cache::get(str_replace(config('cache.prefix') . ':', '', $cacheKeys[0]));
+        if (!$verificationData) {
+            return response()->json(['error' => 'Verification session expired'], 422);
+        }
+        
+        // Get user
+        $user = User::find($verificationData['user_id']);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 422);
+        }
+        
+        $email = $user->email;
+        $ip = $request->ip();
+        
+        // Rate limiting per email (3 per hour)
+        $emailHourlyKey = "device_resend_email_hourly:{$email}:" . now()->format('Y-m-d-H');
+        $emailHourlyCount = Cache::get($emailHourlyKey, 0);
+        if ($emailHourlyCount >= 3) {
+            return response()->json([
+                'error' => 'Too many requests for this email. Try again later.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        // Rate limiting per IP (5 per hour)
+        $ipHourlyKey = "device_resend_ip_hourly:{$ip}:" . now()->format('Y-m-d-H');
+        $ipHourlyCount = Cache::get($ipHourlyKey, 0);
+        if ($ipHourlyCount >= 5) {
+            return response()->json([
+                'error' => 'Too many requests from this location. Try again later.',
+                'retry_after' => now()->addHour()->startOfHour()->timestamp
+            ], 429);
+        }
+        
+        // Check resend timing (60 seconds between requests)
+        $lastSentAt = $verificationData['code_sent_at'] ?? 0;
+        $timeSinceLastSent = now()->timestamp - $lastSentAt;
+        
+        if ($timeSinceLastSent < 60) {
+            $remainingTime = 60 - $timeSinceLastSent;
+            return response()->json([
+                'error' => 'Please wait before requesting another code',
+                'remaining_seconds' => $remainingTime,
+                'resend_available_at' => $lastSentAt + 60
+            ], 429);
+        }
+        
+        // Generate new code
+        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        // Update cache with new code and timestamp
+        $verificationData['code'] = $code;
+        $verificationData['code_sent_at'] = now()->timestamp;
+        $verificationData['expires_at'] = now()->addMinutes(15)->timestamp;
+        
+        Cache::put("device_verification:{$user->id}:{$request->fingerprint}", $verificationData, now()->addMinutes(15));
+        
+        // Increment rate limiting counters
+        Cache::put($emailHourlyKey, $emailHourlyCount + 1, now()->addHour()->startOfHour());
+        Cache::put($ipHourlyKey, $ipHourlyCount + 1, now()->addHour()->startOfHour());
+        
+        // Send new verification email
+        $this->emailService->sendDeviceVerificationEmail($user, $code, [
+            'device_info' => $verificationData['device_info']['user_agent'],
+            'location' => $verificationData['device_info']['location'],
+            'ip' => $verificationData['device_info']['ip']
+        ]);
+        
+        return response()->json([
+            'message' => 'New verification code sent to your email',
+            'code_expires_at' => $verificationData['expires_at'],
+            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'attempts_remaining' => max(0, 3 - ($emailHourlyCount + 1))
+        ]);
+    }
+
     public function verifyDevice(Request $request): JsonResponse
     {
         $request->validate([
@@ -1099,7 +1187,15 @@ class UnifiedAuthController extends Controller
             'fingerprint' => 'required|string'
         ]);
         
-        $verificationData = Cache::get("device_verification:{$request->user()->id}:{$request->fingerprint}");
+        $verificationData = Cache::get("device_verification:*:{$request->fingerprint}");
+        
+        // If not found with wildcard, try to find by iterating cache keys
+        if (!$verificationData) {
+            $cacheKeys = Cache::getRedis()->keys("*device_verification:*:{$request->fingerprint}*");
+            if (!empty($cacheKeys)) {
+                $verificationData = Cache::get(str_replace(config('cache.prefix') . ':', '', $cacheKeys[0]));
+            }
+        }
         
         if (!$verificationData || $verificationData['code'] !== $request->code) {
             return response()->json(['error' => 'Invalid verification code'], 422);
@@ -1109,8 +1205,13 @@ class UnifiedAuthController extends Controller
             return response()->json(['error' => 'Verification code expired'], 422);
         }
         
+        // Get user from verification data
+        $user = User::find($verificationData['user_id']);
+        if (!$user) {
+            return response()->json(['error' => 'User not found'], 422);
+        }
+        
         // Create or update device as trusted
-        $user = $request->user();
         $device = $user->devices()->where('fingerprint', $request->fingerprint)->first();
         
         if (!$device) {
@@ -1131,7 +1232,10 @@ class UnifiedAuthController extends Controller
         }
         
         // Clear verification cache
-        Cache::forget("device_verification:{$request->user()->id}:{$request->fingerprint}");
+        $cacheKeys = Cache::getRedis()->keys("*device_verification:*:{$request->fingerprint}*");
+        foreach ($cacheKeys as $key) {
+            Cache::forget(str_replace(config('cache.prefix') . ':', '', $key));
+        }
         
         // Create auth token
         $token = $user->createToken('auth_token')->plainTextToken;
