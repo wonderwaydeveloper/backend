@@ -14,8 +14,8 @@ class PhoneLoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => 'required|string',
-            'verification_code' => 'required|string|size:6'
+            'phone' => 'required|string|regex:/^09[0-9]{9}$/',
+            'verification_code' => 'required|string|size:6|regex:/^[0-9]+$/'
         ];
     }
 }

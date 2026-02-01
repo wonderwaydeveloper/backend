@@ -14,7 +14,7 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('token');
-            $table->enum('device_type', ['ios', 'android', 'web']);
+            $table->enum('device_type', ['ios', 'android', 'web', 'desktop', 'mobile', 'tablet']);
             $table->string('device_name')->nullable();
             $table->string('browser')->nullable();
             $table->string('os')->nullable();

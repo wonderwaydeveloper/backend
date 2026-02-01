@@ -9,36 +9,43 @@ class EmailService
 {
     public function sendVerificationEmail($user, $code)
     {
+        Log::info('📧 VERIFICATION CODE SENT', [
+            'type' => 'EMAIL_VERIFICATION',
+            'email' => $user->email,
+            'name' => $user->name ?? 'Unknown',
+            'code' => $code,
+            'expires_in' => '15 minutes',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         try {
             Mail::to($user->email)->send(new \App\Mail\VerificationEmail($user, $code));
-            Log::info('Verification email sent successfully', [
-                'user_email' => $user->email, 
-                'code' => $code,
-                'mailer' => config('mail.default')
-            ]);
-
             return true;
         } catch (\Exception $e) {
-            Log::error('Verification email failed', [
+            Log::error('❌ Verification email failed', [
                 'error' => $e->getMessage(), 
-                'user_email' => $user->email,
-                'mailer' => config('mail.default')
+                'user_email' => $user->email
             ]);
-
             return false;
         }
     }
 
-    public function sendPasswordResetEmail($user, $token)
+    public function sendPasswordResetEmail($user, $code)
     {
+        Log::info('🔑 PASSWORD RESET CODE SENT', [
+            'type' => 'PASSWORD_RESET',
+            'email' => $user->email,
+            'name' => $user->name ?? 'Unknown',
+            'code' => $code,
+            'expires_in' => '15 minutes',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         try {
-            Mail::to($user->email)->queue(new \App\Mail\PasswordResetEmail($user, $token));
-            Log::info('Password reset email queued', ['user_id' => $user->id]);
-
+            Mail::to($user->email)->queue(new \App\Mail\PasswordResetEmail($user, $code));
             return true;
         } catch (\Exception $e) {
-            Log::error('Password reset email failed', ['error' => $e->getMessage()]);
-
+            Log::error('❌ Password reset email failed', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -75,14 +82,23 @@ class EmailService
     
     public function sendDeviceVerificationEmail($user, $code, $deviceInfo)
     {
+        Log::info('📱 DEVICE VERIFICATION CODE SENT', [
+            'type' => 'DEVICE_VERIFICATION',
+            'email' => $user->email,
+            'name' => $user->name ?? 'Unknown',
+            'code' => $code,
+            'device' => $deviceInfo['device_info'] ?? 'Unknown Device',
+            'ip' => $deviceInfo['ip'] ?? 'Unknown IP',
+            'location' => $deviceInfo['location'] ?? 'Unknown Location',
+            'expires_in' => '15 minutes',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         try {
             Mail::to($user->email)->send(new \App\Mail\DeviceVerificationEmail($user, $code, $deviceInfo));
-            Log::info('Device verification email sent', ['user_id' => $user->id]);
-
             return true;
         } catch (\Exception $e) {
-            Log::error('Device verification email failed', ['error' => $e->getMessage()]);
-
+            Log::error('❌ Device verification email failed', ['error' => $e->getMessage()]);
             return false;
         }
     }

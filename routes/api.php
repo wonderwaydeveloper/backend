@@ -125,8 +125,8 @@ Route::prefix('auth')->group(function () {
 
     // Social Authentication
     Route::prefix('social')->group(function () {
-        Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google|apple');
-        Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google|apple');
+        Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google');
+        Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google');
         Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
     });
     
@@ -208,8 +208,22 @@ Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
 
     Route::get('/users/{user}', [ProfileController::class, 'show']);
     Route::get('/users/{user}/posts', [ProfileController::class, 'posts']);
+    Route::get('/users/{user}/media', [ProfileController::class, 'media']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy']);
+    
+    // Settings Routes
+    Route::prefix('settings')->group(function () {
+        Route::get('/privacy', [ProfileController::class, 'getPrivacySettings']);
+        Route::put('/privacy', [ProfileController::class, 'updatePrivacySettings']);
+    });
+    
+    // Account Management Routes
+    Route::prefix('account')->group(function () {
+        Route::get('/export-data', [ProfileController::class, 'exportData']);
+        Route::post('/delete-account', [ProfileController::class, 'deleteAccount']);
+    });
+    
     Route::get('/search/users', [SearchController::class, 'users']);
     Route::get('/search/posts', [SearchController::class, 'posts']);
     Route::get('/search/hashtags', [SearchController::class, 'hashtags']);

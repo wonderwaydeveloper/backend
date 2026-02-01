@@ -27,6 +27,17 @@ class ProfileController extends Controller
         return response()->json($posts);
     }
 
+    public function media(User $user): JsonResponse
+    {
+        $mediaPosts = $user->posts()
+            ->whereHas('media')
+            ->with(['media', 'user:id,name,username,avatar'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+            
+        return response()->json($mediaPosts);
+    }
+
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
@@ -84,5 +95,142 @@ class ProfileController extends Controller
         $user->update(['verified' => $request->verified]);
         
         return response()->json(new UserResource($user));
+    }
+    
+    public function getPrivacySettings(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        return response()->json([
+            'is_private' => $user->is_private,
+            'email_notifications_enabled' => $user->email_notifications_enabled,
+            'two_factor_enabled' => $user->two_factor_enabled,
+            'notification_preferences' => $user->notification_preferences ?? []
+        ]);
+    }
+    
+    public function updatePrivacySettings(Request $request): JsonResponse
+    {
+        $request->validate([
+            'is_private' => 'sometimes|boolean',
+            'email_notifications_enabled' => 'sometimes|boolean',
+            'notification_preferences' => 'sometimes|array'
+        ]);
+        
+        $user = $request->user();
+        $user->update($request->only([
+            'is_private', 
+            'email_notifications_enabled',
+            'notification_preferences'
+        ]));
+        
+        return response()->json([
+            'message' => 'Privacy settings updated successfully',
+            'settings' => [
+                'is_private' => $user->is_private,
+                'email_notifications_enabled' => $user->email_notifications_enabled,
+                'notification_preferences' => $user->notification_preferences ?? []
+            ]
+        ]);
+    }
+    
+    public function block(Request $request, User $user): JsonResponse
+    {
+        $currentUser = $request->user();
+        
+        // Add user to blocked list (you may need to create a blocks table)
+        // For now, we'll use a simple approach
+        $blockedUsers = $currentUser->blocked_users ?? [];
+        if (!in_array($user->id, $blockedUsers)) {
+            $blockedUsers[] = $user->id;
+            $currentUser->update(['blocked_users' => $blockedUsers]);
+        }
+        
+        return response()->json(['message' => 'User blocked successfully']);
+    }
+    
+    public function unblock(Request $request, User $user): JsonResponse
+    {
+        $currentUser = $request->user();
+        
+        $blockedUsers = $currentUser->blocked_users ?? [];
+        $blockedUsers = array_filter($blockedUsers, fn($id) => $id !== $user->id);
+        $currentUser->update(['blocked_users' => array_values($blockedUsers)]);
+        
+        return response()->json(['message' => 'User unblocked successfully']);
+    }
+    
+    public function mute(Request $request, User $user): JsonResponse
+    {
+        $currentUser = $request->user();
+        
+        $mutedUsers = $currentUser->muted_users ?? [];
+        if (!in_array($user->id, $mutedUsers)) {
+            $mutedUsers[] = $user->id;
+            $currentUser->update(['muted_users' => $mutedUsers]);
+        }
+        
+        return response()->json(['message' => 'User muted successfully']);
+    }
+    
+    public function unmute(Request $request, User $user): JsonResponse
+    {
+        $currentUser = $request->user();
+        
+        $mutedUsers = $currentUser->muted_users ?? [];
+        $mutedUsers = array_filter($mutedUsers, fn($id) => $id !== $user->id);
+        $currentUser->update(['muted_users' => array_values($mutedUsers)]);
+        
+        return response()->json(['message' => 'User unmuted successfully']);
+    }
+    
+    public function exportData(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        // Collect user data
+        $userData = [
+            'profile' => [
+                'name' => $user->name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'bio' => $user->bio,
+                'location' => $user->location,
+                'website' => $user->website,
+                'created_at' => $user->created_at,
+            ],
+            'posts' => $user->posts()->select(['id', 'content', 'created_at'])->get(),
+            'followers_count' => $user->followers()->count(),
+            'following_count' => $user->following()->count(),
+            'bookmarks' => $user->bookmarks()->with('post:id,content')->get(),
+        ];
+        
+        return response()->json([
+            'message' => 'Data export prepared',
+            'data' => $userData,
+            'export_date' => now()->toISOString()
+        ]);
+    }
+    
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $request->validate([
+            'password' => 'required|string',
+            'confirmation' => 'required|string|in:DELETE_MY_ACCOUNT'
+        ]);
+        
+        $user = $request->user();
+        
+        if (!\Hash::check($request->password, $user->password)) {
+            return response()->json(['error' => 'Invalid password'], 422);
+        }
+        
+        // Delete user data
+        $user->tokens()->delete();
+        $user->devices()->delete();
+        $user->posts()->delete();
+        $user->delete();
+        
+        return response()->json(['message' => 'Account deleted successfully']);
     }
 }

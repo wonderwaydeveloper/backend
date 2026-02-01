@@ -17,7 +17,7 @@ class PasswordResetRequest extends FormRequest
             'email' => 'required|email|exists:users,email',
             'token' => 'sometimes|required|string',
             'code' => 'sometimes|required|string|size:6',
-            'password' => 'sometimes|required|string|min:8|confirmed'
+            'password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed', new \App\Rules\StrongPassword()]
         ];
     }
 }

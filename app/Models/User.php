@@ -53,7 +53,10 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at',
         'phone_verified_at',
         'refresh_token',
-        'password_changed_at'
+        'password_changed_at',
+        'notification_preferences',
+        'blocked_users',
+        'muted_users'
     ];
 
     /**
@@ -96,6 +99,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_suspended' => 'boolean',
             'is_banned' => 'boolean',
             'notification_preferences' => 'array',
+            'blocked_users' => 'array',
+            'muted_users' => 'array',
         ];
     }
 

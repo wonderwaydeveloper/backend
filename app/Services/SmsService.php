@@ -30,7 +30,11 @@ class SmsService
     {
         // Fallback mode when no Twilio client
         if (!$this->client) {
-            Log::info('SMS Fallback Mode', ['phone' => $phoneNumber, 'otp' => $otp]);
+            Log::info('📱 SMS OTP (FALLBACK MODE)', [
+                'phone' => $phoneNumber, 
+                'otp' => $otp,
+                'note' => 'Twilio not configured - using fallback mode'
+            ]);
             return true; // Return success to prevent app breaking
         }
         
@@ -43,26 +47,39 @@ class SmsService
                 ]
             );
 
-            Log::info('SMS sent', ['phone' => $phoneNumber, 'sid' => $message->sid]);
-
+            Log::info('✅ SMS sent successfully', ['phone' => $phoneNumber, 'sid' => $message->sid]);
             return true;
         } catch (\Exception $e) {
-            Log::error('SMS failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
-
+            Log::error('❌ SMS failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
             return false;
         }
     }
 
     public function sendVerificationCode($phoneNumber, $code)
     {
+        Log::info('📱 SMS VERIFICATION CODE SENT', [
+            'type' => 'SMS_VERIFICATION',
+            'phone' => $phoneNumber,
+            'code' => $code,
+            'expires_in' => '15 minutes',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         return $this->sendOtp($phoneNumber, $code);
     }
 
     public function sendLoginCode($phoneNumber, $code)
     {
+        Log::info('🔑 SMS LOGIN CODE SENT', [
+            'type' => 'SMS_LOGIN',
+            'phone' => $phoneNumber,
+            'code' => $code,
+            'expires_in' => '5 minutes',
+            'timestamp' => now()->toDateTimeString()
+        ]);
+        
         // Fallback mode when no Twilio client
         if (!$this->client) {
-            Log::info('SMS Login Code Fallback', ['phone' => $phoneNumber, 'code' => $code]);
             return true;
         }
         
@@ -75,10 +92,9 @@ class SmsService
                 ]
             );
 
-            Log::info('SMS login code sent', ['phone' => $phoneNumber, 'sid' => $message->sid]);
             return true;
         } catch (\Exception $e) {
-            Log::error('SMS login code failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
+            Log::error('❌ SMS login code failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
             return false;
         }
     }

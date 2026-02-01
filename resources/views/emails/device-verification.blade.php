@@ -1,38 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>New Device Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Device Verification - {{ config('app.name') }}</title>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px;">
-    <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; padding: 30px;">
-        <h1 style="color: #dc3545; text-align: center; margin-bottom: 30px;">🔐 New Device Login</h1>
-        
-        <p>Hello {{ $user->name }},</p>
-        
-        <p>We detected a login from a new device. If this was you, please verify this device using the code below:</p>
-        
-        <div style="background-color: #fff5f5; border: 2px dashed #dc3545; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-            <span style="font-size: 32px; font-weight: bold; color: #dc3545; letter-spacing: 4px; font-family: monospace;">{{ $code }}</span>
-        </div>
-        
-        <div style="background-color: #f8f9fa; border-radius: 6px; padding: 15px; margin: 20px 0;">
-            <h3 style="margin: 0 0 10px 0; color: #333;">Device Information:</h3>
-            <p style="margin: 5px 0;"><strong>Device:</strong> {{ $deviceInfo['device_info'] ?? 'Unknown' }}</p>
-            <p style="margin: 5px 0;"><strong>Location:</strong> {{ $deviceInfo['location'] ?? 'Unknown' }}</p>
-            <p style="margin: 5px 0;"><strong>IP Address:</strong> {{ $deviceInfo['ip'] ?? 'Unknown' }}</p>
-        </div>
-        
-        <p style="color: #dc3545; font-weight: bold;">⚠️ If this wasn't you, please secure your account immediately by changing your password.</p>
-        
-        <p style="color: #666; font-size: 14px;">This code is valid for 15 minutes.</p>
-        
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        
-        <p style="color: #999; font-size: 12px; text-align: center;">
-            © {{ date('Y') }} {{ config('app.name') }}. All rights reserved.<br>
-            This is an automated message, please do not reply.
-        </p>
-    </div>
+<body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 20px 20px; border-bottom: 2px solid #dc3545;">
+                            <h1 style="margin: 0; color: #dc3545; font-size: 28px; font-weight: bold;">🔐 Device Verification</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px 20px;">
+                            <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.5;">Hello {{ $user->name ?? 'User' }},</p>
+                            <p style="margin: 0 0 25px; color: #333333; font-size: 16px; line-height: 1.5;">We detected a login from a new device. If this was you, please verify this device using the code below:</p>
+                            
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <div style="background-color: #fff5f5; border: 2px dashed #dc3545; border-radius: 8px; padding: 20px; display: inline-block;">
+                                            <span style="font-size: 32px; font-weight: bold; color: #dc3545; letter-spacing: 4px; font-family: 'Courier New', monospace;">{{ $code }}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Device Info -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 25px 0;">
+                                <tr>
+                                    <td style="background-color: #f8f9fa; border-radius: 6px; padding: 15px;">
+                                        <h3 style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">Device Information:</h3>
+                                        <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>Device:</strong> {{ $deviceInfo['device_info'] ?? 'Unknown Device' }}</p>
+                                        <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>Location:</strong> {{ $deviceInfo['location'] ?? 'Unknown Location' }}</p>
+                                        <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>IP Address:</strong> {{ $deviceInfo['ip'] ?? 'Unknown IP' }}</p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 25px 0 0; color: #666666; font-size: 14px; line-height: 1.5;">This code is valid for 15 minutes.</p>
+                            <p style="margin: 15px 0 0; color: #dc3545; font-size: 14px; line-height: 1.5; font-weight: bold;">⚠️ If this wasn't you, please secure your account immediately by changing your password.</p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="padding: 20px; border-top: 1px solid #eeeeee; background-color: #f8f9fa;">
+                            <p style="margin: 0; color: #999999; font-size: 12px;">© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+                            <p style="margin: 5px 0 0; color: #999999; font-size: 12px;">This is an automated message, please do not reply.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

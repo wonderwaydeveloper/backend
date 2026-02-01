@@ -50,6 +50,7 @@ class AdvancedDeviceController extends Controller
         
         $device = DeviceToken::create([
             'user_id' => $request->user()->id,
+            'token' => 'device_' . \Illuminate\Support\Str::random(40),
             'fingerprint' => $fingerprint,
             'device_name' => $request->name,
             'device_type' => $request->type,
@@ -71,12 +72,56 @@ class AdvancedDeviceController extends Controller
 
     public function listDevices(Request $request)
     {
+        $currentFingerprint = $this->generateFingerprint($request);
+        
+        // Clean up any duplicate devices for this user
+        $this->cleanupDuplicateDevices($request->user());
+        
         $devices = $request->user()->devices()
-            ->select(['id', 'device_name', 'device_type', 'browser', 'os', 'ip_address', 'last_used_at', 'is_trusted', 'created_at'])
+            ->select(['id', 'device_name', 'device_type', 'browser', 'os', 'ip_address', 'last_used_at', 'is_trusted', 'created_at', 'fingerprint'])
             ->orderBy('last_used_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($device) use ($currentFingerprint) {
+                $device->is_current = $device->fingerprint === $currentFingerprint;
+                unset($device->fingerprint); // Remove fingerprint from response
+                return $device;
+            });
 
         return response()->json($devices);
+    }
+    
+    private function cleanupDuplicateDevices($user)
+    {
+        // Get current fingerprint
+        $currentFingerprint = $this->generateFingerprint(request());
+        
+        // Get all devices for this user
+        $devices = $user->devices()->get();
+        
+        // Group by similar characteristics (same IP, similar user agent)
+        $deviceGroups = $devices->groupBy(function ($device) {
+            return $device->ip_address . '|' . $device->browser . '|' . $device->os;
+        });
+        
+        foreach ($deviceGroups as $group) {
+            if ($group->count() > 1) {
+                // Keep the current device if it exists in this group
+                $currentDevice = $group->where('fingerprint', $currentFingerprint)->first();
+                
+                if ($currentDevice) {
+                    // Delete all others in this group except current
+                    $group->except($currentDevice->id)->each(function ($device) {
+                        $device->delete();
+                    });
+                } else {
+                    // Keep the most recent device and delete others
+                    $latest = $group->sortByDesc('last_used_at')->first();
+                    $group->except($latest->id)->each(function ($device) {
+                        $device->delete();
+                    });
+                }
+            }
+        }
     }
 
     public function trustDevice(Request $request, $deviceId)
@@ -96,15 +141,34 @@ class AdvancedDeviceController extends Controller
     public function revokeDevice(Request $request, $deviceId)
     {
         $device = $request->user()->devices()->findOrFail($deviceId);
+        $currentFingerprint = $this->generateFingerprint($request);
         
-        // Revoke all tokens for this device
-        $request->user()->tokens()
-            ->where('name', 'like', "%device:{$device->fingerprint}%")
+        // Prevent revoking current device
+        if ($device->fingerprint === $currentFingerprint) {
+            return response()->json(['error' => 'Cannot revoke current device'], 422);
+        }
+        
+        $user = $request->user();
+        
+        // For browser-based revocation, we need to revoke all tokens except current
+        // since we can't identify which specific token belongs to which device
+        $currentToken = $user->currentAccessToken();
+        
+        // Revoke all other tokens (this will log out other devices/tabs)
+        $user->tokens()
+            ->where('id', '!=', $currentToken->id)
             ->delete();
-            
+        
+        // Delete the device record
         $device->delete();
+        
+        // Clear any cached verification data
+        Cache::forget("device_verification:{$user->id}:{$device->fingerprint}");
 
-        return response()->json(['message' => 'Device revoked']);
+        return response()->json([
+            'message' => 'Device revoked successfully. Other sessions have been logged out.',
+            'warning' => 'All other active sessions have been terminated for security.'
+        ]);
     }
 
     public function revokeAllDevices(Request $request)
@@ -146,13 +210,10 @@ class AdvancedDeviceController extends Controller
 
     private function generateFingerprint(Request $request): string
     {
+        // Use a more stable fingerprint that doesn't change between requests
         return hash('sha256', implode('|', [
-            $request->userAgent(),
-            $request->header('accept-language', ''),
-            $request->header('accept-encoding', ''),
-            $request->ip(),
-            $request->input('screen_resolution', ''),
-            $request->input('timezone', '')
+            $request->userAgent() ?? '',
+            $request->ip() ?? ''
         ]));
     }
 

@@ -18,8 +18,7 @@ class PasswordSecurityService
         $errors = [];
         $config = config('security.password', [
             'min_length' => 8,
-            'require_uppercase' => true,
-            'require_lowercase' => true,
+            'require_letters' => true,  // Changed from separate upper/lower
             'require_numbers' => true,
             'require_special_chars' => false,
             'check_common_passwords' => true
@@ -30,17 +29,13 @@ class PasswordSecurityService
             $errors[] = "Password must be at least {$config['min_length']} characters";
         }
         
-        // Character requirements
-        if ($config['require_uppercase'] && !preg_match('/[A-Z]/', $password)) {
-            $errors[] = 'Password must contain uppercase letters';
-        }
-        
-        if ($config['require_lowercase'] && !preg_match('/[a-z]/', $password)) {
-            $errors[] = 'Password must contain lowercase letters';
+        // Character requirements - relaxed to match StrongPassword rule
+        if ($config['require_letters'] && !preg_match('/[a-zA-Z]/', $password)) {
+            $errors[] = 'Password must contain at least one letter';
         }
         
         if ($config['require_numbers'] && !preg_match('/[0-9]/', $password)) {
-            $errors[] = 'Password must contain numbers';
+            $errors[] = 'Password must contain at least one number';
         }
         
         if ($config['require_special_chars'] && !preg_match('/[^A-Za-z0-9]/', $password)) {
@@ -49,7 +44,7 @@ class PasswordSecurityService
         
         // Common password check
         if ($config['check_common_passwords'] && $this->isCommonPassword($password)) {
-            $errors[] = 'Password is too common';
+            $errors[] = 'Password is too weak';
         }
         
         return $errors;
@@ -190,11 +185,15 @@ class PasswordSecurityService
         // Length bonus
         $score += min(25, strlen($password) * 2);
         
-        // Character variety
-        if (preg_match('/[a-z]/', $password)) $score += 5;
-        if (preg_match('/[A-Z]/', $password)) $score += 5;
-        if (preg_match('/[0-9]/', $password)) $score += 5;
-        if (preg_match('/[^A-Za-z0-9]/', $password)) $score += 10;
+        // Character variety - updated to match new rules
+        if (preg_match('/[a-zA-Z]/', $password)) $score += 10; // Any letter
+        if (preg_match('/[0-9]/', $password)) $score += 10; // Numbers
+        if (preg_match('/[^A-Za-z0-9]/', $password)) $score += 10; // Special chars (bonus)
+        
+        // Bonus for having both upper and lower (optional)
+        if (preg_match('/[a-z]/', $password) && preg_match('/[A-Z]/', $password)) {
+            $score += 5;
+        }
         
         // Patterns penalty
         if (preg_match('/(.)\1{2,}/', $password)) $score -= 10; // Repeated chars

@@ -18,14 +18,12 @@ class StrongPassword implements ValidationRule
             $fail('The password must be at least 8 characters.');
         }
         
-        if (!preg_match('/[A-Z]/', $value)) {
-            $fail('The password must contain at least one uppercase letter.');
+        // At least one letter (uppercase OR lowercase)
+        if (!preg_match('/[a-zA-Z]/', $value)) {
+            $fail('The password must contain at least one letter.');
         }
         
-        if (!preg_match('/[a-z]/', $value)) {
-            $fail('The password must contain at least one lowercase letter.');
-        }
-        
+        // At least one number
         if (!preg_match('/[0-9]/', $value)) {
             $fail('The password must contain at least one number.');
         }
