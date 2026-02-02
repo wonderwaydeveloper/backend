@@ -438,47 +438,147 @@ class UnifiedAuthController extends Controller
     }
 
     // === Social Authentication ===
-    public function socialRedirect(string $provider): JsonResponse
+    public function socialRedirect(string $provider)
     {
         if (!in_array($provider, ['google'])) {
             return response()->json(['error' => 'Invalid provider'], 422);
         }
 
-        return response()->json([
-            'redirect_url' => Socialite::driver($provider)->stateless()->redirect()->getTargetUrl()
-        ]);
+        return Socialite::driver($provider)->stateless()->redirect();
     }
 
-    public function socialCallback(Request $request, string $provider): JsonResponse
+    public function socialCallback(Request $request, string $provider)
     {
         if (!in_array($provider, ['google'])) {
             return response()->json(['error' => 'Invalid provider'], 422);
         }
 
         try {
-            $socialUser = Socialite::driver($provider)->stateless()->user();
-            return $this->createOrUpdateSocialUser($socialUser, $provider);
+            $socialUser = $this->handleGoogleCallback($request->code);
+            
+            $user = User::where('email', $socialUser->email)->first();
+            
+            if (!$user) {
+                $user = User::create([
+                    'name' => $socialUser->name,
+                    'email' => $socialUser->email,
+                    'username' => $this->generateUsername($socialUser->name),
+                    'password' => Hash::make(uniqid()),
+                    'email_verified_at' => now(),
+                    'avatar' => $socialUser->avatar,
+                    'date_of_birth' => null,
+                ]);
+            }
+            
+            $user->update(['google_id' => $socialUser->id]);
+            $token = $user->createToken('auth_token')->plainTextToken;
+            
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            
+            $queryParams = http_build_query([
+                'token' => $token,
+                'requires_age_verification' => !$user->date_of_birth,
+                'provider' => $provider
+            ]);
+            
+            return redirect($frontendUrl . '/social/callback?' . $queryParams);
         } catch (\Exception $e) {
-            return response()->json(['error' => ucfirst($provider) . ' authentication failed'], 401);
+            \Log::error('Social auth error: ' . $e->getMessage());
+            
+            $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
+            return redirect($frontendUrl . '/social/callback?error=social_auth_failed');
+        }
+    }
+    
+    private function handleGoogleCallback($code)
+    {
+        try {
+            $client = new \GuzzleHttp\Client([
+                'verify' => false,
+                'timeout' => 30,
+                'connect_timeout' => 10,
+                'curl' => [
+                    CURLOPT_SSL_VERIFYPEER => false,
+                    CURLOPT_SSL_VERIFYHOST => false,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_MAXREDIRS => 3
+                ]
+            ]);
+            
+            // Exchange code for token
+            $response = $client->post('https://oauth2.googleapis.com/token', [
+                'form_params' => [
+                    'client_id' => config('services.google.client_id'),
+                    'client_secret' => config('services.google.client_secret'),
+                    'redirect_uri' => config('services.google.redirect'),
+                    'grant_type' => 'authorization_code',
+                    'code' => $code
+                ]
+            ]);
+            
+            $tokenData = json_decode($response->getBody(), true);
+            
+            if (!isset($tokenData['access_token'])) {
+                throw new \Exception('No access token received from Google');
+            }
+            
+            // Get user info
+            $userResponse = $client->get('https://www.googleapis.com/oauth2/v2/userinfo', [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $tokenData['access_token']
+                ]
+            ]);
+            
+            $userData = json_decode($userResponse->getBody(), true);
+            
+            if (!isset($userData['email'])) {
+                throw new \Exception('No email received from Google');
+            }
+            
+            // Create user object compatible with Socialite
+            return (object) [
+                'id' => $userData['id'],
+                'name' => $userData['name'],
+                'email' => $userData['email'],
+                'avatar' => $userData['picture'] ?? null
+            ];
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            \Log::error('Google OAuth Request Error', [
+                'message' => $e->getMessage(),
+                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null
+            ]);
+            throw new \Exception('Failed to authenticate with Google: ' . $e->getMessage());
         }
     }
 
     // === Private Methods ===
     private function createOrUpdateSocialUser($socialUser, $provider): JsonResponse
     {
-        $user = User::where('email', $socialUser->getEmail())->first();
+        // Handle both Socialite user object and manual user object
+        $email = is_object($socialUser) && method_exists($socialUser, 'getEmail') 
+            ? $socialUser->getEmail() 
+            : $socialUser->email;
+        $name = is_object($socialUser) && method_exists($socialUser, 'getName') 
+            ? $socialUser->getName() 
+            : $socialUser->name;
+        $socialId = is_object($socialUser) && method_exists($socialUser, 'getId') 
+            ? $socialUser->getId() 
+            : $socialUser->id;
+        $avatar = is_object($socialUser) && method_exists($socialUser, 'getAvatar') 
+            ? $socialUser->getAvatar() 
+            : ($socialUser->avatar ?? null);
+
+        $user = User::where('email', $email)->first();
 
         if (!$user) {
-            // Check if we have date of birth info (usually we don't from social providers)
-            // For social auth, we'll create user but mark as needing age verification
             $user = User::create([
-                'name' => $socialUser->getName(),
-                'email' => $socialUser->getEmail(),
-                'username' => $this->generateUsername($socialUser->getName()),
+                'name' => $name,
+                'email' => $email,
+                'username' => $this->generateUsername($name),
                 'password' => Hash::make(uniqid()),
                 'email_verified_at' => now(),
-                'avatar' => $socialUser->getAvatar(),
-                'date_of_birth' => null, // Will need to be filled later
+                'avatar' => $avatar,
+                'date_of_birth' => null,
             ]);
             
             try {
@@ -486,12 +586,46 @@ class UnifiedAuthController extends Controller
             } catch (\Exception $e) {
                 // Continue without role
             }
+            
+            // Log social registration
+            $this->logSecurityEvent($user, 'social_registration', [
+                'provider' => $provider,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ]);
         }
 
-        $user->update(["{$provider}_id" => $socialUser->getId()]);
+        $user->update(["{$provider}_id" => $socialId]);
+        
+        // Check device verification for social login
+        $deviceCheck = $this->checkDeviceVerification(request(), $user);
+        if ($deviceCheck) {
+            // Store social auth data temporarily
+            Cache::put("social_pending:{$user->id}", [
+                'provider' => $provider,
+                'requires_age_verification' => !$user->date_of_birth,
+                'user_id' => $user->id
+            ], now()->addMinutes(15));
+            
+            $this->logSecurityEvent($user, 'social_login_device_verification', [
+                'provider' => $provider,
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+                'device_fingerprint' => $this->generateFingerprint(request())
+            ]);
+            
+            return response()->json($deviceCheck);
+        }
+        
         $token = $user->createToken('auth_token')->plainTextToken;
+        
+        // Log successful social login
+        $this->logSecurityEvent($user, 'social_login_success', [
+            'provider' => $provider,
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent()
+        ]);
 
-        // If user doesn't have date_of_birth, require it
         if (!$user->date_of_birth) {
             return response()->json([
                 'user' => $user,
@@ -1297,11 +1431,9 @@ class UnifiedAuthController extends Controller
             'fingerprint' => 'required|string'
         ]);
         
-        // Try to find verification data by fingerprint
         $verificationData = null;
         $cacheKey = null;
         
-        // Get all users and check their device verification cache
         $users = User::all();
         foreach ($users as $user) {
             $key = "device_verification:{$user->id}:{$request->fingerprint}";
@@ -1321,7 +1453,6 @@ class UnifiedAuthController extends Controller
             return response()->json(['error' => 'Verification code expired'], 422);
         }
         
-        // Get user from verification data
         $user = User::find($verificationData['user_id']);
         if (!$user) {
             return response()->json(['error' => 'User not found'], 422);
@@ -1347,10 +1478,37 @@ class UnifiedAuthController extends Controller
             $device->update(['is_trusted' => true, 'last_used_at' => now()]);
         }
         
-        // Clear verification cache
         Cache::forget($cacheKey);
         
-        // Create auth token
+        // Check if this was a social auth pending verification
+        $socialPending = Cache::get("social_pending:{$user->id}");
+        if ($socialPending) {
+            Cache::forget("social_pending:{$user->id}");
+            
+            $token = $user->createToken('auth_token')->plainTextToken;
+            
+            $this->logSecurityEvent($user, 'social_device_verified', [
+                'provider' => $socialPending['provider'],
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+            
+            if ($socialPending['requires_age_verification']) {
+                return response()->json([
+                    'user' => $user,
+                    'token' => $token,
+                    'requires_age_verification' => true,
+                    'message' => 'Device verified. Please complete age verification.'
+                ]);
+            }
+            
+            return response()->json([
+                'user' => $user,
+                'token' => $token,
+                'message' => 'Social login completed successfully'
+            ]);
+        }
+        
         $token = $user->createToken('auth_token')->plainTextToken;
         
         return response()->json([
