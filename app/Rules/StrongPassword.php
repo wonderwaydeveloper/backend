@@ -28,7 +28,18 @@ class StrongPassword implements ValidationRule
             $fail('The password must contain at least one number.');
         }
         
-        $weakPasswords = ['password', '123456', 'qwerty', 'abc123', 'password123'];
+        $weakPasswords = [
+            // English common passwords
+            'password', '123456', 'qwerty', 'abc123', 'password123',
+            'admin', 'letmein', 'welcome', 'monkey', '1234567890',
+            'password1', '123123', 'qwerty123', 'dragon', 'master',
+            'hello', 'login', 'princess', 'solo', 'qwertyuiop',
+            'starwars', 'superman', 'iloveyou', 'trustno1',
+            // Persian/Farsi common passwords
+            'رمزعبور', '۱۲۳۴۵۶', 'سلام', 'ایران', 'تهران',
+            'محمد', 'علی', 'فاطمه', 'مریم', 'احمد',
+            'پسورد', 'کلمه', 'عبور', 'رمز'
+        ];
         if (in_array(strtolower($value), $weakPasswords)) {
             $fail('The password is too weak.');
         }

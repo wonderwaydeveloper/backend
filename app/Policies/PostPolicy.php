@@ -57,9 +57,11 @@ class PostPolicy
             return false;
         }
         
-        // Allow updates within 15 minutes or in testing
-        return app()->environment('testing') || 
-               $post->created_at->diffInMinutes(now()) <= 15;
+        // Allow updates within 15 minutes, but also check if post has been edited before
+        $canEdit = app()->environment('testing') || 
+                  ($post->created_at->diffInMinutes(now()) <= 15 && !$post->updated_at->gt($post->created_at));
+                  
+        return $canEdit;
     }
 
     /**

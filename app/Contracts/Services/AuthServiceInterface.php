@@ -18,7 +18,7 @@ interface AuthServiceInterface
     
     public function forgotPassword(string $email): bool;
     
-    public function resetPassword(string $token, string $password): bool;
+    public function resetPassword(string $code, string $password): bool;
     
     public function verifyEmail(string $token): bool;
     

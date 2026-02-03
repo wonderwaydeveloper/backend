@@ -14,7 +14,7 @@ class PasswordResetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email', // Removed exists validation to prevent enumeration
             'token' => 'sometimes|required|string',
             'code' => 'sometimes|required|string|size:6',
             'password' => ['sometimes', 'required', 'string', 'min:8', 'confirmed', new \App\Rules\StrongPassword()]

@@ -131,15 +131,26 @@ class PasswordSecurityService
     private function getPasswordHistory(int $userId): array
     {
         $history = Redis::lrange("password_history:{$userId}", 0, self::HISTORY_LIMIT - 1);
-        return $history ?: [];
+        
+        // Decrypt password hashes
+        return array_map(function($encryptedHash) {
+            try {
+                return decrypt($encryptedHash);
+            } catch (\Exception $e) {
+                return null; // Skip corrupted entries
+            }
+        }, array_filter($history ?: []));
     }
     
     private function addToPasswordHistory(int $userId, string $passwordHash): void
     {
         $key = "password_history:{$userId}";
         
+        // Encrypt password hash before storing
+        $encryptedHash = encrypt($passwordHash);
+        
         // Add to front of list
-        Redis::lpush($key, $passwordHash);
+        Redis::lpush($key, $encryptedHash);
         
         // Keep only last N passwords
         Redis::ltrim($key, 0, self::HISTORY_LIMIT - 1);

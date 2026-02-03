@@ -259,7 +259,7 @@ class DeviceController extends Controller
                 $recentUsers = User::select('id')
                     ->where('updated_at', '>=', now()->subHours(2))
                     ->orderBy('updated_at', 'desc')
-                    ->limit(100)
+                    ->limit(50) // Reduced from 100 for better performance
                     ->pluck('id');
                 
                 foreach ($recentUsers as $userId) {
@@ -374,7 +374,11 @@ class DeviceController extends Controller
         }
         // If no user_id provided, try to find verification session by fingerprint
         if (!$userId) {
-            $recentUsers = User::orderBy('updated_at', 'desc')->limit(50)->pluck('id');
+            $recentUsers = User::select('id')
+                ->where('updated_at', '>=', now()->subHour())
+                ->orderBy('updated_at', 'desc')
+                ->limit(20) // Reduced limit for better performance
+                ->pluck('id');
             
             foreach ($recentUsers as $id) {
                 $key = "device_verification:{$id}:{$fingerprint}";

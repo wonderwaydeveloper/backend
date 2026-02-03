@@ -40,7 +40,7 @@
                                         <h3 style="margin: 0 0 10px 0; color: #333333; font-size: 16px;">Device Information:</h3>
                                         <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>Device:</strong> Unknown Device</p>
                                         <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>Location:</strong> {{ $deviceInfo['location'] ?? 'Unknown Location' }}</p>
-                                        <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>IP Address:</strong> {{ $deviceInfo['ip'] ?? 'Unknown IP' }}</p>
+                                        <p style="margin: 5px 0; color: #666666; font-size: 14px;"><strong>IP Address:</strong> {{ isset($deviceInfo['ip']) ? substr($deviceInfo['ip'], 0, strrpos($deviceInfo['ip'], '.')) . '.***' : 'Unknown IP' }}</p>
                                     </td>
                                 </tr>
                             </table>

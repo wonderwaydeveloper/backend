@@ -13,7 +13,7 @@ class EmailService
             'type' => 'EMAIL_VERIFICATION',
             'email' => $user->email,
             'name' => $user->name ?? 'Unknown',
-            'code' => $code,
+            'code' => '******', // Security: Never log actual codes
             'expires_in' => '15 minutes',
             'timestamp' => now()->toDateTimeString()
         ]);
@@ -36,7 +36,7 @@ class EmailService
             'type' => 'PASSWORD_RESET',
             'email' => $user->email,
             'name' => $user->name ?? 'Unknown',
-            'code' => $code,
+            'code' => '******', // Security: Never log actual codes
             'expires_in' => '15 minutes',
             'timestamp' => now()->toDateTimeString()
         ]);
@@ -86,9 +86,9 @@ class EmailService
             'type' => 'DEVICE_VERIFICATION',
             'email' => $user->email,
             'name' => $user->name ?? 'Unknown',
-            'code' => $code,
+            'code' => '******', // Security: Never log actual codes
             'device' => 'Unknown Device',
-            'ip' => $deviceInfo['ip'] ?? 'Unknown IP',
+            'ip' => substr($deviceInfo['ip'] ?? 'Unknown IP', 0, -2) . '**', // Mask IP
             'location' => $deviceInfo['location'] ?? 'Unknown Location',
             'expires_in' => '15 minutes',
             'timestamp' => now()->toDateTimeString()

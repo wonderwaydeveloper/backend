@@ -29,6 +29,17 @@ class UnifiedAuthController extends Controller
     {
         $loginDTO = LoginDTO::fromRequest($request->validated());
         
+        // Rate limiting for login attempts
+        $securityService = app(\App\Services\SecurityMonitoringService::class);
+        $rateLimitResult = $securityService->checkRateLimit("login_attempts:{$request->ip()}", 5, 15);
+        
+        if (!$rateLimitResult['allowed']) {
+            return response()->json([
+                'error' => $rateLimitResult['error'],
+                'retry_after' => $rateLimitResult['retry_after']
+            ], 429);
+        }
+        
         // Check if 2FA code is provided
         if ($request->has('two_factor_code')) {
             return $this->verify2FALogin($loginDTO, $request->two_factor_code);

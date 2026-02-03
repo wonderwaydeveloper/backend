@@ -18,6 +18,15 @@ class VerificationEmail extends Mailable
 
     public function __construct($user, $code)
     {
+        // Validate inputs
+        if (!$user || !isset($user->email) || !filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            throw new \InvalidArgumentException('Invalid user or email');
+        }
+        
+        if (!$code || !is_string($code) || strlen($code) !== 6 || !ctype_digit($code)) {
+            throw new \InvalidArgumentException('Invalid verification code');
+        }
+        
         $this->user = $user;
         $this->code = $code;
     }

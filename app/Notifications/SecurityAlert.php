@@ -95,11 +95,14 @@ class SecurityAlert extends Notification implements ShouldQueue
         $details = [];
 
         if (isset($this->alertData['source_ip'])) {
-            $details['Source IP'] = $this->alertData['source_ip'];
+            // Mask IP address for privacy
+            $ip = $this->alertData['source_ip'];
+            $maskedIp = substr($ip, 0, strrpos($ip, '.')) . '.***';
+            $details['Source IP'] = $maskedIp;
         }
 
         if (isset($this->alertData['user_id'])) {
-            $details['User ID'] = $this->alertData['user_id'];
+            $details['User ID'] = 'User#' . substr(hash('sha256', $this->alertData['user_id']), 0, 8);
         }
 
         if (isset($this->alertData['timestamp'])) {

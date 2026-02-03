@@ -41,11 +41,14 @@ class LoginRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Normalize login field
+        // Normalize login field - only lowercase for email, preserve case for username
         if ($this->has('login')) {
-            $this->merge([
-                'login' => strtolower(trim($this->input('login'))),
-            ]);
+            $login = trim($this->input('login'));
+            // Only lowercase if it's an email
+            if (filter_var($login, FILTER_VALIDATE_EMAIL)) {
+                $login = strtolower($login);
+            }
+            $this->merge(['login' => $login]);
         }
 
         // Clean 2FA code

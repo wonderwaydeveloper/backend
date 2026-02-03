@@ -36,10 +36,18 @@ class TwoFactorService
     public function generateBackupCodes(int $count = 8): array
     {
         $codes = [];
+        $hashedCodes = [];
+        
         for ($i = 0; $i < $count; $i++) {
-            $codes[] = strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
+            $code = strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
+            $codes[] = $code;
+            $hashedCodes[] = Hash::make($code);
         }
-
-        return $codes;
+        
+        // Return both plain codes (for user display) and hashed codes (for storage)
+        return [
+            'plain' => $codes,
+            'hashed' => $hashedCodes
+        ];
     }
 }

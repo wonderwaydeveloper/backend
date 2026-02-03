@@ -15,11 +15,11 @@ class AdminSeeder extends Seeder
         
         // Create admin user
         $admin = User::firstOrCreate(
-            ['email' => 'wonderwaydeveloper@gmail.com'],
+            ['email' => env('ADMIN_EMAIL', 'admin@example.com')],
             [
-                'name' => 'Vahid Pahnavar',
+                'name' => env('ADMIN_NAME', 'Administrator'),
                 'username' => 'admin',
-                'password' => bcrypt('password123'),
+                'password' => bcrypt(env('ADMIN_PASSWORD', bin2hex(random_bytes(16)))),
                 'email_verified_at' => now(),
                 'is_premium' => true,
             ]
