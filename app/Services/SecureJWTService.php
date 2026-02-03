@@ -27,60 +27,78 @@ class SecureJWTService
         $sessionId = Str::uuid()->toString();
         $deviceFingerprint = $this->generateDeviceFingerprint($deviceInfo);
         
-        $this->storeSession($userId, $sessionId, $deviceFingerprint, $deviceInfo);
-        $this->cleanupOldSessions($userId);
+        // Use atomic operations for session management
+        $lockKey = "token_generation:{$userId}";
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 10);
         
-        $accessJti = Str::uuid()->toString();
-        $refreshJti = Str::uuid()->toString();
-        $now = time();
+        if (!$lock->get()) {
+            throw new \Exception('Token generation in progress, please wait');
+        }
         
-        $accessPayload = [
-            'iss' => config('app.url'),
-            'aud' => config('app.url'),
-            'iat' => $now,
-            'exp' => $now + self::ACCESS_TOKEN_TTL,
-            'sub' => $userId,
-            'jti' => $accessJti,
-            'type' => 'access',
-            'permissions' => $permissions,
-            'session_id' => $sessionId,
-            'device_fp' => $deviceFingerprint
-        ];
-        
-        $refreshPayload = [
-            'iss' => config('app.url'),
-            'aud' => config('app.url'),
-            'iat' => $now,
-            'exp' => $now + self::REFRESH_TOKEN_TTL,
-            'sub' => $userId,
-            'jti' => $refreshJti,
-            'type' => 'refresh',
-            'session_id' => $sessionId
-        ];
-        
-        $accessToken = JWT::encode($accessPayload, $this->secretKey, $this->algorithm);
-        $refreshToken = JWT::encode($refreshPayload, $this->secretKey, $this->algorithm);
-        
-        Redis::setex("jwt_jti:{$accessJti}", self::ACCESS_TOKEN_TTL, json_encode([
-            'user_id' => $userId,
-            'session_id' => $sessionId,
-            'type' => 'access',
-            'created_at' => $now
-        ]));
-        
-        Redis::setex("refresh_token:{$refreshJti}", self::REFRESH_TOKEN_TTL, json_encode([
-            'user_id' => $userId,
-            'session_id' => $sessionId,
-            'type' => 'refresh',
-            'created_at' => $now
-        ]));
-        
-        return [
-            'access_token' => $accessToken,
-            'refresh_token' => $refreshToken,
-            'expires_in' => self::ACCESS_TOKEN_TTL,
-            'token_type' => 'Bearer'
-        ];
+        try {
+            $this->storeSession($userId, $sessionId, $deviceFingerprint, $deviceInfo);
+            $this->cleanupOldSessions($userId);
+            
+            $accessJti = Str::uuid()->toString();
+            $refreshJti = Str::uuid()->toString();
+            $now = time();
+            
+            $accessPayload = [
+                'iss' => config('app.url'),
+                'aud' => config('app.url'),
+                'iat' => $now,
+                'exp' => $now + self::ACCESS_TOKEN_TTL,
+                'sub' => $userId,
+                'jti' => $accessJti,
+                'type' => 'access',
+                'permissions' => $permissions,
+                'session_id' => $sessionId,
+                'device_fp' => $deviceFingerprint
+            ];
+            
+            $refreshPayload = [
+                'iss' => config('app.url'),
+                'aud' => config('app.url'),
+                'iat' => $now,
+                'exp' => $now + self::REFRESH_TOKEN_TTL,
+                'sub' => $userId,
+                'jti' => $refreshJti,
+                'type' => 'refresh',
+                'session_id' => $sessionId
+            ];
+            
+            $accessToken = JWT::encode($accessPayload, $this->secretKey, $this->algorithm);
+            $refreshToken = JWT::encode($refreshPayload, $this->secretKey, $this->algorithm);
+            
+            // Store token metadata with atomic operations
+            Redis::setex("jwt_jti:{$accessJti}", self::ACCESS_TOKEN_TTL, json_encode([
+                'user_id' => $userId,
+                'session_id' => $sessionId,
+                'type' => 'access',
+                'created_at' => $now
+            ]));
+            
+            Redis::setex("refresh_token:{$refreshJti}", self::REFRESH_TOKEN_TTL, json_encode([
+                'user_id' => $userId,
+                'session_id' => $sessionId,
+                'type' => 'refresh',
+                'created_at' => $now
+            ]));
+            
+            // Maintain session-to-token mapping for efficient cleanup
+            Redis::sadd("session_tokens:{$userId}:{$sessionId}", $accessJti);
+            Redis::sadd("session_tokens:{$userId}:{$sessionId}", $refreshJti);
+            Redis::expire("session_tokens:{$userId}:{$sessionId}", self::REFRESH_TOKEN_TTL);
+            
+            return [
+                'access_token' => $accessToken,
+                'refresh_token' => $refreshToken,
+                'expires_in' => self::ACCESS_TOKEN_TTL,
+                'token_type' => 'Bearer'
+            ];
+        } finally {
+            $lock->release();
+        }
     }
     
     public function validateToken(string $token): ?object
@@ -169,19 +187,32 @@ class SecureJWTService
     
     public function invalidateSession(int $userId, string $sessionId): void
     {
-        Redis::del("session:{$userId}:{$sessionId}");
-        Redis::srem("user_sessions:{$userId}", $sessionId);
+        // Use atomic operations to prevent race conditions
+        $lockKey = "session_invalidate:{$userId}:{$sessionId}";
+        $lock = \Illuminate\Support\Facades\Cache::lock($lockKey, 5);
         
-        $keys = Redis::keys("jwt_jti:*");
-        foreach ($keys as $key) {
-            $tokenInfo = Redis::get($key);
-            if ($tokenInfo) {
-                $info = json_decode($tokenInfo, true);
-                if ($info['session_id'] === $sessionId && $info['user_id'] === $userId) {
-                    $jti = str_replace('jwt_jti:', '', $key);
-                    $this->blacklistToken($jti);
-                }
+        if (!$lock->get()) {
+            Log::warning('Could not acquire lock for session invalidation', [
+                'user_id' => $userId,
+                'session_id' => $sessionId
+            ]);
+            return;
+        }
+        
+        try {
+            Redis::del("session:{$userId}:{$sessionId}");
+            Redis::srem("user_sessions:{$userId}", $sessionId);
+            
+            // Instead of using Redis::keys(), maintain a session-to-token mapping
+            $sessionTokens = Redis::smembers("session_tokens:{$userId}:{$sessionId}");
+            foreach ($sessionTokens as $jti) {
+                $this->blacklistToken($jti);
+                Redis::del("jwt_jti:{$jti}");
             }
+            
+            Redis::del("session_tokens:{$userId}:{$sessionId}");
+        } finally {
+            $lock->release();
         }
     }
     
@@ -297,14 +328,27 @@ class SecureJWTService
     
     public function getTokenStatistics(): array
     {
-        $activeTokens = count(Redis::keys('jwt_jti:*'));
-        $blacklistedTokens = count(Redis::keys('blacklisted_jwt:*'));
-        $activeSessions = count(Redis::keys('session:*'));
+        // Use efficient counting methods instead of Redis::keys()
+        $activeTokensCount = 0;
+        $blacklistedTokensCount = 0;
+        $activeSessionsCount = 0;
+        
+        // Count active sessions from user session sets
+        $userSessionKeys = Redis::keys('user_sessions:*');
+        foreach ($userSessionKeys as $key) {
+            $sessionCount = Redis::scard($key);
+            $activeSessionsCount += $sessionCount;
+        }
+        
+        // For token counts, we'll need to maintain counters
+        // This is more efficient than scanning all keys
+        $activeTokensCount = (int) Redis::get('stats:active_tokens') ?: 0;
+        $blacklistedTokensCount = (int) Redis::get('stats:blacklisted_tokens') ?: 0;
         
         return [
-            'active_tokens' => $activeTokens,
-            'blacklisted_tokens' => $blacklistedTokens,
-            'active_sessions' => $activeSessions
+            'active_tokens' => $activeTokensCount,
+            'blacklisted_tokens' => $blacklistedTokensCount,
+            'active_sessions' => $activeSessionsCount
         ];
     }
 }

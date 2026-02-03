@@ -87,7 +87,7 @@ class EmailService
             'email' => $user->email,
             'name' => $user->name ?? 'Unknown',
             'code' => $code,
-            'device' => $deviceInfo['device_info'] ?? 'Unknown Device',
+            'device' => 'Unknown Device',
             'ip' => $deviceInfo['ip'] ?? 'Unknown IP',
             'location' => $deviceInfo['location'] ?? 'Unknown Location',
             'expires_in' => '15 minutes',

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\AdvancedDeviceController;
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\UnifiedAuthController;
 use App\Http\Controllers\Api\PostController;
@@ -33,7 +32,6 @@ use App\Http\Controllers\Api\OnlineStatusController;
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\FinalPerformanceController;
 use App\Http\Controllers\Api\PerformanceDashboardController;
-use App\Http\Controllers\Api\OptimizedTimelineController;
 use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\ConversionController;
 use App\Http\Controllers\Api\SuggestionController;
@@ -122,20 +120,20 @@ Route::prefix('auth')->middleware('security:login')->group(function () {
         Route::post('/verify', [UnifiedAuthController::class, 'verify2FA']);
         Route::post('/disable', [UnifiedAuthController::class, 'disable2FA']);
     });
-
-    // Social Authentication
-    Route::prefix('social')->group(function () {
-        Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google');
-        Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google');
-        Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
-    });
     
     // Device Verification (without auth middleware since user is logging in)
-    Route::post('/verify-device', [UnifiedAuthController::class, 'verifyDevice']);
-    Route::post('/resend-device-code', [UnifiedAuthController::class, 'resendDeviceCode']);
+    Route::post('/verify-device', [DeviceController::class, 'verifyDevice']);
+    Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode']);
     
     // Security Events
     Route::get('/security/events', [UnifiedAuthController::class, 'getSecurityEvents'])->middleware('auth:sanctum');
+});
+
+// Social Authentication (with security protection)
+Route::prefix('auth/social')->middleware('security:social')->group(function () {
+    Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google');
+    Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google');
+    Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
 });
 
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
@@ -235,15 +233,14 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::post('/devices/register', [DeviceController::class, 'register']);
     Route::delete('/devices/{token}', [DeviceController::class, 'unregister']);
     
-    // Advanced device management
+    // Device management
     Route::prefix('devices')->group(function () {
-        Route::post('/advanced/register', [AdvancedDeviceController::class, 'registerDevice']);
-        Route::get('/list', [AdvancedDeviceController::class, 'listDevices']);
-        Route::post('/{device}/trust', [AdvancedDeviceController::class, 'trustDevice']);
-        Route::delete('/{device}/revoke', [AdvancedDeviceController::class, 'revokeDevice']);
-        Route::post('/revoke-all', [AdvancedDeviceController::class, 'revokeAllDevices']);
-        Route::get('/{device}/activity', [AdvancedDeviceController::class, 'deviceActivity']);
-        Route::get('/security-check', [AdvancedDeviceController::class, 'checkSuspiciousActivity']);
+        Route::post('/advanced/register', [DeviceController::class, 'registerAdvanced']);
+        Route::get('/list', [DeviceController::class, 'list']);
+        Route::post('/{device}/trust', [DeviceController::class, 'trust']);
+        Route::delete('/{device}/revoke', [DeviceController::class, 'revoke']);
+        Route::post('/revoke-all', [DeviceController::class, 'revokeAll']);
+        Route::get('/security-check', [DeviceController::class, 'checkSuspiciousActivity']);
     });
 
 
@@ -330,7 +327,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Optimized routes
     Route::prefix('optimized')->group(function () {
-        Route::get('/timeline', [OptimizedTimelineController::class, 'index']);
+        Route::get('/timeline', [TimelineController::class, 'index']);
     });
 
     // Final Performance routes

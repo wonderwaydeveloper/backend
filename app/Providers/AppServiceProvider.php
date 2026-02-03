@@ -32,8 +32,8 @@ class AppServiceProvider extends ServiceProvider
             );
         });
         
-        // Register UnifiedSecurityService
-        $this->app->singleton(\App\Services\UnifiedSecurityService::class);
+        // Register SecurityMonitoringService
+        $this->app->singleton(\App\Services\SecurityMonitoringService::class);
     }
 
     /**

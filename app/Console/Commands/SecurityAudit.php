@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
-use App\Services\AdvancedRateLimiter;
 use App\Services\SecureJWTService;
 
 class SecurityAudit extends Command

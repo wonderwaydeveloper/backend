@@ -41,8 +41,7 @@ class CleanArchitectureServiceProvider extends ServiceProvider
         $this->app->bind(FileUploadServiceInterface::class, FileUploadService::class);
         
         // Security Services
-        $this->app->singleton(\App\Services\UnifiedSecurityService::class);
-        $this->app->singleton(\App\Services\SecurityEventLogger::class);
+        $this->app->singleton(\App\Services\SecurityMonitoringService::class);
 
         // Repository Bindings with Cache Decorators
         $this->app->bind('App\\Repositories\\Eloquent\\EloquentPostRepository', \App\Repositories\PostRepository::class);
