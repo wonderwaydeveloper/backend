@@ -10,7 +10,7 @@ return [
     | string that is kept secret and secure.
     |
     */
-    'secret' => env('JWT_SECRET', 'your-super-secret-jwt-key-change-this-in-production'),
+    'secret' => env('JWT_SECRET'),
 
     /*
     |--------------------------------------------------------------------------
@@ -18,10 +18,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Specify the length of time (in seconds) that the token will be valid for.
-    | Defaults to 1 hour for access tokens.
+    | Defaults to 15 minutes for access tokens.
     |
     */
-    'access_ttl' => env('JWT_ACCESS_TTL', 3600), // 1 hour
+    'access_ttl' => env('JWT_ACCESS_TTL', 900), // 15 minutes
 
     /*
     |--------------------------------------------------------------------------

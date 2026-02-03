@@ -31,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Services\PushNotificationService::class)
             );
         });
+        
+        // Register UnifiedSecurityService
+        $this->app->singleton(\App\Services\UnifiedSecurityService::class);
     }
 
     /**

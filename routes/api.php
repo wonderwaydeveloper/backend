@@ -78,15 +78,15 @@ Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:
 Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
 // === Authentication Routes ===
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->middleware('security:login')->group(function () {
     // Login & Basic Auth
-    Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware(['rate.limit:login']);
+    Route::post('/login', [UnifiedAuthController::class, 'login']);
     Route::post('/logout', [UnifiedAuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/logout-all', [UnifiedAuthController::class, 'logoutAll'])->middleware('auth:sanctum');
     Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
     // Multi-step Registration
-    Route::prefix('register')->middleware(['rate.limit:api'])->group(function () {
+    Route::prefix('register')->group(function () {
         Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
         Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
         Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
@@ -101,7 +101,7 @@ Route::prefix('auth')->group(function () {
     });
 
     // Phone Authentication
-    Route::prefix('phone')->middleware(['rate.limit:api'])->group(function () {
+    Route::prefix('phone')->group(function () {
         Route::post('/login/send-code', [UnifiedAuthController::class, 'phoneLoginSendCode']);
         Route::post('/login/verify-code', [UnifiedAuthController::class, 'phoneLoginVerifyCode']);
         Route::post('/login/resend-code', [UnifiedAuthController::class, 'phoneLoginResendCode']);
@@ -138,12 +138,12 @@ Route::prefix('auth')->group(function () {
     Route::get('/security/events', [UnifiedAuthController::class, 'getSecurityEvents'])->middleware('auth:sanctum');
 });
 
-Route::middleware(['auth:sanctum', 'spam.detection'])->group(function () {
+Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     Route::apiResource('posts', PostController::class);
     Route::put('/posts/{post}', [PostController::class, 'update']);
     Route::get('/posts/{post}/edit-history', [PostController::class, 'editHistory']);
-    Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware(['advanced.rate.limit:likes,60,1']);
+    Route::post('/posts/{post}/like', [PostController::class, 'like']);
     Route::post('/posts/{post}/quote', [PostController::class, 'quote']);
     Route::get('/timeline', [PostController::class, 'timeline'])->name('main.timeline');
     Route::get('/drafts', [PostController::class, 'drafts']);

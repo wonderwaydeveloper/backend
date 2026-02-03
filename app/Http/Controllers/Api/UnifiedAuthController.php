@@ -161,9 +161,13 @@ class UnifiedAuthController extends Controller
     
     private function generateFingerprint(Request $request): string
     {
-        // Use a more stable fingerprint that doesn't change between requests
+        // Use a more comprehensive fingerprint for better device detection
         return hash('sha256', implode('|', [
             $request->userAgent() ?? '',
+            $request->header('accept-language', ''),
+            $request->header('accept-encoding', ''),
+            $request->header('sec-ch-ua', ''),
+            $request->header('sec-ch-ua-platform', ''),
             $request->ip() ?? ''
         ]));
     }

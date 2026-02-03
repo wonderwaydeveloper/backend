@@ -25,23 +25,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
-            \App\Http\Middleware\WebApplicationFirewall::class,
-            // Rate limiting disabled in testing
-            // \App\Http\Middleware\RateLimitMiddleware::class,
-            // \App\Http\Middleware\BruteForceProtection::class,
-            // \App\Http\Middleware\AdvancedRateLimit::class,
-            \App\Http\Middleware\AdvancedInputValidation::class,
+            \App\Http\Middleware\UnifiedSecurityMiddleware::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,
-            \App\Http\Middleware\SessionSecurity::class,
         ]);
 
         $middleware->alias([
+            'security' => \App\Http\Middleware\UnifiedSecurityMiddleware::class,
             'check.reply.permission' => \App\Http\Middleware\CheckReplyPermission::class,
-            'advanced.rate.limit' => \App\Http\Middleware\AdvancedRateLimit::class,
-            'rate.limit' => \App\Http\Middleware\RateLimitMiddleware::class,
             'csrf.protection' => \App\Http\Middleware\CSRFProtection::class,
-            'spam.detection' => \App\Http\Middleware\SpamDetectionMiddleware::class,
             'set.locale' => \App\Http\Middleware\SetLocale::class,
         ]);
 

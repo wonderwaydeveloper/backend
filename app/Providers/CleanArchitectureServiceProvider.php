@@ -39,6 +39,10 @@ class CleanArchitectureServiceProvider extends ServiceProvider
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
         $this->app->bind(FileUploadServiceInterface::class, FileUploadService::class);
+        
+        // Security Services
+        $this->app->singleton(\App\Services\UnifiedSecurityService::class);
+        $this->app->singleton(\App\Services\SecurityEventLogger::class);
 
         // Repository Bindings with Cache Decorators
         $this->app->bind('App\\Repositories\\Eloquent\\EloquentPostRepository', \App\Repositories\PostRepository::class);
