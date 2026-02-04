@@ -170,7 +170,7 @@ class DeviceController extends Controller
         $device->delete();
         
         // Clear cached data
-        Cache::forget("device_verification:{$user->id}:{$device->fingerprint}");
+        Cache::forget("device_verification_by_fingerprint:{$device->fingerprint}");
 
         return response()->json([
             'message' => 'Device revoked successfully',
@@ -231,55 +231,13 @@ class DeviceController extends Controller
             ], 429);
         }
             
-            $verificationData = null;
-            $cacheKey = null;
+            // Get verification session from cache using fingerprint only
+            $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
+            $verificationData = Cache::get($cacheKey);
             
-            // Try to find verification session by fingerprint
-            $code = $request->code;
-            
-            // Try different possible user IDs (this is a fallback approach)
-            $foundData = null;
-            $foundKey = null;
-            
-            // First try with authenticated user if available
-            $user = auth()->user();
-            if ($user) {
-                $key = "device_verification:{$user->id}:{$fingerprint}";
-                $data = Cache::get($key);
-                if ($data && isset($data['code']) && $data['code'] === $code) {
-                    $foundData = $data;
-                    $foundKey = $key;
-                }
-            }
-            
-            // If not found, try to search by code and fingerprint in recent user IDs
-            // FIXED: Use specific query instead of User::all()
-            if (!$foundData) {
-                // Get recent users (last 100) to search their verification sessions
-                $recentUsers = User::select('id')
-                    ->where('updated_at', '>=', now()->subHours(2))
-                    ->orderBy('updated_at', 'desc')
-                    ->limit(50) // Reduced from 100 for better performance
-                    ->pluck('id');
-                
-                foreach ($recentUsers as $userId) {
-                    $key = "device_verification:{$userId}:{$fingerprint}";
-                    $data = Cache::get($key);
-                    if ($data && isset($data['code']) && $data['code'] === $code) {
-                        $foundData = $data;
-                        $foundKey = $key;
-                        break;
-                    }
-                }
-            }
-            
-            $verificationData = $foundData;
-            $cacheKey = $foundKey;
-            
-            if (!$verificationData) {
-                \Log::warning('Device verification failed - session not found', [
+            if (!$verificationData || $verificationData['code'] !== $request->code) {
+                \Log::warning('Device verification failed - invalid code', [
                     'fingerprint' => $fingerprint,
-                    'code' => $code,
                     'ip' => $ip
                 ]);
                 return response()->json([
@@ -372,30 +330,18 @@ class DeviceController extends Controller
                 'retry_after' => $rateLimitResult['retry_after']
             ], 429);
         }
-        // If no user_id provided, try to find verification session by fingerprint
-        if (!$userId) {
-            $recentUsers = User::select('id')
-                ->where('updated_at', '>=', now()->subHour())
-                ->orderBy('updated_at', 'desc')
-                ->limit(20) // Reduced limit for better performance
-                ->pluck('id');
-            
-            foreach ($recentUsers as $id) {
-                $key = "device_verification:{$id}:{$fingerprint}";
-                $data = Cache::get($key);
-                if ($data) {
-                    $userId = $id;
-                    break;
-                }
-            }
-            
-            if (!$userId) {
-                return response()->json([
-                    'error' => 'No verification session found. Please try logging in again.',
-                    'errors' => ['session' => ['Verification session expired or not found']]
-                ], 422);
-            }
+        // Get verification session from cache using fingerprint only
+        $sessionKey = "device_verification_by_fingerprint:{$fingerprint}";
+        $sessionData = Cache::get($sessionKey);
+        
+        if (!$sessionData) {
+            return response()->json([
+                'error' => 'No verification session found. Please try logging in again.',
+                'errors' => ['session' => ['Verification session expired or not found']]
+            ], 422);
         }
+        
+        $userId = $sessionData['user_id'];
         
         // Find user
         $user = User::find($userId);
@@ -406,15 +352,8 @@ class DeviceController extends Controller
             ], 422);
         }
         
-        // Check if verification session exists
-        $existingKey = "device_verification:{$userId}:{$fingerprint}";
-        $existingData = Cache::get($existingKey);
-        if (!$existingData) {
-            return response()->json([
-                'error' => 'No verification session found. Please try logging in again.',
-                'errors' => ['session' => ['Verification session expired or not found']]
-            ], 422);
-        }
+        // Update existing session data
+        $existingData = $sessionData;
         
         $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
@@ -432,7 +371,8 @@ class DeviceController extends Controller
             'resend_count' => ($existingData['resend_count'] ?? 0) + 1
         ];
         
-        $cacheKey = "device_verification:{$userId}:{$fingerprint}";
+        // Store verification data with fingerprint-based key
+        $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
         Cache::put($cacheKey, $verificationData, now()->addMinutes(15));
         
         // Send verification email

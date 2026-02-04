@@ -87,7 +87,7 @@ class UnifiedAuthController extends Controller
                             'resend_count' => 0
                         ];
                         
-                        $cacheKey = "device_verification:{$user->id}:{$fingerprint}";
+                        $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
                         Cache::put($cacheKey, $verificationData, now()->addMinutes(15));
                         
                         // Send device verification email
@@ -315,6 +315,7 @@ class UnifiedAuthController extends Controller
                 'name' => $session['name'],
                 'username' => $request->username,
                 'password' => Hash::make($request->password),
+                'password_changed_at' => now(),
                 'date_of_birth' => $session['date_of_birth'],
                 $session['contact_type'] => $session['contact']
             ];
@@ -425,6 +426,7 @@ class UnifiedAuthController extends Controller
                     'email' => $socialUser->email,
                     'username' => $this->generateUsername($socialUser->name),
                     'password' => Hash::make(uniqid()),
+                    'password_changed_at' => now(),
                     'email_verified_at' => now(),
                     'avatar' => $socialUser->avatar,
                     'date_of_birth' => null,
@@ -461,7 +463,7 @@ class UnifiedAuthController extends Controller
                     'resend_count' => 0
                 ];
                 
-                $cacheKey = "device_verification:{$user->id}:{$fingerprint}";
+                $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
                 Cache::put($cacheKey, $verificationData, now()->addMinutes(15));
                 
                 // Send device verification email
@@ -618,6 +620,7 @@ class UnifiedAuthController extends Controller
                 'email' => $email,
                 'username' => $this->generateUsername($name),
                 'password' => Hash::make(uniqid()),
+                'password_changed_at' => now(),
                 'email_verified_at' => now(),
                 'avatar' => $avatar,
                 'date_of_birth' => null,
@@ -879,12 +882,12 @@ class UnifiedAuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
         
-        // Check if new password is same as current password
-        if (Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'New password must be different from current password'], 422);
+        // Use PasswordSecurityService for secure password reset
+        try {
+            $this->passwordService->updatePassword($user, $request->password);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
         }
-        
-        $user->update(['password' => Hash::make($request->password)]);
 
         Cache::forget("password_reset:{$request->email}");
 
@@ -979,12 +982,12 @@ class UnifiedAuthController extends Controller
 
         $user->update([
             'two_factor_enabled' => true,
-            'two_factor_backup_codes' => encrypt(json_encode($backupCodes)),
+            'two_factor_backup_codes' => encrypt(json_encode($backupCodes['plain'])),
         ]);
 
         return response()->json([
             'message' => '2FA enabled successfully',
-            'backup_codes' => $backupCodes,
+            'backup_codes' => $backupCodes['plain'],
         ]);
     }
 

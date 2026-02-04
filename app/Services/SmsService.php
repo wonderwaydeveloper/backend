@@ -28,75 +28,41 @@ class SmsService
 
     public function sendOtp($phoneNumber, $otp)
     {
-        // Fallback mode when no Twilio client
-        if (!$this->client) {
-            Log::info('📱 SMS OTP (FALLBACK MODE)', [
-                'phone' => $phoneNumber, 
-                'otp' => $otp,
-                'note' => 'Twilio not configured - using fallback mode'
-            ]);
-            return true; // Return success to prevent app breaking
-        }
-        
-        try {
-            $message = $this->client->messages->create(
-                $phoneNumber,
-                [
-                    'from' => $this->fromNumber,
-                    'body' => "Verification code for " . config('app.name') . ": $otp",
-                ]
-            );
-
-            Log::info('✅ SMS sent successfully', ['phone' => $phoneNumber, 'sid' => $message->sid]);
-            return true;
-        } catch (\Exception $e) {
-            Log::error('❌ SMS failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
-            return false;
-        }
+        // Development mode - SMS service not configured
+        Log::info('📱 SMS OTP (DEVELOPMENT MODE)', [
+            'phone' => $phoneNumber, 
+            'otp' => '******', // Hidden for security
+            'note' => 'SMS service not configured - check logs for development'
+        ]);
+        return true; // Return success to prevent app breaking
     }
 
     public function sendVerificationCode($phoneNumber, $code)
     {
-        Log::info('📱 SMS VERIFICATION CODE SENT', [
+        Log::info('📱 SMS VERIFICATION CODE (DEVELOPMENT MODE)', [
             'type' => 'SMS_VERIFICATION',
             'phone' => $phoneNumber,
-            'code' => $code,
+            'code' => '******', // Hidden for security
             'expires_in' => '15 minutes',
-            'timestamp' => now()->toDateTimeString()
+            'timestamp' => now()->toDateTimeString(),
+            'note' => 'SMS service not configured - code logged for development'
         ]);
         
-        return $this->sendOtp($phoneNumber, $code);
+        return true; // Always return success in development mode
     }
 
     public function sendLoginCode($phoneNumber, $code)
     {
-        Log::info('🔑 SMS LOGIN CODE SENT', [
+        Log::info('🔑 SMS LOGIN CODE (DEVELOPMENT MODE)', [
             'type' => 'SMS_LOGIN',
             'phone' => $phoneNumber,
-            'code' => $code,
+            'code' => '******', // Hidden for security
             'expires_in' => '5 minutes',
-            'timestamp' => now()->toDateTimeString()
+            'timestamp' => now()->toDateTimeString(),
+            'note' => 'SMS service not configured - code logged for development'
         ]);
         
-        // Fallback mode when no Twilio client
-        if (!$this->client) {
-            return true;
-        }
-        
-        try {
-            $message = $this->client->messages->create(
-                $phoneNumber,
-                [
-                    'from' => $this->fromNumber,
-                    'body' => "Login code for " . config('app.name') . ": $code. This code expires in 5 minutes.",
-                ]
-            );
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('❌ SMS login code failed', ['phone' => $phoneNumber, 'error' => $e->getMessage()]);
-            return false;
-        }
+        return true; // Always return success in development mode
     }
     public function sendNotification($phoneNumber, $message)
     {

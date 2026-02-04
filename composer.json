@@ -14,7 +14,6 @@
         "php": "^8.2",
         "darkaonline/l5-swagger": "^9.0",
         "filament/filament": "^4.3",
-        "firebase/jwt": "^6.10",
         "guzzlehttp/guzzle": "^7.8",
         "intervention/image": "^3.11",
         "laravel/framework": "^12.0",

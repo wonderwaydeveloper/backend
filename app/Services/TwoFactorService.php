@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use PragmaRX\Google2FA\Google2FA;
+use Illuminate\Support\Facades\Hash;
 
 class TwoFactorService
 {

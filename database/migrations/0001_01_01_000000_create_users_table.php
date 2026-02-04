@@ -39,7 +39,6 @@ return new class () extends Migration {
             $table->unsignedInteger('posts_count')->default(0);
             $table->boolean('email_notifications_enabled')->default(true);
             $table->string('google_id')->nullable();
-            $table->string('apple_id')->nullable();
             $table->timestamp('last_active_at')->nullable();
             $table->rememberToken();
             $table->string('refresh_token')->nullable();

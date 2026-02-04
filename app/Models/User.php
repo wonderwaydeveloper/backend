@@ -41,7 +41,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'is_premium',
         'is_private',
         'google_id',
-        'apple_id',
         'two_factor_enabled',
         'two_factor_secret',
         'two_factor_backup_codes',

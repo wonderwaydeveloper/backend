@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\DB;
-use App\Services\SecureJWTService;
 
 class SecurityAudit extends Command
 {
@@ -18,7 +17,7 @@ class SecurityAudit extends Command
         $this->newLine();
         
         $score = 0;
-        $maxScore = 100;
+        $maxScore = 80; // Reduced from 100 since JWT removed
         
         // WAF Status
         $this->info('📡 Web Application Firewall');
@@ -32,13 +31,6 @@ class SecurityAudit extends Command
         $rateLimitScore = $this->checkRateLimiting();
         $score += $rateLimitScore;
         $this->line("Score: {$rateLimitScore}/20");
-        $this->newLine();
-        
-        // JWT Security
-        $this->info('🎫 JWT Security');
-        $jwtScore = $this->checkJWTSecurity();
-        $score += $jwtScore;
-        $this->line("Score: {$jwtScore}/20");
         $this->newLine();
         
         // Database Security
@@ -135,39 +127,7 @@ class SecurityAudit extends Command
         
         return $score;
     }
-    
-    private function checkJWTSecurity(): int
-    {
-        $score = 0;
-        
-        // Check JWT secret
-        $secret = config('jwt.secret');
-        if ($secret && strlen($secret) >= 32) {
-            $score += 5;
-            $this->line('✅ JWT secret is strong');
-        } else {
-            $this->error('❌ JWT secret is weak or missing');
-        }
-        
-        // Check token TTL
-        $ttl = config('jwt.access_ttl');
-        if ($ttl > 0 && $ttl <= 3600) {
-            $score += 5;
-            $this->line("✅ Access token TTL: {$ttl}s");
-        }
-        
-        // Check active tokens
-        $activeTokens = count(Redis::keys('jwt_jti:*'));
-        $score += 5;
-        $this->line("✅ Active tokens: {$activeTokens}");
-        
-        // Check blacklisted tokens
-        $blacklisted = count(Redis::keys('blacklisted_jwt:*'));
-        $score += 5;
-        $this->line("✅ Blacklisted tokens: {$blacklisted}");
-        
-        return $score;
-    }
+
     
     private function checkDatabaseSecurity(): int
     {
