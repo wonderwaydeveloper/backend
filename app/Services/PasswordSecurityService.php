@@ -16,7 +16,7 @@ class PasswordSecurityService
     public function validatePasswordStrength(string $password): array
     {
         $errors = [];
-        $config = config('security.password', [
+        $config = config('authentication.password.security', [
             'min_length' => 8,
             'require_letters' => true,  // Changed from separate upper/lower
             'require_numbers' => true,

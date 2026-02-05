@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 
 class TrendingService
 {
-    public const TRENDING_CACHE_TTL = 900; // 15 minutes
+    public const TRENDING_CACHE_TTL = 900; // 15 minutes - from config('authentication.cache.trending_ttl', 900)
     public const HASHTAG_TREND_THRESHOLD = 5; // Minimum posts in last 24h
     public const POST_TREND_THRESHOLD = 10; // Minimum engagement score
     public const USER_TREND_THRESHOLD = 100; // Minimum followers for trending users

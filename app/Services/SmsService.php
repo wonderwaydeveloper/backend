@@ -28,41 +28,94 @@ class SmsService
 
     public function sendOtp($phoneNumber, $otp)
     {
-        // Development mode - SMS service not configured
+        if ($this->client) {
+            try {
+                $this->client->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => $this->fromNumber,
+                        'body' => "Your OTP is: {$otp}"
+                    ]
+                );
+                Log::info('SMS OTP sent', ['phone' => $phoneNumber]);
+                return true;
+            } catch (\Exception $e) {
+                Log::error('SMS OTP failed', ['error' => $e->getMessage()]);
+                return false;
+            }
+        }
+        
+        // Development fallback
         Log::info('📱 SMS OTP (DEVELOPMENT MODE)', [
             'phone' => $phoneNumber, 
-            'otp' => '******', // Hidden for security
+            'otp' => '******',
             'note' => 'SMS service not configured - check logs for development'
         ]);
-        return true; // Return success to prevent app breaking
+        return true;
     }
 
     public function sendVerificationCode($phoneNumber, $code)
     {
+        if ($this->client) {
+            try {
+                $this->client->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => $this->fromNumber,
+                        'body' => "Your verification code is: {$code}. Valid for " . config('authentication.email.verification_expire_minutes', 15) . " minutes."
+                    ]
+                );
+                Log::info('SMS verification code sent', ['phone' => $phoneNumber]);
+                return true;
+            } catch (\Exception $e) {
+                Log::error('SMS verification failed', ['error' => $e->getMessage()]);
+                return false;
+            }
+        }
+        
+        // Development fallback
         Log::info('📱 SMS VERIFICATION CODE (DEVELOPMENT MODE)', [
             'type' => 'SMS_VERIFICATION',
             'phone' => $phoneNumber,
-            'code' => '******', // Hidden for security
-            'expires_in' => '15 minutes',
+            'code' => '******',
+            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
             'timestamp' => now()->toDateTimeString(),
             'note' => 'SMS service not configured - code logged for development'
         ]);
         
-        return true; // Always return success in development mode
+        return true;
     }
 
     public function sendLoginCode($phoneNumber, $code)
     {
+        if ($this->client) {
+            try {
+                $this->client->messages->create(
+                    $phoneNumber,
+                    [
+                        'from' => $this->fromNumber,
+                        'body' => "Your login code is: {$code}. Valid for " . (config('authentication.tokens.auto_refresh_threshold', 300) / 60) . " minutes."
+                    ]
+                );
+                Log::info('SMS login code sent', ['phone' => $phoneNumber]);
+                return true;
+            } catch (\Exception $e) {
+                Log::error('SMS login failed', ['error' => $e->getMessage()]);
+                return false;
+            }
+        }
+        
+        // Development fallback
         Log::info('🔑 SMS LOGIN CODE (DEVELOPMENT MODE)', [
             'type' => 'SMS_LOGIN',
             'phone' => $phoneNumber,
-            'code' => '******', // Hidden for security
-            'expires_in' => '5 minutes',
+            'code' => '******',
+            'expires_in' => (config('authentication.tokens.auto_refresh_threshold', 300) / 60) . ' minutes',
             'timestamp' => now()->toDateTimeString(),
             'note' => 'SMS service not configured - code logged for development'
         ]);
         
-        return true; // Always return success in development mode
+        return true;
     }
     public function sendNotification($phoneNumber, $message)
     {

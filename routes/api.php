@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\CommunityController;
 use App\Http\Controllers\Api\UnifiedAuthController;
+use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\BookmarkController;
@@ -76,15 +78,21 @@ Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:
 Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
 // === Authentication Routes ===
-Route::prefix('auth')->middleware('security:login')->group(function () {
+Route::prefix('auth')->middleware('security:auth.login')->group(function () {
     // Login & Basic Auth
     Route::post('/login', [UnifiedAuthController::class, 'login']);
     Route::post('/logout', [UnifiedAuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/logout-all', [UnifiedAuthController::class, 'logoutAll'])->middleware('auth:sanctum');
     Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
+    
+    // Session Management
+    Route::prefix('sessions')->middleware('auth:sanctum')->group(function () {
+        Route::get('/', [UnifiedAuthController::class, 'getSessions']);
+        Route::delete('/{token_id}', [UnifiedAuthController::class, 'revokeSession']);
+    });
 
     // Multi-step Registration
-    Route::prefix('register')->group(function () {
+    Route::prefix('register')->middleware('security:auth.register')->group(function () {
         Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
         Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
         Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
@@ -106,11 +114,11 @@ Route::prefix('auth')->middleware('security:login')->group(function () {
     });
 
     // Password Management
-    Route::prefix('password')->group(function () {
-        Route::post('/forgot', [UnifiedAuthController::class, 'forgotPassword']);
-        Route::post('/resend', [UnifiedAuthController::class, 'resendResetCode']);
-        Route::post('/verify-code', [UnifiedAuthController::class, 'verifyResetCode']);
-        Route::post('/reset', [UnifiedAuthController::class, 'resetPassword']);
+    Route::prefix('password')->middleware('security:auth.password_reset')->group(function () {
+        Route::post('/forgot', [PasswordResetController::class, 'forgotPassword']);
+        Route::post('/verify-code', [PasswordResetController::class, 'verifyCode']);
+        Route::post('/resend', [PasswordResetController::class, 'resendCode']);
+        Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
         Route::post('/change', [UnifiedAuthController::class, 'changePassword'])->middleware('auth:sanctum');
     });
 
@@ -122,18 +130,29 @@ Route::prefix('auth')->middleware('security:login')->group(function () {
     });
     
     // Device Verification (without auth middleware since user is logging in)
-    Route::post('/verify-device', [DeviceController::class, 'verifyDevice']);
-    Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode']);
+    Route::post('/verify-device', [DeviceController::class, 'verifyDevice'])->middleware('security:device.verification');
+    Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode'])->middleware('security:device.verification');
+    
+    // Age Verification
+    Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
     
     // Security Events
     Route::get('/security/events', [UnifiedAuthController::class, 'getSecurityEvents'])->middleware('auth:sanctum');
+    
+    // Audit Logs
+    Route::prefix('audit')->middleware('auth:sanctum')->group(function () {
+        Route::get('/my-activity', [\App\Http\Controllers\Api\AuditController::class, 'getUserAuditTrail']);
+        Route::get('/anomalies', [\App\Http\Controllers\Api\AuditController::class, 'detectAnomalies']);
+        Route::get('/security-events', [\App\Http\Controllers\Api\AuditController::class, 'getSecurityEvents']);
+        Route::get('/high-risk', [\App\Http\Controllers\Api\AuditController::class, 'getHighRiskActivities']);
+        Route::get('/statistics', [\App\Http\Controllers\Api\AuditController::class, 'getAuditStatistics']);
+    });
 });
 
-// Social Authentication (with security protection)
-Route::prefix('auth/social')->middleware('security:social')->group(function () {
-    Route::get('/{provider}', [UnifiedAuthController::class, 'socialRedirect'])->where('provider', 'google');
-    Route::get('/{provider}/callback', [UnifiedAuthController::class, 'socialCallback'])->where('provider', 'google');
-    Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
+// Social Authentication
+Route::prefix('auth/social')->group(function () {
+    Route::get('/{provider}', [SocialAuthController::class, 'redirect'])->where('provider', 'google');
+    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google');
 });
 
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
@@ -237,6 +256,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::prefix('devices')->group(function () {
         Route::post('/advanced/register', [DeviceController::class, 'registerAdvanced']);
         Route::get('/list', [DeviceController::class, 'list']);
+        Route::get('/{device}/activity', [DeviceController::class, 'getActivity']);
         Route::post('/{device}/trust', [DeviceController::class, 'trust']);
         Route::delete('/{device}/revoke', [DeviceController::class, 'revoke']);
         Route::post('/revoke-all', [DeviceController::class, 'revokeAll']);

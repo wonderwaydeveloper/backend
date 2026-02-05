@@ -67,7 +67,7 @@ class SecurityAudit extends Command
         $score = 0;
         
         // Check if WAF is enabled
-        if (config('security.waf.enabled')) {
+        if (config('authentication.waf.enabled')) {
             $score += 5;
             $this->line('✅ WAF is enabled');
         } else {
@@ -75,7 +75,7 @@ class SecurityAudit extends Command
         }
         
         // Check threat threshold
-        $threshold = config('security.waf.threat_threshold');
+        $threshold = config('authentication.waf.threat_threshold');
         if ($threshold > 0 && $threshold <= 100) {
             $score += 5;
             $this->line("✅ Threat threshold: {$threshold}");
@@ -104,7 +104,7 @@ class SecurityAudit extends Command
     {
         $score = 0;
         
-        if (config('security.rate_limiting.enabled')) {
+        if (config('authentication.rate_limiting.login.max_attempts')) {
             $score += 10;
             $this->line('✅ Rate limiting enabled');
         } else {
@@ -119,7 +119,7 @@ class SecurityAudit extends Command
         }
         
         // Check rate limit configuration
-        $perMinute = config('security.rate_limiting.per_minute');
+        $perMinute = config('authentication.rate_limiting.login.max_attempts');
         if ($perMinute > 0 && $perMinute <= 100) {
             $score += 5;
             $this->line("✅ Per-minute limit: {$perMinute}");
@@ -186,7 +186,7 @@ class SecurityAudit extends Command
         }
         
         // Check security headers
-        if (config('security.headers.enabled')) {
+        if (config('authentication.waf.headers.enabled')) {
             $score += 5;
             $this->line('✅ Security headers enabled');
         }

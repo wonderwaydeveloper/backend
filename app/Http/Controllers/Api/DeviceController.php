@@ -8,12 +8,15 @@ use App\Services\{DeviceFingerprintService, EmailService};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DeviceController extends Controller
 {
     public function __construct(
-        private EmailService $emailService
+        private EmailService $emailService,
+        private \App\Services\RateLimitingService $rateLimiter,
+        private \App\Services\SessionTimeoutService $timeoutService
     ) {}
     /**
      * Register a new device (simple registration)
@@ -66,12 +69,14 @@ class DeviceController extends Controller
 
         $fingerprint = DeviceFingerprintService::generate($request);
         
-        $existingDevice = DeviceToken::where('user_id', $request->user()->id)
-                                   ->where('fingerprint', $fingerprint)
-                                   ->first();
-        
-        if ($existingDevice) {
-            $existingDevice->update([
+        // Use updateOrCreate to prevent race conditions
+        $device = DeviceToken::updateOrCreate(
+            [
+                'user_id' => $request->user()->id,
+                'fingerprint' => $fingerprint,
+            ],
+            [
+                'token' => 'device_' . Str::random(40),
                 'device_name' => $request->name,
                 'device_type' => $request->type,
                 'browser' => $request->browser,
@@ -79,29 +84,10 @@ class DeviceController extends Controller
                 'push_token' => $request->push_token,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'last_used_at' => now()
-            ]);
-            
-            return response()->json([
-                'device_id' => $existingDevice->id,
-                'requires_verification' => !$existingDevice->is_trusted
-            ]);
-        }
-        
-        $device = DeviceToken::create([
-            'user_id' => $request->user()->id,
-            'token' => 'device_' . Str::random(40),
-            'fingerprint' => $fingerprint,
-            'device_name' => $request->name,
-            'device_type' => $request->type,
-            'browser' => $request->browser,
-            'os' => $request->os,
-            'push_token' => $request->push_token,
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'last_used_at' => now(),
-            'is_trusted' => false
-        ]);
+                'last_used_at' => now(),
+                'is_trusted' => false
+            ]
+        );
 
         return response()->json([
             'device_id' => $device->id,
@@ -162,15 +148,18 @@ class DeviceController extends Controller
         $user = $request->user();
         $currentToken = $user->currentAccessToken();
         
-        // Revoke tokens for security
-        $user->tokens()
-            ->where('id', '!=', $currentToken->id)
-            ->delete();
-        
-        $device->delete();
-        
-        // Clear cached data
-        Cache::forget("device_verification_by_fingerprint:{$device->fingerprint}");
+        // Use transaction to prevent race conditions
+        DB::transaction(function () use ($user, $device, $currentToken) {
+            // Revoke tokens for security
+            $user->tokens()
+                ->where('id', '!=', $currentToken->id)
+                ->delete();
+            
+            $device->delete();
+            
+            // Clear cached data
+            Cache::forget("device_verification_by_fingerprint:{$device->fingerprint}");
+        });
 
         return response()->json([
             'message' => 'Device revoked successfully',
@@ -193,15 +182,18 @@ class DeviceController extends Controller
         $currentToken = $user->currentAccessToken();
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
-        // Revoke all other tokens
-        $user->tokens()
-            ->where('id', '!=', $currentToken->id)
-            ->delete();
+        // Use transaction to prevent race conditions
+        DB::transaction(function () use ($user, $currentToken, $currentFingerprint) {
+            // Revoke all other tokens
+            $user->tokens()
+                ->where('id', '!=', $currentToken->id)
+                ->delete();
 
-        // Remove all other devices
-        $user->devices()
-            ->where('fingerprint', '!=', $currentFingerprint)
-            ->delete();
+            // Remove all other devices
+            $user->devices()
+                ->where('fingerprint', '!=', $currentFingerprint)
+                ->delete();
+        });
 
         return response()->json(['message' => 'All other devices revoked successfully']);
     }
@@ -219,9 +211,7 @@ class DeviceController extends Controller
         $ip = $request->ip();
         $fingerprint = $request->fingerprint;
         
-        // Use centralized rate limiting
-        $securityService = app(\App\Services\SecurityMonitoringService::class);
-        $rateLimitResult = $securityService->checkRateLimit("device_verify:{$ip}:{$fingerprint}", 3, 1);
+        $rateLimitResult = $this->rateLimiter->checkLimit('device.verify', "{$ip}:{$fingerprint}");
         
         if (!$rateLimitResult['allowed']) {
             return response()->json([
@@ -268,12 +258,10 @@ class DeviceController extends Controller
             }
             
             try {
-                $device = $user->devices()->where('fingerprint', $fingerprint)->first();
-                
-                if (!$device) {
-                    $device = $user->devices()->create([
+                $device = $user->devices()->updateOrCreate(
+                    ['fingerprint' => $fingerprint],
+                    [
                         'token' => 'device_' . Str::random(40),
-                        'fingerprint' => $fingerprint,
                         'device_name' => $this->getDeviceNameFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'device_type' => $this->getDeviceTypeFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'browser' => $this->getBrowserFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
@@ -282,17 +270,15 @@ class DeviceController extends Controller
                         'user_agent' => $verificationData['device_info']['user_agent'] ?? 'Unknown',
                         'is_trusted' => true,
                         'last_used_at' => now()
-                    ]);
-                } else {
-                    $device->update(['is_trusted' => true, 'last_used_at' => now()]);
-                }
+                    ]
+                );
             } finally {
                 $deviceLock->release();
             }
             
             Cache::forget($cacheKey);
             
-            $token = $user->createToken('auth_token')->plainTextToken;
+            $token = app(\App\Services\SessionTimeoutService::class)->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
             
             \Log::info('Device verification successful', [
                 'user_id' => $user->id,
@@ -320,9 +306,7 @@ class DeviceController extends Controller
         $fingerprint = $request->fingerprint;
         $userId = $request->user_id;
         
-        // Use centralized rate limiting
-        $securityService = app(\App\Services\SecurityMonitoringService::class);
-        $rateLimitResult = $securityService->checkRateLimit("device_resend:{$request->ip()}:{$fingerprint}", 5, 1);
+        $rateLimitResult = $this->rateLimiter->checkLimit('device.resend', "{$request->ip()}:{$fingerprint}");
         
         if (!$rateLimitResult['allowed']) {
             return response()->json([
@@ -355,7 +339,7 @@ class DeviceController extends Controller
         // Update existing session data
         $existingData = $sessionData;
         
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = random_int(100000, 999999);
         
         $verificationData = [
             'code' => $code,
@@ -367,25 +351,45 @@ class DeviceController extends Controller
                 'location' => 'Unknown Location'
             ],
             'code_sent_at' => now()->timestamp,
-            'expires_at' => now()->addMinutes(15)->timestamp,
+            'expires_at' => now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry())->timestamp,
             'resend_count' => ($existingData['resend_count'] ?? 0) + 1
         ];
         
         // Store verification data with fingerprint-based key
         $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
-        Cache::put($cacheKey, $verificationData, now()->addMinutes(15));
+        Cache::put($cacheKey, $verificationData, now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry()));
         
         // Send verification email
         $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
         
-        $resendAvailableAt = now()->addSeconds(30)->timestamp;
+        $resendAvailableAt = now()->addSeconds(60)->timestamp;
         
         return response()->json([
             'message' => 'New verification code sent to your email',
             'code_expires_at' => $verificationData['expires_at'],
             'resend_available_at' => $resendAvailableAt,
-            'expires_in' => '15 minutes',
-            'resend_cooldown' => 30
+            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
+            'resend_cooldown' => 60
+        ]);
+    }
+
+    /**
+     * Get device activity history
+     */
+    public function getActivity(Request $request, $deviceId)
+    {
+        $device = $request->user()->devices()->findOrFail($deviceId);
+        
+        // Get security events for this device
+        $securityService = app(\App\Services\SecurityMonitoringService::class);
+        $events = $securityService->getSecurityEvents($request->user()->id);
+        
+        return response()->json([
+            'device' => $device,
+            'activity' => $events,
+            'last_login' => $device->last_used_at,
+            'total_logins' => 0, // Can be calculated from activity logs
+            'security_score' => $this->calculateSecurityScore($device)
         ]);
     }
 
@@ -402,8 +406,31 @@ class DeviceController extends Controller
         return response()->json([
             'has_suspicious_activity' => $suspiciousActivity['detected'],
             'risk_level' => $suspiciousActivity['risk_level'],
-            'recommendations' => $suspiciousActivity['recommendations']
+            'recommendations' => $suspiciousActivity['recommendations'],
+            'alerts' => $suspiciousActivity['alerts'] ?? []
         ]);
+    }
+
+    private function calculateSecurityScore($device): int
+    {
+        $score = 100;
+        
+        // Reduce score for untrusted devices
+        if (!$device->is_trusted) $score -= 20;
+        
+        // Reduce score for old devices
+        if ($device->last_used_at < now()->subDays($this->timeoutService->getDeviceTokenInactivityLimit())) $score -= 10;
+        
+        // Reduce score for suspicious IPs
+        if ($this->isSuspiciousIP($device->ip_address)) $score -= 30;
+        
+        return max(0, $score);
+    }
+    
+    private function isSuspiciousIP(string $ip): bool
+    {
+        // Simple check - in production use proper IP reputation service
+        return false;
     }
 
     private function getDeviceNameFromUserAgent(string $userAgent): string

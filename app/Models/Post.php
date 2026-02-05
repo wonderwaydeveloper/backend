@@ -222,13 +222,13 @@ class Post extends Model
 
     public function canBeEdited(): bool
     {
-        return $this->created_at->diffInMinutes(now()) <= 30;
+        return $this->created_at->diffInMinutes(now()) <= config('authentication.session.timeout_seconds', 7200) / 60;
     }
 
     public function editPost(string $newContent, ?string $reason = null): void
     {
         if (! $this->canBeEdited()) {
-            throw new \Exception('Post cannot be edited after 30 minutes');
+            throw new \Exception('Post cannot be edited after ' . config('authentication.session.timeout_seconds', 7200) / 60 . ' minutes');
         }
 
         $this->edits()->create([

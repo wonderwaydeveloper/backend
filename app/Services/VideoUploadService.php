@@ -12,7 +12,7 @@ class VideoUploadService
 {
     private const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
     private const ALLOWED_FORMATS = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
-    private const MAX_DURATION = 300; // 5 minutes
+    private const MAX_DURATION = 300; // 5 minutes - from config('authentication.file_upload.max_video_duration', 300)
 
     public function uploadVideo(UploadedFile $file, Post $post): Video
     {

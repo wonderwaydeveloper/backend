@@ -16,7 +16,7 @@ class SecurityHeaders
             return $response;
         }
         
-        $config = config('security.headers', []);
+        $config = config('authentication.waf.headers', []);
         
         if (empty($config) || !($config['enabled'] ?? false)) {
             return $response;

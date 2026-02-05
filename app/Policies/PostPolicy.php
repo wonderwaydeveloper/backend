@@ -57,9 +57,9 @@ class PostPolicy
             return false;
         }
         
-        // Allow updates within 15 minutes, but also check if post has been edited before
+        // Allow updates within config timeout, but also check if post has been edited before
         $canEdit = app()->environment('testing') || 
-                  ($post->created_at->diffInMinutes(now()) <= 15 && !$post->updated_at->gt($post->created_at));
+                  ($post->created_at->diffInMinutes(now()) <= config('authentication.session.timeout_seconds', 7200) / 60 && !$post->updated_at->gt($post->created_at));
                   
         return $canEdit;
     }

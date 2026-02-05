@@ -45,7 +45,7 @@
                                 </tr>
                             </table>
                             
-                            <p style="margin: 25px 0 0; color: #666666; font-size: 14px; line-height: 1.5;">This code is valid for 15 minutes.</p>
+                            <p style="margin: 25px 0 0; color: #666666; font-size: 14px; line-height: 1.5;">This code is valid for {{ config('authentication.email.verification_expire_minutes', 15) }} minutes.</p>
                             <p style="margin: 15px 0 0; color: #dc3545; font-size: 14px; line-height: 1.5; font-weight: bold;">⚠️ If this wasn't you, please secure your account immediately by changing your password.</p>
                         </td>
                     </tr>

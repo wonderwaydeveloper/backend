@@ -19,9 +19,9 @@ return [
     ],
 
     'google' => [
-        'client_id' => env('GOOGLE_CLIENT_ID'),
-        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI'),
+        'client_id' => config('authentication.social.google.client_id'),
+        'client_secret' => config('authentication.social.google.client_secret'),
+        'redirect' => config('authentication.social.google.redirect'),
     ],
 
 

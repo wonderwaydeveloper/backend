@@ -10,35 +10,69 @@ use App\Exceptions\ValidationException;
 use App\DTOs\LoginDTO;
 use App\DTOs\UserRegistrationDTO;
 use PragmaRX\Google2FA\Google2FA;
+use App\Services\{TokenManagementService, AuditTrailService};
 
 class AuthService implements AuthServiceInterface
 {
     public function __construct(
-        private EmailService $emailService
+        private EmailService $emailService,
+        private TokenManagementService $tokenService,
+        private AuditTrailService $auditService,
+        private RateLimitingService $rateLimiter,
+        private SecurityMonitoringService $securityService,
+        private SessionTimeoutService $timeoutService,
+        private PasswordSecurityService $passwordService
     ) {
     }
 
-    /**
-     * Register a new user
-     */
-    public function register(UserRegistrationDTO $dto): array
+    public function register(UserRegistrationDTO $dto, ?\Illuminate\Http\Request $request = null): array
     {
+        $rateLimitResult = $this->rateLimiter->checkLimit('auth.register', $dto->email);
+        
+        if (!$rateLimitResult['allowed']) {
+            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
+                'type' => 'auth.register',
+                'identifier' => $dto->email,
+                'attempts' => $rateLimitResult['attempts']
+            ], $request);
+            
+            throw new ValidationException([
+                'email' => ['Too many registration attempts. Please try again later.'],
+            ]);
+        }
+
+        // Create user with basic data first
         $user = User::create([
             'name' => $dto->name,
             'username' => $dto->username,
             'email' => $dto->email,
-            'password' => Hash::make($dto->password),
             'date_of_birth' => $dto->dateOfBirth,
+            'password' => 'temp', // Temporary password
         ]);
 
-        // Check if user is under 18
+        // Use PasswordSecurityService for consistent password handling
+        try {
+            $this->passwordService->updatePassword($user, $dto->password);
+        } catch (\InvalidArgumentException $e) {
+            // If password validation fails, delete the user and throw exception
+            $user->delete();
+            throw new ValidationException([
+                'password' => [$e->getMessage()],
+            ]);
+        }
+
         if ($user->date_of_birth && $user->date_of_birth->age < 18) {
             $user->update(['is_child' => true]);
         }
 
         $user->assignRole('user');
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $this->auditService->logAuthEvent('register', $user, [
+            'registration_method' => 'email',
+            'is_child' => $user->is_child
+        ]);
+
+        $token = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
 
         return [
             'message' => 'User registered successfully',
@@ -47,26 +81,53 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
-    /**
-     * Login user with credentials
-     */
-    public function login(LoginDTO $loginDTO, bool $createToken = true): array
+    public function login(LoginDTO $loginDTO, bool $createToken = true, ?\Illuminate\Http\Request $request = null): array
     {
-        // Find user by email, username, or phone
+        $identifier = $loginDTO->login;
+        $rateLimitResult = $this->rateLimiter->checkLimit('auth.login', $identifier);
+        
+        if (!$rateLimitResult['allowed']) {
+            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
+                'type' => 'auth.login',
+                'identifier' => $identifier,
+                'attempts' => $rateLimitResult['attempts']
+            ], $request);
+            
+            throw new ValidationException([
+                'login' => ['Too many login attempts. Please try again later.'],
+            ]);
+        }
+
         $user = User::where('email', $loginDTO->login)
                    ->orWhere('username', $loginDTO->login)
                    ->orWhere('phone', $loginDTO->login)
                    ->first();
         
-        // Use hash_equals to prevent timing attacks
         $validCredentials = $user && Hash::check($loginDTO->password, $user->password);
         
-        // Always perform hash check even if user doesn't exist to prevent timing attacks
         if (!$user) {
             Hash::check('dummy-password', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
         }
 
         if (!$validCredentials) {
+            $this->auditService->logAuthEvent('failed_login', $user ?? new User(['email' => $loginDTO->login]), [
+                'login_attempt' => $loginDTO->login,
+                'failure_reason' => 'invalid_credentials',
+                'ip' => $request?->ip(),
+                'user_agent' => $request?->userAgent()
+            ], $request);
+            
+            if ($user && $request) {
+                $suspiciousActivity = $this->securityService->checkSuspiciousActivity($user->id);
+                if ($suspiciousActivity['risk_level'] === 'high') {
+                    $this->auditService->logSecurityEvent('suspicious_login_pattern', [
+                        'user_id' => $user->id,
+                        'risk_score' => $suspiciousActivity['risk_score'],
+                        'reasons' => $suspiciousActivity['reasons']
+                    ], $request);
+                }
+            }
+            
             throw new ValidationException([
                 'login' => ['Invalid login credentials'],
             ]);
@@ -76,7 +137,14 @@ class AuthService implements AuthServiceInterface
             return ['user' => $user];
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $this->tokenService->enforceConcurrentSessionLimits($user);
+
+        $this->auditService->logAuthEvent('login', $user, [
+            'login_method' => 'credentials',
+            'session_count' => $user->tokens()->count()
+        ]);
+
+        $token = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
 
         return [
             'message' => 'Login successful',
@@ -85,18 +153,36 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
-    /**
-     * Logout user by deleting current token
-     */
     public function logout(User $user): bool
     {
+        $this->auditService->logAuthEvent('logout', $user);
         $user->currentAccessToken()->delete();
         return true;
     }
 
+    public function logoutFromAllDevices(User $user): int
+    {
+        $revokedCount = $this->tokenService->revokeAllUserSessions($user);
+        
+        $this->auditService->logAuthEvent('logout_all', $user, [
+            'sessions_revoked' => $revokedCount
+        ]);
+        
+        return $revokedCount;
+    }
+
+    public function getUserSessions(User $user): array
+    {
+        return $this->tokenService->getUserActiveSessions($user);
+    }
+
+    public function revokeSession(User $user, string $tokenId): bool
+    {
+        return $this->tokenService->revokeSession($user, $tokenId);
+    }
+
     public function refreshToken(string $refreshToken): array
     {
-        // Find all users and check refresh token
         $users = User::whereNotNull('refresh_token')->get();
         $user = null;
         
@@ -111,11 +197,14 @@ class AuthService implements AuthServiceInterface
             throw new ValidationException(['token' => ['Invalid refresh token']]);
         }
 
-        // Generate new tokens
-        $newToken = $user->createToken('auth_token')->plainTextToken;
+        $newToken = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
         $newRefreshToken = Str::random(60);
         
-        $user->update(['refresh_token' => Hash::make($newRefreshToken)]);
+        $user->update([
+            'refresh_token' => Hash::make($newRefreshToken)
+        ]);
+
+        $this->auditService->logAuthEvent('token_refreshed', $user);
 
         return [
             'token' => $newToken,
@@ -123,39 +212,84 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
-    public function forgotPassword(string $email): bool
+    public function forgotPassword(string $email, ?\Illuminate\Http\Request $request = null): bool
     {
+        $rateLimitResult = $this->rateLimiter->checkLimit('auth.password_reset', $email);
+        
+        if (!$rateLimitResult['allowed']) {
+            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
+                'type' => 'auth.password_reset',
+                'identifier' => $email,
+                'attempts' => $rateLimitResult['attempts']
+            ], $request);
+            
+            return true;
+        }
+
         $user = User::where('email', $email)->first();
         
         if (!$user) {
-            return true; // Don't reveal if email exists
+            return true;
         }
 
-        $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $code = random_int(100000, 999999);
+        $expiryMinutes = $this->timeoutService->getPasswordResetExpiry();
         
+        // Store in both database and cache for consistency
         \DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $email],
-            ['token' => Hash::make($code), 'created_at' => now()]
+            [
+                'token' => Hash::make($code),
+                'created_at' => now()
+            ]
         );
+        
+        // Also store in cache for verify endpoint
+        \Cache::put("password_reset:{$email}", [
+            'code' => (string)$code,
+            'expires_at' => now()->addMinutes($expiryMinutes)->timestamp
+        ], now()->addMinutes($expiryMinutes));
 
         $this->emailService->sendPasswordResetEmail($user, $code);
+        $this->auditService->logAuthEvent('password_reset_requested', $user);
         
         return true;
     }
 
-    public function resetPassword(string $code, string $password): bool
+    public function resetPassword(string $code, string $password, ?\Illuminate\Http\Request $request = null, ?string $email = null): bool
     {
-        $tokenRecords = \DB::table('password_reset_tokens')->get();
-        $validRecord = null;
+        $rateLimitResult = $this->rateLimiter->checkLimit('auth.reset_verify', $code);
         
-        foreach ($tokenRecords as $record) {
+        if (!$rateLimitResult['allowed']) {
+            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
+                'type' => 'auth.reset_verify',
+                'identifier' => 'code_attempt',
+                'attempts' => $rateLimitResult['attempts']
+            ], $request);
+            
+            return false;
+        }
+
+        $resetExpiry = $this->timeoutService->getPasswordResetExpiry();
+        $records = \DB::table('password_reset_tokens')
+                     ->where('created_at', '>', now()->subMinutes($resetExpiry));
+        
+        // If email provided, filter by email for better performance
+        if ($email) {
+            $records = $records->where('email', $email);
+        }
+        
+        $records = $records->get();
+        
+        $validRecord = null;
+        foreach ($records as $record) {
             if (Hash::check($code, $record->token)) {
                 $validRecord = $record;
                 break;
             }
         }
 
-        if (!$validRecord || now()->diffInMinutes($validRecord->created_at) > 15) {
+        if (!$validRecord) {
             return false;
         }
 
@@ -164,8 +298,29 @@ class AuthService implements AuthServiceInterface
             return false;
         }
 
-        $user->update(['password' => Hash::make($password)]);
+        // Use PasswordSecurityService for password history and validation
+        try {
+            $this->passwordService->updatePassword($user, $password);
+        } catch (\InvalidArgumentException $e) {
+            // Log the validation failure
+            $this->auditService->logSecurityEvent('password_reset_validation_failed', [
+                'user_id' => $user->id,
+                'reason' => $e->getMessage()
+            ], $request);
+            return false;
+        }
+
+        // Clean up both database and cache
         \DB::table('password_reset_tokens')->where('email', $validRecord->email)->delete();
+        \Cache::forget("password_reset:{$validRecord->email}");
+        
+        // Revoke all active sessions for security
+        $this->tokenService->revokeAllUserSessions($user);
+        
+        $this->auditService->logAuthEvent('password_reset', $user, [
+            'sessions_revoked' => true,
+            'password_history_checked' => true
+        ]);
         
         return true;
     }
@@ -183,7 +338,7 @@ class AuthService implements AuthServiceInterface
                 break;
             }
         }
-
+        
         if (!$user) {
             return false;
         }
@@ -192,6 +347,8 @@ class AuthService implements AuthServiceInterface
             'email_verified_at' => now(),
             'email_verification_token' => null
         ]);
+        
+        $this->auditService->logAuthEvent('email_verified', $user);
         
         return true;
     }
@@ -203,9 +360,13 @@ class AuthService implements AuthServiceInterface
         }
 
         $token = Str::random(60);
-        $user->update(['email_verification_token' => Hash::make($token)]);
+        
+        $user->update([
+            'email_verification_token' => Hash::make($token)
+        ]);
         
         $this->emailService->sendVerificationEmail($user, $token);
+        $this->auditService->logAuthEvent('verification_resent', $user);
         
         return true;
     }
@@ -257,17 +418,11 @@ class AuthService implements AuthServiceInterface
         return true;
     }
 
-    /**
-     * Get current user data
-     */
     public function getCurrentUser(User $user): User
     {
         return $user;
     }
 
-    /**
-     * Handle 2FA verification
-     */
     private function handle2FA(User $user, ?string $twoFactorCode): array
     {
         if (! $twoFactorCode) {
@@ -287,7 +442,7 @@ class AuthService implements AuthServiceInterface
             ]);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
 
         return [
             'message' => 'Login successful',

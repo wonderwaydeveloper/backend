@@ -8,10 +8,10 @@ use Illuminate\Support\Facades\{Cache, DB, Redis};
 class CacheOptimizationService
 {
     private const CACHE_TAGS = [
-        'timeline' => 300,    // 5 minutes
-        'user' => 600,       // 10 minutes
-        'post' => 1800,      // 30 minutes
-        'trending' => 900    // 15 minutes
+        'timeline' => config('authentication.cache.timeline_ttl', 300),    // 5 minutes
+        'user' => config('authentication.cache.user_ttl', 600),       // 10 minutes
+        'post' => config('authentication.cache.post_ttl', 1800),      // 30 minutes
+        'trending' => config('authentication.cache.trending_ttl', 900)    // 15 minutes
     ];
 
     public function getCachedFollowingIds(int $userId): array

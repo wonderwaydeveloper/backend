@@ -8,12 +8,10 @@ use Illuminate\Http\Request;
 
 class UnifiedSecurityMiddleware
 {
-    private SecurityMonitoringService $security;
-    
-    public function __construct(SecurityMonitoringService $security)
-    {
-        $this->security = $security;
-    }
+    public function __construct(
+        private SecurityMonitoringService $security,
+        private \App\Services\RateLimitingService $rateLimiter
+    ) {}
     
     public function handle(Request $request, Closure $next, string $type = 'general')
     {
@@ -24,17 +22,37 @@ class UnifiedSecurityMiddleware
         
         $ip = $request->ip();
         
+        // Check IP whitelist
+        if (in_array($ip, config('authentication.waf.admin_allowed_ips', []))) {
+            return $next($request);
+        }
+        
         // Check if IP is blocked
         if ($this->security->isIPBlocked($ip)) {
+            // Log the blocked access attempt
+            app(\App\Services\AuditTrailService::class)->logSecurityEvent('blocked_ip_access', [
+                'ip' => $ip,
+                'endpoint' => $request->path(),
+                'user_agent' => $request->userAgent()
+            ], $request);
+            
             return response()->json(['error' => 'Access denied'], 403);
         }
         
-        // Rate limiting check
-        $rateCheck = $this->security->checkRateLimit("middleware:{$type}:{$ip}", 60, 1);
+        // Rate limiting check with centralized service
+        $rateCheck = $this->rateLimiter->checkLimit("api.{$type}", $ip);
+        
         if (!$rateCheck['allowed']) {
+            app(\App\Services\AuditTrailService::class)->logSecurityEvent('rate_limit_exceeded', [
+                'ip' => $ip,
+                'endpoint' => $request->path(),
+                'type' => $type,
+                'attempts' => $rateCheck['attempts'] ?? 0
+            ], $request);
+            
             return response()->json([
                 'error' => $rateCheck['error'],
-                'retry_after' => $rateCheck['retry_after']
+                'retry_after' => $rateCheck['retry_after'] ?? 60
             ], 429);
         }
         
@@ -42,7 +60,23 @@ class UnifiedSecurityMiddleware
         $threatAnalysis = $this->security->calculateThreatScore($request);
         
         if ($threatAnalysis['action'] === 'block') {
+            // Log threat detection before blocking
+            app(\App\Services\AuditTrailService::class)->logSecurityEvent('threat_detected', [
+                'threat_score' => $threatAnalysis['score'],
+                'reasons' => $threatAnalysis['reasons'],
+                'ip' => $ip,
+                'endpoint' => $request->path()
+            ], $request);
+            
             $this->security->blockIP($ip, 3600, 'high_threat_score');
+            
+            // Log IP blocking
+            app(\App\Services\AuditTrailService::class)->logSecurityEvent('ip_blocked', [
+                'ip' => $ip,
+                'duration' => 3600,
+                'reason' => 'high_threat_score'
+            ], $request);
+            
             return response()->json(['error' => 'Security threat detected'], 403);
         }
         
@@ -50,7 +84,8 @@ class UnifiedSecurityMiddleware
         
         // Add security headers
         return $response->withHeaders([
-            'X-RateLimit-Remaining' => $rateCheck['remaining'],
+            'X-RateLimit-Remaining' => $rateCheck['remaining'] ?? 0,
+            'X-RateLimit-Limit' => $this->rateLimiter->getConfig("api.{$type}")['max_attempts'] ?? 60,
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'DENY',
             'X-XSS-Protection' => '1; mode=block'

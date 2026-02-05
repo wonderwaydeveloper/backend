@@ -21,7 +21,8 @@ return new class () extends Migration {
             $table->string('push_token')->nullable();
             $table->string('ip_address')->nullable();
             $table->text('user_agent')->nullable();
-            $table->string('fingerprint')->unique();
+            $table->string('fingerprint');
+            $table->unique(['user_id', 'fingerprint']);
             $table->boolean('is_trusted')->default(false);
             $table->boolean('active')->default(true);
             $table->timestamp('last_used_at')->nullable();

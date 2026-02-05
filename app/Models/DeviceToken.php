@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class DeviceToken extends Model
 {
@@ -33,8 +34,48 @@ class DeviceToken extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('active', true);
+    }
+
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('active', false)
+                    ->orWhere('last_used_at', '<', now()->subDays(config('authentication.device.max_inactivity_days', 30)));
+    }
+
+    public function scopeTrusted(Builder $query): Builder
+    {
+        return $query->where('is_trusted', true);
+    }
+
+    public function scopeRecentlyUsed(Builder $query, int $days = 7): Builder
+    {
+        return $query->where('last_used_at', '>', now()->subDays($days));
+    }
+
+    /**
+     * Mark device as inactive
+     */
+    public function markInactive(): void
+    {
+        $this->update(['active' => false]);
+    }
+
+    /**
+     * Update last used timestamp
+     */
+    public function updateLastUsed(): void
+    {
+        $this->update(['last_used_at' => now()]);
+    }
+
+    /**
+     * Check if device is stale (not used for configured days)
+     */
+    public function isStale(): bool
+    {
+        return $this->last_used_at < now()->subDays(config('authentication.device.max_inactivity_days', 30));
     }
 }
