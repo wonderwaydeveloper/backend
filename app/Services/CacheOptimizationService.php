@@ -7,18 +7,23 @@ use Illuminate\Support\Facades\{Cache, DB, Redis};
 
 class CacheOptimizationService
 {
-    private const CACHE_TAGS = [
-        'timeline' => config('authentication.cache.timeline_ttl', 300),    // 5 minutes
-        'user' => config('authentication.cache.user_ttl', 600),       // 10 minutes
-        'post' => config('authentication.cache.post_ttl', 1800),      // 30 minutes
-        'trending' => config('authentication.cache.trending_ttl', 900)    // 15 minutes
-    ];
+    // ✅ تبدیل به method
+    private function getCacheTags(): array
+    {
+        return [
+            'timeline' => config('authentication.cache.timeline_ttl', 300),
+            'user' => config('authentication.cache.user_ttl', 600),
+            'post' => config('authentication.cache.post_ttl', 1800),
+            'trending' => config('authentication.cache.trending_ttl', 900)
+        ];
+    }
 
     public function getCachedFollowingIds(int $userId): array
     {
+        $tags = $this->getCacheTags();
         return Cache::remember(
             "following:{$userId}",
-            self::CACHE_TAGS['user'],
+            $tags['user'],
             fn() => Follow::where('follower_id', $userId)
                 ->pluck('following_id')
                 ->push($userId)
@@ -28,8 +33,9 @@ class CacheOptimizationService
 
     public function getOptimizedUserProfile(int $userId): array
     {
+        $tags = $this->getCacheTags();
         return Cache::tags(['user', "profile:{$userId}"])
-            ->remember("profile:{$userId}", self::CACHE_TAGS['user'], function () use ($userId) {
+            ->remember("profile:{$userId}", $tags['user'], function () use ($userId) {
                 return User::select(['id', 'name', 'username', 'avatar', 'bio'])
                     ->withCount(['followers', 'following', 'posts'])
                     ->findOrFail($userId)
@@ -39,8 +45,9 @@ class CacheOptimizationService
 
     public function getCachedTrendingPosts(int $limit = 20): array
     {
+        $tags = $this->getCacheTags();
         return Cache::tags(['trending', 'posts'])
-            ->remember('trending:posts', self::CACHE_TAGS['trending'], function () use ($limit) {
+            ->remember('trending:posts', $tags['trending'], function () use ($limit) {
                 return Post::select(['id', 'user_id', 'content', 'created_at'])
                     ->with(['user:id,name,username,avatar'])
                     ->withCount(['likes', 'comments'])
@@ -54,6 +61,7 @@ class CacheOptimizationService
 
     public function warmupUserCache(int $userId): void
     {
+        $tags = $this->getCacheTags();
         // Warm following cache
         $this->getCachedFollowingIds($userId);
         
@@ -63,7 +71,7 @@ class CacheOptimizationService
         // Warm timeline cache
         $timelineData = $this->generateTimelineData($userId);
         Cache::tags(['timeline', "user:{$userId}"])
-            ->put("timeline:{$userId}:1", $timelineData, self::CACHE_TAGS['timeline']);
+            ->put("timeline:{$userId}:1", $timelineData, $tags['timeline']);
     }
 
     public function invalidateUserCache(int $userId): void
@@ -97,10 +105,11 @@ class CacheOptimizationService
 
     public function getOptimizedTimeline(int $userId, int $page = 1): array
     {
+        $tags = $this->getCacheTags();
         $cacheKey = "optimized_timeline:{$userId}:{$page}";
         
         return Cache::tags(['timeline', "user:{$userId}"])
-            ->remember($cacheKey, self::CACHE_TAGS['timeline'], function () use ($userId, $page) {
+            ->remember($cacheKey, $tags['timeline'], function () use ($userId, $page) {
                 $followingIds = $this->getCachedFollowingIds($userId);
                 $posts = $this->generateTimelineData($userId);
                 
@@ -110,8 +119,9 @@ class CacheOptimizationService
 
     public function cacheUserData(int $userId, array $data): void
     {
+        $tags = $this->getCacheTags();
         Cache::tags(["user:{$userId}"])
-            ->put("user_data:{$userId}", $data, self::CACHE_TAGS['user']);
+            ->put("user_data:{$userId}", $data, $tags['user']);
     }
 
     public function getCachedUserData(int $userId): ?array

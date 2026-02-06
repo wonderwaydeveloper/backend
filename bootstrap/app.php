@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(append: [
-            \App\Http\Middleware\UnifiedSecurityMiddleware::class,
+            // UnifiedSecurityMiddleware removed from global - applied per route
             \App\Http\Middleware\CSRFProtection::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,

@@ -24,6 +24,7 @@ return [
     ],
     
     'rate_limiting' => [
+        // Authentication
         'login' => ['max_attempts' => 5, 'window_minutes' => 15],
         'register' => ['max_attempts' => 3, 'window_minutes' => 60],
         'password_reset' => ['max_attempts' => 2, 'window_minutes' => 60],
@@ -40,13 +41,42 @@ return [
         'email_password_reset' => ['max_attempts' => 2, 'window_minutes' => 60],
         'email_device_verification' => ['max_attempts' => 3, 'window_minutes' => 60],
         'email_resend' => ['max_attempts' => 3, 'window_minutes' => 60],
-        'api_general' => ['max_attempts' => 60, 'window_minutes' => 1],
+        'api_general' => ['max_attempts' => 300, 'window_minutes' => 15],
         'api_login' => ['max_attempts' => 5, 'window_minutes' => 15],
         'api_register' => ['max_attempts' => 3, 'window_minutes' => 60],
+        
+        // Content Actions (Twitter-like limits)
+        'post_create' => ['max_attempts' => 300, 'window_minutes' => 180],
+        'post_update' => ['max_attempts' => 100, 'window_minutes' => 60],
+        'post_delete' => ['max_attempts' => 100, 'window_minutes' => 60],
+        'comment_create' => ['max_attempts' => 300, 'window_minutes' => 180],
+        'like' => ['max_attempts' => 1000, 'window_minutes' => 1440],
+        'repost' => ['max_attempts' => 300, 'window_minutes' => 180],
+        
+        // Social Actions
+        'follow' => ['max_attempts' => 400, 'window_minutes' => 1440],
+        'unfollow' => ['max_attempts' => 400, 'window_minutes' => 1440],
+        'block' => ['max_attempts' => 50, 'window_minutes' => 60],
+        'mute' => ['max_attempts' => 50, 'window_minutes' => 60],
+        
+        // Search & Discovery
+        'search' => ['max_attempts' => 180, 'window_minutes' => 15],
+        'trending' => ['max_attempts' => 75, 'window_minutes' => 15],
+        
+        // Profile & Settings
+        'profile_update' => ['max_attempts' => 5, 'window_minutes' => 60],
+        'profile_view' => ['max_attempts' => 500, 'window_minutes' => 15],
+        
+        // Media
+        'media_upload' => ['max_attempts' => 50, 'window_minutes' => 60],
+        
+        // Messages
+        'message_send' => ['max_attempts' => 500, 'window_minutes' => 1440],
+        'message_read' => ['max_attempts' => 1000, 'window_minutes' => 15],
     ],
     
     'tokens' => [
-        'access_lifetime_seconds' => env('ACCESS_TOKEN_LIFETIME', 3600),
+        'access_lifetime_seconds' => env('ACCESS_TOKEN_LIFETIME', 7200), // 2h like Twitter
         'refresh_lifetime_seconds' => env('REFRESH_TOKEN_LIFETIME', 604800),
         'remember_lifetime_seconds' => env('REMEMBER_TOKEN_LIFETIME', 1209600),
         'auto_refresh_threshold' => env('AUTO_REFRESH_THRESHOLD', 300),

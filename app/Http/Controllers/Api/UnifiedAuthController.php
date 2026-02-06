@@ -28,14 +28,7 @@ class UnifiedAuthController extends Controller
     {
         $loginDTO = LoginDTO::fromRequest($request->validated());
         
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.login', $request->ip());
-        
-        if (!$rateLimitResult['allowed']) {
-            return response()->json([
-                'error' => $rateLimitResult['error'],
-                'retry_after' => $rateLimitResult['retry_after']
-            ], 429);
-        }
+        // Rate limiting handled by UnifiedSecurityMiddleware
         
         if ($request->has('two_factor_code')) {
             return $this->verify2FALogin($loginDTO, $request->two_factor_code);
@@ -178,16 +171,7 @@ class UnifiedAuthController extends Controller
 
     public function me(Request $request): JsonResponse
     {
-        // Add rate limiting for /auth/me endpoint
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.me', $request->user()->id);
-        
-        if (!$rateLimitResult['allowed']) {
-            return response()->json([
-                'error' => $rateLimitResult['error'],
-                'retry_after' => $rateLimitResult['retry_after']
-            ], 429);
-        }
-        
+        // Rate limiting handled by UnifiedSecurityMiddleware
         $user = $this->authService->getCurrentUser($request->user());
         return response()->json($user);
     }

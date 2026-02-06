@@ -40,7 +40,8 @@ class UnifiedSecurityMiddleware
         }
         
         // Rate limiting check with centralized service
-        $rateCheck = $this->rateLimiter->checkLimit("api.{$type}", $ip);
+        // Use the type directly without 'api.' prefix
+        $rateCheck = $this->rateLimiter->checkLimit($type, $ip);
         
         if (!$rateCheck['allowed']) {
             app(\App\Services\AuditTrailService::class)->logSecurityEvent('rate_limit_exceeded', [
@@ -85,7 +86,7 @@ class UnifiedSecurityMiddleware
         // Add security headers
         return $response->withHeaders([
             'X-RateLimit-Remaining' => $rateCheck['remaining'] ?? 0,
-            'X-RateLimit-Limit' => $this->rateLimiter->getConfig("api.{$type}")['max_attempts'] ?? 60,
+            'X-RateLimit-Limit' => $this->rateLimiter->getConfig($type)['max_attempts'] ?? 60,
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'DENY',
             'X-XSS-Protection' => '1; mode=block'

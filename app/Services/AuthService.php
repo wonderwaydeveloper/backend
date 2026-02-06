@@ -27,20 +27,8 @@ class AuthService implements AuthServiceInterface
 
     public function register(UserRegistrationDTO $dto, ?\Illuminate\Http\Request $request = null): array
     {
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.register', $dto->email);
+        // Rate limiting handled by middleware layer
         
-        if (!$rateLimitResult['allowed']) {
-            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
-                'type' => 'auth.register',
-                'identifier' => $dto->email,
-                'attempts' => $rateLimitResult['attempts']
-            ], $request);
-            
-            throw new ValidationException([
-                'email' => ['Too many registration attempts. Please try again later.'],
-            ]);
-        }
-
         // Create user with basic data first
         $user = User::create([
             'name' => $dto->name,
@@ -83,20 +71,8 @@ class AuthService implements AuthServiceInterface
 
     public function login(LoginDTO $loginDTO, bool $createToken = true, ?\Illuminate\Http\Request $request = null): array
     {
+        // Rate limiting handled by middleware layer
         $identifier = $loginDTO->login;
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.login', $identifier);
-        
-        if (!$rateLimitResult['allowed']) {
-            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
-                'type' => 'auth.login',
-                'identifier' => $identifier,
-                'attempts' => $rateLimitResult['attempts']
-            ], $request);
-            
-            throw new ValidationException([
-                'login' => ['Too many login attempts. Please try again later.'],
-            ]);
-        }
 
         $user = User::where('email', $loginDTO->login)
                    ->orWhere('username', $loginDTO->login)
@@ -214,18 +190,8 @@ class AuthService implements AuthServiceInterface
 
     public function forgotPassword(string $email, ?\Illuminate\Http\Request $request = null): bool
     {
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.password_reset', $email);
+        // Rate limiting handled by middleware layer
         
-        if (!$rateLimitResult['allowed']) {
-            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
-                'type' => 'auth.password_reset',
-                'identifier' => $email,
-                'attempts' => $rateLimitResult['attempts']
-            ], $request);
-            
-            return true;
-        }
-
         $user = User::where('email', $email)->first();
         
         if (!$user) {
@@ -258,19 +224,11 @@ class AuthService implements AuthServiceInterface
 
     public function resetPassword(string $code, string $password, ?\Illuminate\Http\Request $request = null, ?string $email = null): bool
     {
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.reset_verify', $code);
+        // Rate limiting handled by middleware layer
         
-        if (!$rateLimitResult['allowed']) {
-            $this->auditService->logSecurityEvent('rate_limit_exceeded', [
-                'type' => 'auth.reset_verify',
-                'identifier' => 'code_attempt',
-                'attempts' => $rateLimitResult['attempts']
-            ], $request);
-            
-            return false;
-        }
-
         $resetExpiry = $this->timeoutService->getPasswordResetExpiry();
+        $records = \DB::table('password_reset_tokens')
+                     ->where('created_at', '>', now()->subMinutes($resetExpiry));ordResetExpiry();
         $records = \DB::table('password_reset_tokens')
                      ->where('created_at', '>', now()->subMinutes($resetExpiry));
         

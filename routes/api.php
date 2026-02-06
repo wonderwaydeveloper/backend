@@ -78,12 +78,12 @@ Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:
 Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
 
 // === Authentication Routes ===
-Route::prefix('auth')->middleware('security:auth.login')->group(function () {
+Route::prefix('auth')->group(function () {
     // Login & Basic Auth
-    Route::post('/login', [UnifiedAuthController::class, 'login']);
+    Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware('security:auth.login');
     Route::post('/logout', [UnifiedAuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/logout-all', [UnifiedAuthController::class, 'logoutAll'])->middleware('auth:sanctum');
-    Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware(['auth:sanctum', 'security:auth.me']);
     
     // Session Management
     Route::prefix('sessions')->middleware('auth:sanctum')->group(function () {
@@ -92,33 +92,33 @@ Route::prefix('auth')->middleware('security:auth.login')->group(function () {
     });
 
     // Multi-step Registration
-    Route::prefix('register')->middleware('security:auth.register')->group(function () {
-        Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1']);
-        Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2']);
-        Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3']);
-        Route::post('/resend-code', [UnifiedAuthController::class, 'multiStepResendCode']);
+    Route::prefix('register')->group(function () {
+        Route::post('/step1', [UnifiedAuthController::class, 'multiStepStep1'])->middleware('security:auth.register');
+        Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2'])->middleware('security:auth.register');
+        Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3'])->middleware('security:auth.register');
+        Route::post('/resend-code', [UnifiedAuthController::class, 'multiStepResendCode'])->middleware('security:auth.resend');
     });
 
     // Email Verification
     Route::prefix('email')->group(function () {
-        Route::post('/verify', [UnifiedAuthController::class, 'verifyEmail']);
-        Route::post('/resend', [UnifiedAuthController::class, 'resendEmailVerification']);
+        Route::post('/verify', [UnifiedAuthController::class, 'verifyEmail'])->middleware('security:email.verification');
+        Route::post('/resend', [UnifiedAuthController::class, 'resendEmailVerification'])->middleware('security:email.resend');
         Route::get('/status', [UnifiedAuthController::class, 'emailVerificationStatus'])->middleware('auth:sanctum');
     });
 
     // Phone Authentication
     Route::prefix('phone')->group(function () {
-        Route::post('/login/send-code', [UnifiedAuthController::class, 'phoneLoginSendCode']);
-        Route::post('/login/verify-code', [UnifiedAuthController::class, 'phoneLoginVerifyCode']);
-        Route::post('/login/resend-code', [UnifiedAuthController::class, 'phoneLoginResendCode']);
+        Route::post('/login/send-code', [UnifiedAuthController::class, 'phoneLoginSendCode'])->middleware('security:auth.phone_login');
+        Route::post('/login/verify-code', [UnifiedAuthController::class, 'phoneLoginVerifyCode'])->middleware('security:auth.phone_login');
+        Route::post('/login/resend-code', [UnifiedAuthController::class, 'phoneLoginResendCode'])->middleware('security:auth.phone_resend');
     });
 
     // Password Management
-    Route::prefix('password')->middleware('security:auth.password_reset')->group(function () {
-        Route::post('/forgot', [PasswordResetController::class, 'forgotPassword']);
-        Route::post('/verify-code', [PasswordResetController::class, 'verifyCode']);
-        Route::post('/resend', [PasswordResetController::class, 'resendCode']);
-        Route::post('/reset', [PasswordResetController::class, 'resetPassword']);
+    Route::prefix('password')->group(function () {
+        Route::post('/forgot', [PasswordResetController::class, 'forgotPassword'])->middleware('security:auth.password_reset');
+        Route::post('/verify-code', [PasswordResetController::class, 'verifyCode'])->middleware('security:auth.reset_verify');
+        Route::post('/resend', [PasswordResetController::class, 'resendCode'])->middleware('security:auth.reset_resend');
+        Route::post('/reset', [PasswordResetController::class, 'resetPassword'])->middleware('security:auth.reset_verify');
         Route::post('/change', [UnifiedAuthController::class, 'changePassword'])->middleware('auth:sanctum');
     });
 
@@ -151,8 +151,8 @@ Route::prefix('auth')->middleware('security:auth.login')->group(function () {
 
 // Social Authentication
 Route::prefix('auth/social')->group(function () {
-    Route::get('/{provider}', [SocialAuthController::class, 'redirect'])->where('provider', 'google');
-    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google');
+    Route::get('/{provider}', [SocialAuthController::class, 'redirect'])->where('provider', 'google')->middleware('security:auth.social');
+    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google')->middleware('security:auth.social');
 });
 
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
