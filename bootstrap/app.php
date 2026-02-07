@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'csrf.protection' => \App\Http\Middleware\CSRFProtection::class,
             'set.locale' => \App\Http\Middleware\SetLocale::class,
             'captcha' => \App\Http\Middleware\CaptchaMiddleware::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
 
         $middleware->throttleApi('60,1');

@@ -71,8 +71,19 @@ class AppServiceProvider extends ServiceProvider
 
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
 
-        // Register Policies
+        // Register All Policies
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Post::class, \App\Policies\PostPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Comment::class, \App\Policies\CommentPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Community::class, \App\Policies\CommunityPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Moment::class, \App\Policies\MomentPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Notification::class, \App\Policies\NotificationPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\ScheduledPost::class, \App\Policies\ScheduledPostPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Space::class, \App\Policies\SpacePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\UserList::class, \App\Policies\UserListPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\AuditLog::class, \App\Policies\AuditLogPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\ProfilePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Message::class, \App\Policies\MessagePolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Bookmark::class, \App\Policies\BookmarkPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Report::class, \App\Policies\ReportPolicy::class);
     }
 }
