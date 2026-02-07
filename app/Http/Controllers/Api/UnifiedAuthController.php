@@ -21,7 +21,8 @@ class UnifiedAuthController extends Controller
         private SmsService $smsService,
         private TwoFactorService $twoFactorService,
         private PasswordSecurityService $passwordService,
-        private \App\Services\RateLimitingService $rateLimiter
+        private \App\Services\RateLimitingService $rateLimiter,
+        private VerificationCodeService $verificationCodeService
     ) {}
 
     public function login(LoginRequest $request): JsonResponse
@@ -45,17 +46,27 @@ class UnifiedAuthController extends Controller
         
         if (isset($result['user'])) {
             $user = $result['user'];
+            
+            // Check password age (Twitter standard)
+            if ($this->passwordService->isPasswordExpired($user)) {
+                return response()->json([
+                    'requires_password_change' => true,
+                    'message' => 'Your password has expired. Please change it.',
+                    'user_id' => $user->id
+                ], 403);
+            }
+            
             $fingerprint = DeviceFingerprintService::generate($request);
             
             $lockKey = "device_check:{$user->id}:{$fingerprint}";
-            $lock = Cache::lock($lockKey, 10);
+            $lock = Cache::lock($lockKey, 30);
             
             if ($lock->get()) {
                 try {
                     $trustedDevice = $user->devices()->where('fingerprint', $fingerprint)->where('is_trusted', true)->first();
                     
                     if (!$trustedDevice) {
-                        $code = random_int(100000, 999999);
+                        $code = $this->verificationCodeService->generateCode();
                         
                         $verificationData = [
                             'code' => $code,
@@ -67,14 +78,18 @@ class UnifiedAuthController extends Controller
                                 'location' => 'Unknown Location'
                             ],
                             'code_sent_at' => now()->timestamp,
-                            'expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry())->timestamp,
+                            'expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp(),
                             'resend_count' => 0
                         ];
                         
                         $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
-                        Cache::put($cacheKey, $verificationData, now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry()));
+                        Cache::put($cacheKey, $verificationData, now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
                         
-                        $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
+                        if ($user->email) {
+                            $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
+                        } elseif ($user->phone) {
+                            $this->smsService->sendVerificationCode($user->phone, $code);
+                        }
                         
                         return response()->json([
                             'requires_device_verification' => true,
@@ -82,7 +97,7 @@ class UnifiedAuthController extends Controller
                             'fingerprint' => $fingerprint,
                             'message' => 'Device verification required. Check your email for verification code.',
                             'code_expires_at' => $verificationData['expires_at'],
-                            'resend_available_at' => now()->addSeconds(60)->timestamp
+                            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp()
                         ]);
                     }
                 } finally {
@@ -185,11 +200,11 @@ class UnifiedAuthController extends Controller
             'contact_type' => 'required|in:email,phone'
         ]);
 
-        $sessionId = Str::uuid();
-        $code = random_int(100000, 999999);
+        $sessionId = $this->verificationCodeService->generateSessionId();
+        $code = $this->verificationCodeService->generateCode();
 
         if (User::where($request->contact_type, $request->contact)->exists()) {
-            return response()->json(['error' => 'Contact already registered'], 422);
+            return response()->json(['error' => 'Unable to complete registration'], 422);
         }
 
         Cache::put("registration:{$sessionId}", [
@@ -201,8 +216,8 @@ class UnifiedAuthController extends Controller
             'step' => 1,
             'verified' => false,
             'code_sent_at' => now()->timestamp,
-            'code_expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry())->timestamp
-        ], now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry()));
+            'code_expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp()
+        ], now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
 
         if ($request->contact_type === 'email') {
             $this->emailService->sendVerificationEmail((object)['email' => $request->contact, 'name' => $request->name], $code);
@@ -214,8 +229,8 @@ class UnifiedAuthController extends Controller
             'session_id' => $sessionId,
             'message' => 'Verification code sent',
             'next_step' => 2,
-            'resend_available_at' => now()->addSeconds(60)->timestamp,
-            'code_expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry())->timestamp
+            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(),
+            'code_expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp()
         ]);
     }
 
@@ -239,24 +254,39 @@ class UnifiedAuthController extends Controller
             return response()->json(['error' => 'Invalid verification code'], 422);
         }
 
+        // Generate username suggestion
+        $suggestedUsername = $this->generateUsername($session['name']);
+
         $session['verified'] = true;
         $session['step'] = 2;
-        Cache::put("registration:{$request->session_id}", $session, now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry()));
+        $session['suggested_username'] = $suggestedUsername;
+        Cache::put("registration:{$request->session_id}", $session, now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
 
-        return response()->json(['message' => 'Contact verified', 'next_step' => 3]);
+        return response()->json([
+            'message' => 'Contact verified',
+            'next_step' => 3,
+            'suggested_username' => $suggestedUsername
+        ]);
     }
 
     public function multiStepStep3(Request $request): JsonResponse
     {
         $request->validate([
             'session_id' => 'required|uuid',
-            'username' => ['required', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
+            'username' => ['nullable', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
             'password' => ['required', 'string', 'min:8', 'confirmed', new StrongPassword()]
         ]);
 
         $session = Cache::get("registration:{$request->session_id}");
         if (!$session || $session['step'] !== 2 || !$session['verified']) {
             return response()->json(['error' => 'Invalid session'], 422);
+        }
+
+        // Use provided username or suggested username
+        $username = $request->username ?? $session['suggested_username'];
+        
+        if (!$username) {
+            return response()->json(['error' => 'Username is required'], 422);
         }
 
         $lockKey = "user_creation:{$session['contact']}";
@@ -268,17 +298,17 @@ class UnifiedAuthController extends Controller
         
         try {
             if (User::where($session['contact_type'], $session['contact'])->exists()) {
-                return response()->json(['error' => 'Contact already registered'], 422);
+                return response()->json(['error' => 'Unable to complete registration'], 422);
             }
             
-            if (User::where('username', $request->username)->exists()) {
+            if (User::where('username', $username)->exists()) {
                 return response()->json(['error' => 'Username already taken'], 422);
             }
 
             // Create user with basic data first
             $userData = [
                 'name' => $session['name'],
-                'username' => $request->username,
+                'username' => $username,
                 'date_of_birth' => $session['date_of_birth'],
                 $session['contact_type'] => $session['contact'],
                 'password' => 'temp', // Temporary password
@@ -342,13 +372,13 @@ class UnifiedAuthController extends Controller
             ], 429);
         }
 
-        $code = random_int(100000, 999999);
+        $code = $this->verificationCodeService->generateCode();
         $session['code'] = $code;
         $session['code_sent_at'] = now()->timestamp;
-        $session['code_expires_at'] = now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry())->timestamp;
+        $session['code_expires_at'] = $this->verificationCodeService->getCodeExpiryTimestamp();
         $session['resend_count'] = ($session['resend_count'] ?? 0) + 1;
         
-        Cache::put("registration:{$request->session_id}", $session, now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry()));
+        Cache::put("registration:{$request->session_id}", $session, now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
 
         if ($session['contact_type'] === 'email') {
             $this->emailService->sendVerificationEmail((object)['email' => $session['contact'], 'name' => $session['name']], $code);
@@ -359,8 +389,8 @@ class UnifiedAuthController extends Controller
         return response()->json([
             'message' => 'New verification code sent',
             'session_id' => $request->session_id,
-            'resend_available_at' => now()->addSeconds(60)->timestamp,
-            'code_expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getDeviceVerificationExpiry())->timestamp,
+            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(),
+            'code_expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp(),
             'attempts_remaining' => $rateLimitResult['remaining']
         ]);
     }
@@ -410,14 +440,14 @@ class UnifiedAuthController extends Controller
             ], 429);
         }
 
-        $code = random_int(100000, 999999);
+        $code = $this->verificationCodeService->generateCode();
         $user->update(['email_verification_token' => Hash::make($code)]);
 
         $this->emailService->sendVerificationEmail($user, $code);
 
         return response()->json([
             'message' => 'Verification code sent',
-            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(),
             'attempts_remaining' => $rateLimitResult['remaining']
         ]);
     }
@@ -465,7 +495,7 @@ class UnifiedAuthController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->password, $user->password)) {
+        if (!$this->twoFactorService->verifyPassword($user, $request->password)) {
             throw ValidationException::withMessages([
                 'password' => ['Incorrect password'],
             ]);
@@ -476,9 +506,10 @@ class UnifiedAuthController extends Controller
         }
 
         $secret = $this->twoFactorService->generateSecret();
+        $identifier = $user->email ?? $user->phone ?? $user->username;
         $qrCodeUrl = $this->twoFactorService->getQRCodeUrl(
             config('app.name'),
-            $user->email,
+            $identifier,
             $secret
         );
 
@@ -501,7 +532,7 @@ class UnifiedAuthController extends Controller
             return response()->json(['message' => '2FA not initialized'], 400);
         }
 
-        $secret = decrypt($user->two_factor_secret);
+        $secret = $this->twoFactorService->decryptSecret($user->two_factor_secret);
         $valid = $this->twoFactorService->verifyCode($secret, $request->code);
 
         if (!$valid) {
@@ -529,7 +560,7 @@ class UnifiedAuthController extends Controller
 
         $user = $request->user();
 
-        if (!Hash::check($request->password, $user->password)) {
+        if (!$this->twoFactorService->verifyPassword($user, $request->password)) {
             throw ValidationException::withMessages([
                 'password' => ['Incorrect password'],
             ]);
@@ -571,8 +602,8 @@ class UnifiedAuthController extends Controller
             ], 429);
         }
 
-        $code = random_int(100000, 999999);
-        $sessionId = Str::uuid();
+        $code = $this->verificationCodeService->generateCode();
+        $sessionId = $this->verificationCodeService->generateSessionId();
 
         Cache::put("phone_login:{$sessionId}", [
             'phone' => $request->phone,
@@ -587,7 +618,7 @@ class UnifiedAuthController extends Controller
         return response()->json([
             'session_id' => $sessionId,
             'message' => 'Login code sent to your phone',
-            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(),
             'code_expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getTwoFactorCodeExpiry())->timestamp
         ]);
     }
@@ -655,7 +686,7 @@ class UnifiedAuthController extends Controller
             ], 429);
         }
 
-        $code = random_int(100000, 999999);
+        $code = $this->verificationCodeService->generateCode();
         $session['code'] = $code;
         $session['code_sent_at'] = now()->timestamp;
         $session['code_expires_at'] = now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getTwoFactorCodeExpiry())->timestamp;
@@ -666,7 +697,7 @@ class UnifiedAuthController extends Controller
 
         return response()->json([
             'message' => 'New login code sent',
-            'resend_available_at' => now()->addSeconds(60)->timestamp,
+            'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(),
             'code_expires_at' => now()->addMinutes(app(\App\Services\SessionTimeoutService::class)->getTwoFactorCodeExpiry())->timestamp,
             'attempts_remaining' => $rateLimitResult['remaining']
         ]);
@@ -702,5 +733,45 @@ class UnifiedAuthController extends Controller
         $events = $auditService->getSecurityEvents(7);
         
         return response()->json($events);
+    }
+
+    public function checkUsernameAvailability(Request $request): JsonResponse
+    {
+        $request->validate([
+            'username' => ['required', 'string', 'max:15', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
+        ]);
+
+        $available = !User::where('username', $request->username)->exists();
+
+        return response()->json([
+            'available' => $available,
+            'username' => $request->username
+        ]);
+    }
+
+    private function generateUsername(string $name): string
+    {
+        $username = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($name));
+        
+        if (empty($username) || is_numeric($username[0])) {
+            $username = 'user' . $username;
+        }
+        
+        $username = substr($username, 0, 15);
+        
+        if (strlen($username) < 4) {
+            $username = $username . str_repeat('x', 4 - strlen($username));
+        }
+        
+        $originalUsername = $username;
+        $count = 1;
+        while (User::where('username', $username)->exists()) {
+            $suffix = (string)$count;
+            $maxBase = 15 - strlen($suffix);
+            $username = substr($originalUsername, 0, $maxBase) . $suffix;
+            $count++;
+        }
+        
+        return $username;
     }
 }

@@ -40,7 +40,7 @@ class TwoFactorService
         $hashedCodes = [];
         
         for ($i = 0; $i < $count; $i++) {
-            $code = strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
+            $code = strtoupper(substr(bin2hex(random_bytes(8)), 0, 16)); // 16 characters
             $codes[] = $code;
             $hashedCodes[] = Hash::make($code);
         }
@@ -50,5 +50,15 @@ class TwoFactorService
             'plain' => $codes,
             'hashed' => $hashedCodes
         ];
+    }
+
+    public function verifyPassword(\App\Models\User $user, string $password): bool
+    {
+        return Hash::check($password, $user->password);
+    }
+
+    public function decryptSecret(string $encryptedSecret): string
+    {
+        return decrypt($encryptedSecret);
     }
 }

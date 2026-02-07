@@ -16,7 +16,8 @@ class SocialAuthController extends Controller
         private DeviceFingerprintService $deviceService,
         private EmailService $emailService,
         private \App\Services\RateLimitingService $rateLimiter,
-        private \App\Services\SessionTimeoutService $timeoutService
+        private \App\Services\SessionTimeoutService $timeoutService,
+        private \App\Services\VerificationCodeService $verificationCodeService
     ) {}
 
     public function redirect($provider, Request $request)
@@ -114,7 +115,7 @@ class SocialAuthController extends Controller
                 return redirect($frontendUrl . '/social/callback?' . $queryParams);
             }
 
-            $code = random_int(100000, 999999);
+            $code = $this->verificationCodeService->generateCode();
             
             $verificationData = [
                 'code' => $code,
@@ -126,13 +127,17 @@ class SocialAuthController extends Controller
                     'location' => 'Unknown Location'
                 ],
                 'code_sent_at' => now()->timestamp,
-                'expires_at' => now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry())->timestamp,
+                'expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp(),
                 'resend_count' => 0
             ];
             
-            Cache::put("device_verification_by_fingerprint:{$fingerprint}", $verificationData, now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry()));
+            Cache::put("device_verification_by_fingerprint:{$fingerprint}", $verificationData, now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
             
-            $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
+            if ($user->email) {
+                $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
+            } elseif ($user->phone) {
+                app(\App\Services\SmsService::class)->sendVerificationCode($user->phone, $code);
+            }
             
             $frontendUrl = config('app.frontend_url', 'http://localhost:3000');
             
@@ -144,7 +149,7 @@ class SocialAuthController extends Controller
                 'provider' => $provider,
                 'message' => 'Device verification required. Check your email for verification code.',
                 'code_expires_at' => $verificationData['expires_at'],
-                'resend_available_at' => now()->addSeconds(30)->timestamp
+                'resend_available_at' => $this->verificationCodeService->getResendAvailableTimestamp(30)
             ]);
             
             return redirect($frontendUrl . '/social/callback?' . $queryParams);

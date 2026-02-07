@@ -21,7 +21,8 @@ class AuthService implements AuthServiceInterface
         private RateLimitingService $rateLimiter,
         private SecurityMonitoringService $securityService,
         private SessionTimeoutService $timeoutService,
-        private PasswordSecurityService $passwordService
+        private PasswordSecurityService $passwordService,
+        private VerificationCodeService $verificationCodeService
     ) {
     }
 
@@ -86,6 +87,11 @@ class AuthService implements AuthServiceInterface
         }
 
         if (!$validCredentials) {
+            // Increment failed login attempts for CAPTCHA
+            $cacheKey = "failed_login:{$identifier}";
+            \Cache::increment($cacheKey, 1);
+            \Cache::expire($cacheKey, 900); // 15 minutes
+            
             $this->auditService->logAuthEvent('failed_login', $user ?? new User(['email' => $loginDTO->login]), [
                 'login_attempt' => $loginDTO->login,
                 'failure_reason' => 'invalid_credentials',
@@ -108,6 +114,9 @@ class AuthService implements AuthServiceInterface
                 'login' => ['Invalid login credentials'],
             ]);
         }
+
+        // Clear failed attempts on successful login
+        \Cache::forget("failed_login:{$identifier}");
 
         if (!$createToken) {
             return ['user' => $user];
@@ -174,7 +183,7 @@ class AuthService implements AuthServiceInterface
         }
 
         $newToken = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
-        $newRefreshToken = Str::random(60);
+        $newRefreshToken = Str::random(config('authentication.tokens.refresh_token_length', 60));
         
         $user->update([
             'refresh_token' => Hash::make($newRefreshToken)
@@ -188,70 +197,92 @@ class AuthService implements AuthServiceInterface
         ];
     }
 
-    public function forgotPassword(string $email, ?\Illuminate\Http\Request $request = null): bool
+    public function forgotPassword(string $contact, ?\Illuminate\Http\Request $request = null, string $field = 'email'): bool
     {
         // Rate limiting handled by middleware layer
         
-        $user = User::where('email', $email)->first();
+        $user = User::where($field, $contact)->first();
         
         if (!$user) {
             return true;
         }
 
-        $code = random_int(100000, 999999);
+        $code = $this->verificationCodeService->generateCode();
         $expiryMinutes = $this->timeoutService->getPasswordResetExpiry();
         
         // Store in both database and cache for consistency
-        \DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $email],
-            [
-                'token' => Hash::make($code),
-                'created_at' => now()
-            ]
-        );
+        if ($field === 'email') {
+            \DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $contact],
+                [
+                    'token' => Hash::make($code),
+                    'created_at' => now()
+                ]
+            );
+        }
         
-        // Also store in cache for verify endpoint
-        \Cache::put("password_reset:{$email}", [
+        // Store in cache for verify endpoint (works for both email and phone)
+        \Cache::put("password_reset:{$contact}", [
             'code' => (string)$code,
+            'field' => $field,
             'expires_at' => now()->addMinutes($expiryMinutes)->timestamp
         ], now()->addMinutes($expiryMinutes));
 
-        $this->emailService->sendPasswordResetEmail($user, $code);
+        if ($field === 'email') {
+            $this->emailService->sendPasswordResetEmail($user, $code);
+        } else {
+            app(SmsService::class)->sendVerificationCode($contact, $code);
+        }
+        
         $this->auditService->logAuthEvent('password_reset_requested', $user);
         
         return true;
     }
 
-    public function resetPassword(string $code, string $password, ?\Illuminate\Http\Request $request = null, ?string $email = null): bool
+    public function resetPassword(string $code, string $password, ?\Illuminate\Http\Request $request = null, ?string $contact = null, string $field = 'email'): bool
     {
         // Rate limiting handled by middleware layer
         
         $resetExpiry = $this->timeoutService->getPasswordResetExpiry();
-        $records = \DB::table('password_reset_tokens')
-                     ->where('created_at', '>', now()->subMinutes($resetExpiry));ordResetExpiry();
-        $records = \DB::table('password_reset_tokens')
-                     ->where('created_at', '>', now()->subMinutes($resetExpiry));
         
-        // If email provided, filter by email for better performance
-        if ($email) {
-            $records = $records->where('email', $email);
-        }
-        
-        $records = $records->get();
-        
-        $validRecord = null;
-        foreach ($records as $record) {
-            if (Hash::check($code, $record->token)) {
-                $validRecord = $record;
-                break;
+        // For email, check database
+        if ($field === 'email') {
+            $records = \DB::table('password_reset_tokens')
+                         ->where('created_at', '>', now()->subMinutes($resetExpiry));
+            
+            if ($contact) {
+                $records = $records->where('email', $contact);
             }
-        }
+            
+            $records = $records->get();
+            
+            $validRecord = null;
+            foreach ($records as $record) {
+                if (Hash::check($code, $record->token)) {
+                    $validRecord = $record;
+                    break;
+                }
+            }
 
-        if (!$validRecord) {
-            return false;
-        }
+            if (!$validRecord) {
+                return false;
+            }
 
-        $user = User::where('email', $validRecord->email)->first();
+            $user = User::where('email', $validRecord->email)->first();
+        } else {
+            // For phone, check cache
+            if (!$contact) {
+                return false;
+            }
+            
+            $cacheData = \Cache::get("password_reset:{$contact}");
+            if (!$cacheData || $cacheData['code'] !== $code) {
+                return false;
+            }
+            
+            $user = User::where('phone', $contact)->first();
+        }
+        
         if (!$user) {
             return false;
         }
@@ -269,8 +300,12 @@ class AuthService implements AuthServiceInterface
         }
 
         // Clean up both database and cache
-        \DB::table('password_reset_tokens')->where('email', $validRecord->email)->delete();
-        \Cache::forget("password_reset:{$validRecord->email}");
+        if ($field === 'email' && isset($validRecord)) {
+            \DB::table('password_reset_tokens')->where('email', $validRecord->email)->delete();
+            \Cache::forget("password_reset:{$validRecord->email}");
+        } else {
+            \Cache::forget("password_reset:{$contact}");
+        }
         
         // Revoke all active sessions for security
         $this->tokenService->revokeAllUserSessions($user);
@@ -317,7 +352,7 @@ class AuthService implements AuthServiceInterface
             return false;
         }
 
-        $token = Str::random(60);
+        $token = Str::random(config('authentication.email.verification_token_length', 60));
         
         $user->update([
             'email_verification_token' => Hash::make($token)

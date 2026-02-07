@@ -24,10 +24,10 @@ return [
     ],
     
     'rate_limiting' => [
-        // Authentication
+        // Authentication (Twitter-compatible)
         'login' => ['max_attempts' => 5, 'window_minutes' => 15],
         'register' => ['max_attempts' => 3, 'window_minutes' => 60],
-        'password_reset' => ['max_attempts' => 2, 'window_minutes' => 60],
+        'password_reset' => ['max_attempts' => 3, 'window_minutes' => 60],
         'device_verify' => ['max_attempts' => 3, 'window_minutes' => 1],
         'email_verification' => ['max_attempts' => 3, 'window_minutes' => 60],
         'reset_verify' => ['max_attempts' => 5, 'window_minutes' => 15],
@@ -78,6 +78,7 @@ return [
     'tokens' => [
         'access_lifetime_seconds' => env('ACCESS_TOKEN_LIFETIME', 7200), // 2h like Twitter
         'refresh_lifetime_seconds' => env('REFRESH_TOKEN_LIFETIME', 604800),
+        'refresh_token_length' => 60,
         'remember_lifetime_seconds' => env('REMEMBER_TOKEN_LIFETIME', 1209600),
         'auto_refresh_threshold' => env('AUTO_REFRESH_THRESHOLD', 300),
     ],
@@ -91,6 +92,9 @@ return [
     'email' => [
         'verification_expire_minutes' => env('EMAIL_VERIFICATION_EXPIRE', 15),
         'code_length' => 6,
+        'code_min' => 100000,
+        'code_max' => 999999,
+        'verification_token_length' => 60,
         'max_code_attempts' => 5,
         'blacklist_domains' => [
             '10minutemail.com',

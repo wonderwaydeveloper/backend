@@ -18,10 +18,9 @@ class PasswordSecurityService
         $errors = [];
         $config = config('authentication.password.security', [
             'min_length' => 8,
-            'require_letters' => true,  // Changed from separate upper/lower
+            'require_letters' => true,
             'require_numbers' => true,
             'require_special_chars' => false,
-            'check_common_passwords' => true
         ]);
         
         // Length check
@@ -29,7 +28,7 @@ class PasswordSecurityService
             $errors[] = "Password must be at least {$config['min_length']} characters";
         }
         
-        // Character requirements - relaxed to match StrongPassword rule
+        // Character requirements
         if ($config['require_letters'] && !preg_match('/[a-zA-Z]/', $password)) {
             $errors[] = 'Password must contain at least one letter';
         }
@@ -43,7 +42,7 @@ class PasswordSecurityService
         }
         
         // Common password check
-        if ($config['check_common_passwords'] && $this->isCommonPassword($password)) {
+        if ($this->isCommonPassword($password)) {
             $errors[] = 'Password is too weak';
         }
         
@@ -100,18 +99,18 @@ class PasswordSecurityService
             throw new \InvalidArgumentException(implode(', ', $errors));
         }
         
-        // Check minimum age
-        if (!$this->canChangePassword($user->id)) {
+        // Check minimum age only if user exists in DB
+        if ($user->exists && !$this->canChangePassword($user->id)) {
             throw new \InvalidArgumentException('Password was changed too recently');
         }
         
-        // Check history
-        if (!$this->checkPasswordHistory($user->id, $newPassword)) {
+        // Check history only if user exists in DB
+        if ($user->exists && !$this->checkPasswordHistory($user->id, $newPassword)) {
             throw new \InvalidArgumentException('Password was used recently');
         }
         
-        // Store old password in history
-        if ($user->password) {
+        // Store old password in history only if user exists
+        if ($user->exists && $user->password) {
             $this->addToPasswordHistory($user->id, $user->password);
         }
         
@@ -121,11 +120,11 @@ class PasswordSecurityService
             'password_changed_at' => now()
         ]);
         
-        // Update last change timestamp
-        Redis::set("password_last_change:{$user->id}", time());
-        
-        // Invalidate all sessions except current
-        $this->invalidateOtherSessions($user->id);
+        // Update last change timestamp only if user exists
+        if ($user->exists) {
+            Redis::set("password_last_change:{$user->id}", time());
+            $this->invalidateOtherSessions($user->id);
+        }
     }
     
     private function getPasswordHistory(int $userId): array

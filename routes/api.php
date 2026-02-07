@@ -74,13 +74,10 @@ Route::post('/upload', function () {
 // GraphQL endpoint
 Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:sanctum');
 
-// Me endpoint (for auth testing)
-Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware('auth:sanctum');
-
 // === Authentication Routes ===
 Route::prefix('auth')->group(function () {
     // Login & Basic Auth
-    Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware('security:auth.login');
+    Route::post('/login', [UnifiedAuthController::class, 'login'])->middleware(['captcha', 'security:auth.login']);
     Route::post('/logout', [UnifiedAuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('/logout-all', [UnifiedAuthController::class, 'logoutAll'])->middleware('auth:sanctum');
     Route::get('/me', [UnifiedAuthController::class, 'me'])->middleware(['auth:sanctum', 'security:auth.me']);
@@ -97,6 +94,7 @@ Route::prefix('auth')->group(function () {
         Route::post('/step2', [UnifiedAuthController::class, 'multiStepStep2'])->middleware('security:auth.register');
         Route::post('/step3', [UnifiedAuthController::class, 'multiStepStep3'])->middleware('security:auth.register');
         Route::post('/resend-code', [UnifiedAuthController::class, 'multiStepResendCode'])->middleware('security:auth.resend');
+        Route::post('/check-username', [UnifiedAuthController::class, 'checkUsernameAvailability']);
     });
 
     // Email Verification
@@ -130,8 +128,10 @@ Route::prefix('auth')->group(function () {
     });
     
     // Device Verification (without auth middleware since user is logging in)
-    Route::post('/verify-device', [DeviceController::class, 'verifyDevice'])->middleware('security:device.verification');
-    Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode'])->middleware('security:device.verification');
+    Route::post('/verify-device', [DeviceController::class, 'verifyDevice'])
+        ->middleware('throttle:5,1'); // 5 attempts per minute
+    Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode'])
+        ->middleware('throttle:3,1'); // 3 attempts per minute
     
     // Age Verification
     Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
@@ -151,8 +151,11 @@ Route::prefix('auth')->group(function () {
 
 // Social Authentication
 Route::prefix('auth/social')->group(function () {
-    Route::get('/{provider}', [SocialAuthController::class, 'redirect'])->where('provider', 'google')->middleware('security:auth.social');
-    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])->where('provider', 'google')->middleware('security:auth.social');
+    Route::get('/{provider}', [SocialAuthController::class, 'redirect'])
+        ->where('provider', 'google')
+        ->middleware('throttle:10,1'); // 10 attempts per minute
+    Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])
+        ->where('provider', 'google'); // No rate limit - it's a redirect from Google
 });
 
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {

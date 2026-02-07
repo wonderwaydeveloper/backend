@@ -16,7 +16,8 @@ class DeviceController extends Controller
     public function __construct(
         private EmailService $emailService,
         private \App\Services\RateLimitingService $rateLimiter,
-        private \App\Services\SessionTimeoutService $timeoutService
+        private \App\Services\SessionTimeoutService $timeoutService,
+        private \App\Services\VerificationCodeService $verificationCodeService
     ) {}
     /**
      * Register a new device (simple registration)
@@ -339,7 +340,7 @@ class DeviceController extends Controller
         // Update existing session data
         $existingData = $sessionData;
         
-        $code = random_int(100000, 999999);
+        $code = $this->verificationCodeService->generateCode();
         
         $verificationData = [
             'code' => $code,
@@ -351,18 +352,18 @@ class DeviceController extends Controller
                 'location' => 'Unknown Location'
             ],
             'code_sent_at' => now()->timestamp,
-            'expires_at' => now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry())->timestamp,
+            'expires_at' => $this->verificationCodeService->getCodeExpiryTimestamp(),
             'resend_count' => ($existingData['resend_count'] ?? 0) + 1
         ];
         
         // Store verification data with fingerprint-based key
         $cacheKey = "device_verification_by_fingerprint:{$fingerprint}";
-        Cache::put($cacheKey, $verificationData, now()->addMinutes($this->timeoutService->getDeviceVerificationExpiry()));
+        Cache::put($cacheKey, $verificationData, now()->addMinutes($this->verificationCodeService->getExpiryMinutes()));
         
         // Send verification email
         $this->emailService->sendDeviceVerificationEmail($user, $code, $verificationData['device_info']);
         
-        $resendAvailableAt = now()->addSeconds(60)->timestamp;
+        $resendAvailableAt = $this->verificationCodeService->getResendAvailableTimestamp();
         
         return response()->json([
             'message' => 'New verification code sent to your email',

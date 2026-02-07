@@ -17,12 +17,16 @@ class PasswordResetController extends Controller
 
     public function forgotPassword(Request $request): JsonResponse
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate([
+            'contact' => 'required|string',
+            'contact_type' => 'required|in:email,phone'
+        ]);
         
-        $success = $this->authService->forgotPassword($request->email, $request);
+        $field = $request->contact_type;
+        $success = $this->authService->forgotPassword($request->contact, $request, $field);
         
         return response()->json([
-            'message' => 'If this email is registered, a password reset code has been sent.',
+            'message' => 'If this ' . $field . ' is registered, a password reset code has been sent.',
             'resend_available_at' => now()->addSeconds(60)->timestamp
         ]);
     }
@@ -30,11 +34,12 @@ class PasswordResetController extends Controller
     public function verifyCode(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'contact' => 'required|string',
+            'contact_type' => 'required|in:email,phone',
             'code' => 'required|string|size:6'
         ]);
 
-        $cacheKey = "password_reset:{$request->email}";
+        $cacheKey = "password_reset:{$request->contact}";
         $resetData = Cache::get($cacheKey);
         
         if (!$resetData || $resetData['code'] !== $request->code) {
@@ -50,9 +55,12 @@ class PasswordResetController extends Controller
 
     public function resendCode(Request $request): JsonResponse
     {
-        $request->validate(['email' => 'required|email']);
+        $request->validate([
+            'contact' => 'required|string',
+            'contact_type' => 'required|in:email,phone'
+        ]);
         
-        $rateLimitResult = $this->rateLimiter->checkLimit('auth.password_resend', $request->email);
+        $rateLimitResult = $this->rateLimiter->checkLimit('auth.password_resend', $request->contact);
         
         if (!$rateLimitResult['allowed']) {
             return response()->json([
@@ -61,10 +69,11 @@ class PasswordResetController extends Controller
             ], 429);
         }
         
-        $success = $this->authService->forgotPassword($request->email, $request);
+        $field = $request->contact_type;
+        $success = $this->authService->forgotPassword($request->contact, $request, $field);
         
         return response()->json([
-            'message' => 'If this email is registered, a new password reset code has been sent.',
+            'message' => 'If this ' . $field . ' is registered, a new password reset code has been sent.',
             'resend_available_at' => now()->addSeconds(60)->timestamp
         ]);
     }
@@ -72,12 +81,13 @@ class PasswordResetController extends Controller
     public function resetPassword(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'contact' => 'required|string',
+            'contact_type' => 'required|in:email,phone',
             'code' => 'required|string|size:6',
             'password' => ['required', 'string', 'min:8', 'confirmed', new StrongPassword()]
         ]);
 
-        $success = $this->authService->resetPassword($request->code, $request->password, $request, $request->email);
+        $success = $this->authService->resetPassword($request->code, $request->password, $request, $request->contact, $request->contact_type);
         
         if (!$success) {
             return response()->json(['error' => 'Invalid or expired code'], 422);

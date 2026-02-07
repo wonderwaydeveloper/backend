@@ -90,8 +90,8 @@ class DeviceFingerprintService
     
     private static function getTemporalComponent(): string
     {
-        // Changes daily to prevent long-term tracking
-        return date('Y-m-d');
+        // Changes weekly to balance security and user experience
+        return date('Y-W'); // Year-Week format
     }
     
     private static function getSubnet(string $ip): string

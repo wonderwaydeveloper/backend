@@ -20,20 +20,43 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Register Authentication Services as Singletons
+        $this->app->singleton(\App\Services\SessionTimeoutService::class);
+        $this->app->singleton(\App\Services\TwoFactorService::class);
+        $this->app->singleton(\App\Services\SmsService::class);
+        
+        // Register with proper dependencies
+        $this->app->singleton(\App\Services\RateLimitingService::class, function ($app) {
+            return new \App\Services\RateLimitingService(
+                $app->make(\App\Services\AuditTrailService::class)
+            );
+        });
+        
+        $this->app->singleton(\App\Services\EmailService::class, function ($app) {
+            return new \App\Services\EmailService(
+                $app->make(\App\Services\AuditTrailService::class),
+                $app->make(\App\Services\RateLimitingService::class)
+            );
+        });
+        
+        $this->app->singleton(\App\Services\AuditTrailService::class);
+        
+        $this->app->singleton(\App\Services\SecurityMonitoringService::class, function ($app) {
+            return new \App\Services\SecurityMonitoringService(
+                $app->make(\App\Services\AuditTrailService::class),
+                $app->make(\App\Services\RateLimitingService::class)
+            );
+        });
+        
         $this->app->bind(\App\Services\NotificationService::class, function ($app) {
-            // In testing, use null services to avoid dependencies
             if ($app->environment('testing')) {
                 return new \App\Services\NotificationService(null, null);
             }
-
             return new \App\Services\NotificationService(
                 $app->make(\App\Services\EmailService::class),
                 $app->make(\App\Services\PushNotificationService::class)
             );
         });
-        
-        // Register SecurityMonitoringService
-        $this->app->singleton(\App\Services\SecurityMonitoringService::class);
     }
 
     /**

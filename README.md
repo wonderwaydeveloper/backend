@@ -1,54 +1,71 @@
 # Microblogging Platform
 
-A modern, enterprise-grade microblogging platform built with Laravel 12, featuring advanced authentication, real-time capabilities, comprehensive social media functionality, and monetization systems.
+A modern microblogging platform built with Laravel 12, featuring advanced authentication, real-time capabilities, and comprehensive social media functionality.
 
 ## 🚀 Features
 
 ### Authentication & Security
-- **Multi-step Registration**: Email/Phone verification with OTP
-- **Social Authentication**: Google, Apple integration
-- **Two-Factor Authentication**: Google Authenticator with backup codes
-- **Advanced Security**: Brute force protection, device fingerprinting, session management
-- **Password Security**: History tracking, strength validation, secure reset
-- **Real-time Monitoring**: Security audit system with threat detection
+- **Multi-step Registration**: 3-step registration with email/phone verification (OTP)
+- **Social Authentication**: Google OAuth integration
+- **Two-Factor Authentication**: Google Authenticator (2FA)
+- **Device Management**: Device fingerprinting, verification, and trust system
+- **Session Management**: Multi-device session tracking and revocation
+- **Password Security**: Secure reset with OTP, password change
+- **Security Monitoring**: Audit logs, security events, anomaly detection
 
 ### Social Features
-- **Posts & Content**: Text posts (280 chars), media upload, drafts, scheduled posts
-- **Interactions**: Like, comment, repost, quote tweets
-- **Social Graph**: Follow/unfollow, follow requests for private accounts
-- **Mentions & Hashtags**: User mentions, trending hashtags
+- **Posts**: Create, edit, delete posts with 280 character limit
+- **Drafts**: Save posts as drafts before publishing
+- **Scheduled Posts**: Schedule posts for future publishing
+- **Threads**: Create multi-post threads
+- **Interactions**: Like, comment, repost, quote posts
+- **Follow System**: Follow/unfollow users, follow requests for private accounts
+- **Mentions & Hashtags**: @mentions and #hashtags with trending support
 - **Bookmarks**: Save posts for later
-- **Lists & Spaces**: User lists, audio spaces
-- **Direct Messaging**: Real-time private messaging
-- **Community Notes**: Collaborative fact-checking
+- **Direct Messaging**: Real-time private messaging with typing indicators
+- **Community Notes**: Collaborative fact-checking with voting system
+
+### Communities
+- **Create Communities**: Public/private communities
+- **Community Posts**: Post within communities
+- **Member Management**: Join requests, approve/reject members
+- **Roles & Permissions**: Community admin and member roles
 
 ### Content & Media
-- **Media Upload**: Images, videos, documents with CDN integration
-- **Image Processing**: Automatic optimization, thumbnail generation
-- **File Management**: AWS S3 storage with CloudFront CDN
-- **Content Moderation**: Spam detection, reporting system, auto-moderation
+- **Media Upload**: Images, videos, documents
+- **GIF Integration**: Giphy API integration for GIF search
+- **Video Processing**: Background video processing with status tracking
+- **Content Moderation**: User reporting system
 
 ### Real-time Features
-- **Live Timeline**: Real-time post updates
-- **Notifications**: Push notifications, in-app notifications
+- **Live Timeline**: Real-time post updates via WebSocket
+- **Notifications**: In-app notifications with preferences
+- **Push Notifications**: Device-based push notifications
 - **Messaging**: Real-time chat with typing indicators
 - **Online Status**: User presence tracking
 - **Broadcasting**: Laravel Reverb WebSocket integration
 
-### Monetization & Business
-- **Subscriptions**: Free, Premium, Creator tiers
-- **Advertisement System**: Targeted ads with analytics
-- **Creator Fund**: Revenue sharing for content creators
-- **Analytics**: Comprehensive user and content analytics
-- **A/B Testing**: Feature testing and optimization
-
 ### Advanced Features
-- **Search**: Full-text search with Elasticsearch/Meilisearch
-- **Trending**: Real-time trending content and hashtags
-- **Polls**: Interactive polls with voting
+- **Spaces**: Audio rooms with participant management
+- **Lists**: Create and manage user lists
+- **Polls**: Create polls with multiple options and voting
 - **Moments**: Curated content collections
-- **Parental Controls**: Child account management
-- **Localization**: Multi-language support (English, Persian, Arabic, etc.)
+- **Search**: Full-text search with Meilisearch (users, posts, hashtags)
+- **Trending**: Real-time trending hashtags, posts, and users
+- **User Suggestions**: Personalized user recommendations
+
+### Monetization
+- **Premium Subscriptions**: Multi-tier subscription plans
+- **Advertisement System**: Targeted ads with click tracking and analytics
+- **Creator Fund**: Revenue sharing for content creators with earnings tracking
+
+### Analytics & Monitoring
+- **User Analytics**: User activity and engagement metrics
+- **Post Analytics**: Individual post performance tracking
+- **Conversion Tracking**: Funnel analysis, cohort analysis, user journey
+- **A/B Testing**: Feature testing with variant assignment and event tracking
+- **Performance Monitoring**: System status, cache, queue monitoring
+- **Auto-scaling**: Predictive scaling based on metrics
 
 ## 🛠 Tech Stack
 
@@ -56,31 +73,26 @@ A modern, enterprise-grade microblogging platform built with Laravel 12, featuri
 - **Framework**: Laravel 12.x
 - **PHP**: 8.2+
 - **Database**: MySQL 8.0+
-- **Cache**: Redis 7.0+
-- **Queue**: Redis with Horizon
-- **Search**: Elasticsearch/Meilisearch
+- **Cache**: Redis
+- **Queue**: Redis
+- **Search**: Meilisearch
 - **WebSockets**: Laravel Reverb
 
-### Authentication & Security
-- **API Authentication**: Laravel Sanctum + JWT
-- **2FA**: Google2FA
+### Key Packages
+- **API Authentication**: Laravel Sanctum
+- **2FA**: pragmarx/google2fa-laravel
 - **Permissions**: Spatie Laravel Permission
-- **Rate Limiting**: Advanced Redis-based limiting
-- **Security**: WAF, Input validation, XSS protection
-
-### Infrastructure
-- **File Storage**: AWS S3
-- **CDN**: CloudFront
-- **Monitoring**: Custom performance monitoring
-- **Admin Panel**: Filament 3.x
+- **Search**: Laravel Scout + Meilisearch
+- **Social Auth**: Laravel Socialite
+- **SMS**: Twilio SDK
+- **Image Processing**: Intervention Image
+- **Admin Panel**: Filament 4.x
 - **API Documentation**: L5-Swagger (OpenAPI)
 
 ### Development & Testing
-- **Testing**: PHPUnit with 98% test coverage
+- **Testing**: PHPUnit
 - **Code Quality**: PHP CS Fixer, Laravel Pint
-- **CI/CD**: GitHub Actions
-- **Docker**: Production-ready containers
-- **Deployment**: Docker Compose with Nginx
+- **Docker**: Docker Compose setup available
 
 ## 📦 Installation
 
@@ -89,7 +101,8 @@ A modern, enterprise-grade microblogging platform built with Laravel 12, featuri
 - Composer
 - Node.js 18+
 - MySQL 8.0+
-- Redis 7.0+
+- Redis
+- Meilisearch (optional, for search)
 
 ### Quick Start
 ```bash
@@ -133,46 +146,64 @@ http://localhost:8080
 ```env
 # Application
 APP_NAME="Microblogging"
-APP_URL=https://your-domain.com
+APP_URL=http://localhost:8000
 
 # Database
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_DATABASE=microblogging
+DB_USERNAME=root
+DB_PASSWORD=
 
 # Redis
 REDIS_HOST=127.0.0.1
 REDIS_PORT=6379
 
-# AWS S3
-AWS_ACCESS_KEY_ID=your-key
-AWS_SECRET_ACCESS_KEY=your-secret
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=your-bucket
+# Meilisearch
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=
 
-# Social Auth
+# Twilio (SMS)
+TWILIO_SID=your-twilio-sid
+TWILIO_TOKEN=your-twilio-token
+TWILIO_FROM=your-twilio-phone
+
+# Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
-APPLE_CLIENT_ID=your-apple-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8000/api/auth/social/google/callback
+
+# Giphy (optional)
+GIPHY_API_KEY=DEMO_API_KEY
+
+# SendGrid (optional)
+SENDGRID_API_KEY=
+SENDGRID_FROM_EMAIL=
+
+# Firebase (optional, for push notifications)
+FIREBASE_API_KEY=
+FIREBASE_PROJECT_ID=
+FIREBASE_CREDENTIALS_PATH=
 ```
 
-## 🎯 Management Commands
+## 🎯 Artisan Commands
 
-### Enterprise Management
+### Content Management
 ```bash
-# System status
-php artisan microblogging:enterprise status
+# Publish scheduled posts
+php artisan posts:publish-scheduled
 
-# Process creator payments
-php artisan microblogging:enterprise process-creator-payments
-
-# Generate analytics
-php artisan microblogging:enterprise generate-analytics
+# Update trending data
+php artisan trending:update
 ```
 
-### Performance & Monitoring
+### Maintenance
 ```bash
 # Cache warmup
 php artisan cache:warmup
+
+# Database optimization
+php artisan db:optimize
 
 # Performance monitoring
 php artisan performance:monitor
@@ -180,20 +211,26 @@ php artisan performance:monitor
 # Security audit
 php artisan security:audit
 
-# Database optimization
-php artisan db:optimize
+# Cleanup audit logs
+php artisan audit:cleanup
+
+# Cleanup expired tokens
+php artisan tokens:cleanup
 ```
 
-### Content Management
+### Analysis
 ```bash
-# Update trending data
-php artisan trending:update
+# Architecture analysis
+php artisan architecture:analyze
 
-# Publish scheduled posts
-php artisan posts:publish-scheduled
+# Code quality check
+php artisan code:quality-check
 
 # Search system analysis
 php artisan search:analyze
+
+# Project cleanup analysis
+php artisan project:cleanup-analysis
 ```
 
 ## 📊 API Documentation
@@ -201,61 +238,69 @@ php artisan search:analyze
 ### Access Points
 - **Swagger UI**: `/api/documentation`
 - **JSON Spec**: `/api/documentation.json`
-- **Postman Collection**: Available in `/docs` folder
+- **Health Check**: `/api/health`
 
-### Key Endpoints
-- **Authentication**: `/api/auth/*`
-- **Posts**: `/api/posts/*`
-- **Users**: `/api/users/*`
-- **Timeline**: `/api/timeline`
-- **Search**: `/api/search`
-- **Notifications**: `/api/notifications`
+### Key Endpoint Groups
+- **Authentication**: `/api/auth/*` (login, register, 2FA, password reset, sessions)
+- **Posts**: `/api/posts/*` (CRUD, like, quote, drafts, scheduled)
+- **Comments**: `/api/posts/{post}/comments`
+- **Users**: `/api/users/*` (profile, followers, following)
+- **Follow**: `/api/users/{user}/follow`, `/api/follow-requests`
+- **Timeline**: `/api/timeline`, `/api/optimized/timeline`
+- **Search**: `/api/search/*` (users, posts, hashtags, all)
+- **Messages**: `/api/messages/*` (conversations, send, typing)
+- **Notifications**: `/api/notifications/*`
+- **Bookmarks**: `/api/bookmarks`
+- **Hashtags**: `/api/hashtags/*`
+- **Trending**: `/api/trending/*`
+- **Spaces**: `/api/spaces/*`
+- **Lists**: `/api/lists/*`
+- **Polls**: `/api/polls/*`
+- **Moments**: `/api/moments/*`
+- **Communities**: `/api/communities/*`
+- **Monetization**: `/api/monetization/*` (ads, creator-fund, premium)
+- **Analytics**: `/api/analytics/*`
 
 ## 🔒 Security Features
 
 ### Authentication Security
-- Multi-factor authentication (2FA)
+- Multi-step registration with OTP verification
+- Two-factor authentication (2FA) with Google Authenticator
 - Device fingerprinting and verification
-- Session management with device tracking
-- Password history and strength validation
-- Brute force protection with IP blocking
+- Session management with multi-device tracking
+- Secure password reset with OTP
+- Social authentication (Google OAuth)
 
 ### Application Security
-- Advanced input validation and sanitization
-- XSS and SQL injection protection
+- Input validation and sanitization
+- Rate limiting on sensitive endpoints
 - CSRF protection
-- Rate limiting with Redis
-- Real-time security monitoring
-- Automated threat detection
+- Security middleware (UnifiedSecurityMiddleware)
+- Audit logging for all actions
+- Security event tracking
+- Anomaly detection
 
 ### Data Protection
-- Encrypted sensitive data
 - Secure file upload validation
-- Content moderation and spam detection
-- Privacy controls and data anonymization
+- Content moderation (user reporting)
+- Privacy settings (private accounts)
+- Block/mute functionality
 
-## 📈 Performance & Scalability
+## 📈 Performance & Monitoring
 
-### Caching Strategy
+### Caching
 - Redis for session and application cache
-- Database query optimization
-- CDN integration for static assets
-- Eager loading and query optimization
+- Timeline caching
+- Query optimization with eager loading
 
-### Monitoring & Analytics
-- Real-time performance monitoring
-- User behavior analytics
-- A/B testing framework
-- Error tracking and logging
-- Custom metrics and dashboards
+### Monitoring
+- Performance monitoring dashboard
+- Cache monitoring
+- Queue monitoring
+- System status tracking
+- Auto-scaling metrics
 
 ## 🧪 Testing
-
-### Test Coverage
-- **Unit Tests**: 98% coverage
-- **Feature Tests**: Complete API coverage
-- **Integration Tests**: End-to-end workflows
-- **Performance Tests**: Load and stress testing
 
 ### Running Tests
 ```bash
@@ -264,6 +309,7 @@ php artisan test
 
 # Run specific test suite
 php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
 
 # Run with coverage
 php artisan test --coverage
@@ -275,11 +321,11 @@ php artisan test --coverage
 - [ ] Environment variables configured
 - [ ] Database migrations run
 - [ ] Redis configured and running
-- [ ] File storage (S3) configured
-- [ ] CDN configured
+- [ ] Meilisearch configured (optional)
+- [ ] Queue worker running
+- [ ] Reverb WebSocket server running
 - [ ] SSL certificates installed
-- [ ] Monitoring and logging setup
-- [ ] Backup strategy implemented
+- [ ] Scheduled tasks configured (cron)
 
 ### Docker Production
 ```bash
@@ -287,33 +333,49 @@ php artisan test --coverage
 docker build -t microblogging:latest .
 
 # Deploy with docker-compose
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose up -d
 ```
 
-## 🤝 Contributing
+### Scheduled Tasks
+Add to crontab:
+```bash
+* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
+```
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+## 📁 Project Structure
 
-### Development Standards
-- Follow PSR-12 coding standards
-- Write comprehensive tests
-- Update documentation
-- Use conventional commit messages
+```
+app/
+├── Console/Commands/     # Artisan commands
+├── Contracts/           # Interfaces
+├── DTOs/                # Data Transfer Objects
+├── Events/              # Event classes
+├── Exceptions/          # Custom exceptions
+├── Filament/            # Admin panel resources
+├── Http/
+│   ├── Controllers/Api/ # API controllers
+│   ├── Middleware/      # Custom middleware
+│   ├── Requests/        # Form requests
+│   └── Resources/       # API resources
+├── Jobs/                # Queue jobs
+├── Listeners/           # Event listeners
+├── Mail/                # Mail classes
+├── Models/              # Eloquent models
+├── Monetization/        # Monetization features
+├── Notifications/       # Notification classes
+├── Observers/           # Model observers
+├── Policies/            # Authorization policies
+├── Providers/           # Service providers
+├── Repositories/        # Repository pattern
+├── Rules/               # Validation rules
+├── Services/            # Business logic services
+└── Traits/              # Reusable traits
+```
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [Wiki](../../wiki)
-- **Issues**: [GitHub Issues](../../issues)
-- **Discussions**: [GitHub Discussions](../../discussions)
+This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ using Laravel 12 and modern web technologies**
+**Built with Laravel 12**
