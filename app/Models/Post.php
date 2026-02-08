@@ -24,6 +24,7 @@ class Post extends Model
         'gif_url',
         'likes_count',
         'comments_count',
+        'quotes_count',
         'is_draft',
         'is_pinned',
         'published_at',
@@ -38,6 +39,7 @@ class Post extends Model
     protected $casts = [
         'likes_count' => 'integer',
         'comments_count' => 'integer',
+        'quotes_count' => 'integer',
         'is_draft' => 'boolean',
         'is_pinned' => 'boolean',
         'published_at' => 'datetime',
@@ -222,13 +224,42 @@ class Post extends Model
 
     public function canBeEdited(): bool
     {
-        return $this->created_at->diffInMinutes(now()) <= config('authentication.session.timeout_seconds', 7200) / 60;
+        $editTimeoutMinutes = config('posts.edit_timeout_minutes', 60);
+        return $this->created_at->diffInMinutes(now()) <= $editTimeoutMinutes;
+    }
+
+    public function canBeEditedForTesting(): bool
+    {
+        if (app()->environment('testing')) {
+            $editTimeoutMinutes = config('posts.edit_timeout_minutes', 60);
+            return $this->created_at->diffInMinutes(now()) <= $editTimeoutMinutes;
+        }
+        return $this->canBeEdited();
     }
 
     public function editPost(string $newContent, ?string $reason = null): void
     {
         if (! $this->canBeEdited()) {
-            throw new \Exception('Post cannot be edited after ' . config('authentication.session.timeout_seconds', 7200) / 60 . ' minutes');
+            throw new \App\Exceptions\BusinessLogicException(
+                'Post cannot be edited after timeout',
+                'POST_EDIT_TIMEOUT'
+            );
+        }
+        
+        $newContent = trim($newContent);
+        
+        if (strlen($newContent) < 1) {
+            throw new \App\Exceptions\BusinessLogicException(
+                'Content cannot be empty',
+                'EMPTY_CONTENT'
+            );
+        }
+        
+        if (strlen($newContent) > 280) {
+            throw new \App\Exceptions\BusinessLogicException(
+                'Content exceeds 280 characters',
+                'CONTENT_TOO_LONG'
+            );
         }
 
         $this->edits()->create([

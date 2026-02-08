@@ -11,7 +11,7 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         // Create admin role if it doesn't exist
-        $adminRole = Role::firstOrCreate(['name' => 'admin']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
         
         // Create admin user
         $admin = User::firstOrCreate(
@@ -26,8 +26,8 @@ class AdminSeeder extends Seeder
         );
         
         // Assign admin role
-        if (!$admin->hasRole('admin')) {
-            $admin->assignRole('admin');
+        if (!$admin->hasRole('admin', 'sanctum')) {
+            $admin->assignRole($adminRole);
         }
         
         $this->command->info('Admin user created successfully!');

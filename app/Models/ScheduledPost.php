@@ -38,4 +38,14 @@ class ScheduledPost extends Model
     {
         return $query->pending()->where('scheduled_at', '<=', now());
     }
+    
+    public function scopeFailed($query)
+    {
+        return $query->where('status', 'failed');
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
 }

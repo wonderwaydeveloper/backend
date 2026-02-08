@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Models\Block;
+use App\Models\Mute;
 use App\Services\UserService;
 use Illuminate\Http\{JsonResponse, Request};
 
@@ -138,24 +140,34 @@ class ProfileController extends Controller
     {
         $currentUser = $request->user();
         
-        // Add user to blocked list (you may need to create a blocks table)
-        // For now, we'll use a simple approach
-        $blockedUsers = $currentUser->blocked_users ?? [];
-        if (!in_array($user->id, $blockedUsers)) {
-            $blockedUsers[] = $user->id;
-            $currentUser->update(['blocked_users' => $blockedUsers]);
+        // Prevent self-blocking
+        if ($currentUser->id === $user->id) {
+            return response()->json(['error' => 'Cannot block yourself'], 422);
         }
+        
+        $request->validate(['reason' => 'nullable|string|max:255']);
+        
+        Block::firstOrCreate(
+            ['blocker_id' => $currentUser->id, 'blocked_id' => $user->id],
+            ['reason' => $request->input('reason')]
+        );
+        
+        // Auto-unfollow when blocking
+        $currentUser->following()->detach($user->id);
+        $user->following()->detach($currentUser->id);
         
         return response()->json(['message' => 'User blocked successfully']);
     }
     
     public function unblock(Request $request, User $user): JsonResponse
     {
-        $currentUser = $request->user();
+        $deleted = Block::where('blocker_id', $request->user()->id)
+            ->where('blocked_id', $user->id)
+            ->delete();
         
-        $blockedUsers = $currentUser->blocked_users ?? [];
-        $blockedUsers = array_filter($blockedUsers, fn($id) => $id !== $user->id);
-        $currentUser->update(['blocked_users' => array_values($blockedUsers)]);
+        if (!$deleted) {
+            return response()->json(['error' => 'User is not blocked'], 404);
+        }
         
         return response()->json(['message' => 'User unblocked successfully']);
     }
@@ -164,24 +176,54 @@ class ProfileController extends Controller
     {
         $currentUser = $request->user();
         
-        $mutedUsers = $currentUser->muted_users ?? [];
-        if (!in_array($user->id, $mutedUsers)) {
-            $mutedUsers[] = $user->id;
-            $currentUser->update(['muted_users' => $mutedUsers]);
+        // Prevent self-muting
+        if ($currentUser->id === $user->id) {
+            return response()->json(['error' => 'Cannot mute yourself'], 422);
         }
+        
+        $request->validate(['expires_at' => 'nullable|date|after:now|before:+1 year']);
+        
+        Mute::firstOrCreate(
+            ['muter_id' => $currentUser->id, 'muted_id' => $user->id],
+            ['expires_at' => $request->input('expires_at')]
+        );
         
         return response()->json(['message' => 'User muted successfully']);
     }
     
     public function unmute(Request $request, User $user): JsonResponse
     {
-        $currentUser = $request->user();
+        $deleted = Mute::where('muter_id', $request->user()->id)
+            ->where('muted_id', $user->id)
+            ->delete();
         
-        $mutedUsers = $currentUser->muted_users ?? [];
-        $mutedUsers = array_filter($mutedUsers, fn($id) => $id !== $user->id);
-        $currentUser->update(['muted_users' => array_values($mutedUsers)]);
+        if (!$deleted) {
+            return response()->json(['error' => 'User is not muted'], 404);
+        }
         
         return response()->json(['message' => 'User unmuted successfully']);
+    }
+    
+    public function getBlockedUsers(Request $request): JsonResponse
+    {
+        $blockedUsers = $request->user()
+            ->blockedUsers()
+            ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
+            ->withPivot('reason', 'created_at')
+            ->paginate(50);
+        
+        return response()->json($blockedUsers);
+    }
+    
+    public function getMutedUsers(Request $request): JsonResponse
+    {
+        $mutedUsers = $request->user()
+            ->mutedUsers()
+            ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
+            ->withPivot('expires_at', 'created_at')
+            ->paginate(50);
+        
+        return response()->json($mutedUsers);
     }
     
     public function exportData(Request $request): JsonResponse

@@ -5,16 +5,21 @@ namespace App\Services;
 use App\Models\Post;
 use App\Models\User;
 use App\Events\PostInteraction;
+use Illuminate\Support\Facades\DB;
 
 class PostLikeService
 {
     public function toggleLike(Post $post, User $user): array
     {
-        if ($post->isLikedBy($user->id)) {
-            return $this->unlikePost($post, $user);
-        }
-        
-        return $this->likePost($post, $user);
+        return DB::transaction(function () use ($post, $user) {
+            $post = Post::lockForUpdate()->findOrFail($post->id);
+            
+            if ($post->isLikedBy($user->id)) {
+                return $this->unlikePost($post, $user);
+            }
+            
+            return $this->likePost($post, $user);
+        });
     }
 
     private function likePost(Post $post, User $user): array

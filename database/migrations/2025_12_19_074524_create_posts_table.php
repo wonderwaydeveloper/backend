@@ -24,6 +24,7 @@ return new class () extends Migration {
             $table->unsignedInteger('likes_count')->default(0);
             $table->unsignedInteger('comments_count')->default(0);
             $table->unsignedInteger('reposts_count')->default(0);
+            $table->unsignedInteger('quotes_count')->default(0);
             $table->unsignedInteger('views_count')->default(0);
             $table->foreignId('quoted_post_id')->nullable()->constrained('posts')->onDelete('cascade');
             $table->foreignId('thread_id')->nullable()->constrained('posts')->onDelete('cascade');

@@ -3,241 +3,209 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ReportRequest;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ModerationController extends Controller
 {
-    public function reportContent(ReportRequest $request)
+    public function reportPost(Request $request, Post $post)
     {
-        $validated = $request->validated();
-
-        try {
-            $existingReport = DB::table('reports')
-                ->where('reporter_id', auth()->id())
-                ->where('reportable_type', $validated['reportable_type'])
-                ->where('reportable_id', $validated['reportable_id'])
-                ->first();
-
-            if ($existingReport) {
-                return response()->json(['message' => 'You have already reported this content'], 400);
-            }
-
-            DB::table('reports')->insert([
-                'reporter_id' => auth()->id(),
-                'reportable_type' => $validated['reportable_type'],
-                'reportable_id' => $validated['reportable_id'],
-                'reason' => $validated['reason'],
-                'description' => $validated['description'] ?? null,
-                'status' => 'pending',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $this->autoModerate($validated['reportable_type'], $validated['reportable_id']);
-
-            return response()->json(['message' => 'Your report has been submitted and will be reviewed']);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error submitting report',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        $request->validate([
+            'reason' => 'required|string|in:spam,harassment,hate_speech,violence,nudity,other',
+            'description' => 'nullable|string|max:500',
+        ]);
+        
+        return $this->createReport($request, $post, 'App\\Models\\Post');
     }
 
-    public function getReports(Request $request)
+    public function reportUser(Request $request, User $user)
     {
-        // This should be admin-only in production
+        if ($user->id === auth()->id()) {
+            return response()->json(['message' => 'Cannot report yourself'], 422);
+        }
+        
         $request->validate([
-            'status' => 'nullable|in:pending,reviewed,resolved,dismissed',
-            'type' => 'nullable|in:post,comment,user',
-            'per_page' => 'nullable|integer|min:1|max:100',
+            'reason' => 'required|string|in:spam,harassment,hate_speech,violence,nudity,other',
+            'description' => 'nullable|string|max:500',
         ]);
+        
+        return $this->createReport($request, $user, 'App\\Models\\User');
+    }
 
-        $query = DB::table('reports')
-            ->leftJoin('users as reporters', 'reports.reporter_id', '=', 'reporters.id')
-            ->select([
-                'reports.*',
-                'reporters.name as reporter_name',
-                'reporters.username as reporter_username',
-            ])
-            ->orderBy('reports.created_at', 'desc');
+    public function reportComment(Request $request, Comment $comment)
+    {
+        $request->validate([
+            'reason' => 'required|string|in:spam,harassment,hate_speech,violence,nudity,other',
+            'description' => 'nullable|string|max:500',
+        ]);
+        
+        return $this->createReport($request, $comment, 'App\\Models\\Comment');
+    }
 
-        if ($request->status) {
-            $query->where('reports.status', $request->status);
+    private function createReport(Request $request, $reportable, $type)
+    {
+        // Check if user already reported this content
+        $existingReport = Report::where('reporter_id', auth()->id())
+            ->where('reportable_type', $type)
+            ->where('reportable_id', $reportable->id)
+            ->first();
+
+        if ($existingReport) {
+            return response()->json(['message' => 'You have already reported this content'], 400);
         }
 
-        if ($request->type) {
-            $query->where('reports.reportable_type', $request->type);
-        }
+        // Create report
+        $report = new Report();
+        $report->reporter_id = auth()->id();
+        $report->reportable_type = $type;
+        $report->reportable_id = $reportable->id;
+        $report->reason = $request->input('reason');
+        $report->description = $request->input('description');
+        $report->status = 'pending';
+        $report->save();
 
-        $reports = $query->paginate($request->per_page ?? 20);
+        $this->autoModerate($type, $reportable->id);
 
-        // Add reportable content details
-        foreach ($reports->items() as $report) {
-            $report->reportable_content = $this->getReportableContent($report->reportable_type, $report->reportable_id);
-        }
+        return response()->json([
+            'message' => 'Thank you for reporting. We will review this content.',
+            'report_id' => $report->id
+        ]);
+    }
+
+    public function myReports(Request $request)
+    {
+        $reports = Report::where('reporter_id', auth()->id())
+            ->with('reportable')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json($reports);
     }
 
-    public function updateReportStatus(Request $request, $reportId)
+    public function getReports(Request $request)
     {
         $request->validate([
-            'status' => 'required|in:reviewed,resolved,dismissed',
-            'admin_notes' => 'nullable|string|max:1000',
-            'action_taken' => 'nullable|in:none,warning,content_removed,user_suspended,user_banned',
+            'status' => 'nullable|in:pending,reviewed,resolved,rejected',
+            'type' => 'nullable|string',
+            'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
-        try {
-            $report = DB::table('reports')->where('id', $reportId)->first();
+        $query = Report::with(['reporter:id,name,username', 'reviewer:id,name,username', 'reportable'])
+            ->orderBy('created_at', 'desc');
 
-            if (! $report) {
-                return response()->json(['message' => 'Report not found'], 404);
-            }
-
-            // Update report status
-            DB::table('reports')
-                ->where('id', $reportId)
-                ->update([
-                    'status' => $request->status,
-                    'admin_notes' => $request->admin_notes,
-                    'action_taken' => $request->action_taken,
-                    'reviewed_by' => auth()->id(),
-                    'reviewed_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            // Take action if specified
-            if ($request->action_taken && $request->action_taken !== 'none') {
-                $this->takeAction($report, $request->action_taken);
-            }
-
-            return response()->json(['message' => 'Report status updated']);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error updating report',
-                'error' => $e->getMessage(),
-            ], 500);
+        if ($request->status) {
+            $query->where('status', $request->status);
         }
+
+        if ($request->type) {
+            $query->where('reportable_type', $request->type);
+        }
+
+        return response()->json($query->paginate($request->per_page ?? 20));
+    }
+
+    public function showReport(Report $report)
+    {
+        return response()->json($report->load(['reporter', 'reviewer', 'reportable']));
+    }
+
+    public function updateReportStatus(Request $request, Report $report)
+    {
+        $request->validate([
+            'status' => 'required|in:reviewed,resolved,rejected',
+            'admin_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $report->status = $request->status;
+        $report->admin_notes = $request->admin_notes;
+        $report->reviewed_by = auth()->id();
+        $report->reviewed_at = now();
+        $report->save();
+
+        return response()->json(['message' => 'Report status updated']);
+    }
+
+    public function takeAction(Request $request, Report $report)
+    {
+        $request->validate([
+            'action' => 'required|in:dismiss,warn,remove_content,suspend_user,ban_user'
+        ]);
+
+        $this->executeAction($report, $request->action);
+
+        $report->status = 'resolved';
+        $report->action_taken = $request->action;
+        $report->reviewed_by = auth()->id();
+        $report->reviewed_at = now();
+        $report->save();
+
+        return response()->json(['message' => 'Action taken successfully']);
     }
 
     public function getContentStats()
     {
-        try {
-            $stats = [
-                'reports' => [
-                    'total' => DB::table('reports')->count(),
-                    'pending' => DB::table('reports')->where('status', 'pending')->count(),
-                    'reviewed' => DB::table('reports')->where('status', 'reviewed')->count(),
-                    'resolved' => DB::table('reports')->where('status', 'resolved')->count(),
-                ],
-                'content' => [
-                    'total_posts' => Post::count(),
-                    'flagged_posts' => Post::where('is_flagged', true)->count(),
-                    'total_users' => User::count(),
-                    'suspended_users' => User::where('is_suspended', true)->count(),
-                ],
-            ];
-
-            return response()->json($stats);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Error retrieving statistics',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'reports' => [
+                'total' => Report::count(),
+                'pending' => Report::where('status', 'pending')->count(),
+                'reviewed' => Report::where('status', 'reviewed')->count(),
+                'resolved' => Report::where('status', 'resolved')->count(),
+            ],
+            'content' => [
+                'total_posts' => Post::count(),
+                'flagged_posts' => Post::where('is_flagged', true)->count(),
+            ],
+        ]);
     }
 
     private function autoModerate($type, $id)
     {
-        $reportCount = DB::table('reports')
-            ->where('reportable_type', $type)
+        $reportCount = Report::where('reportable_type', $type)
             ->where('reportable_id', $id)
             ->where('status', 'pending')
             ->count();
 
-        // Auto-flag content if it has 5+ reports
         if ($reportCount >= 5) {
-            switch ($type) {
-                case 'post':
-                    Post::where('id', $id)->update(['is_flagged' => true]);
-
-                    break;
-                case 'user':
-                    User::where('id', $id)->update(['is_flagged' => true]);
-
-                    break;
+            if ($type === 'App\\Models\\Post') {
+                Post::where('id', $id)->update(['is_flagged' => true]);
             }
         }
 
-        // Auto-hide content if it has 10+ reports
         if ($reportCount >= 10) {
-            switch ($type) {
-                case 'post':
-                    Post::where('id', $id)->update(['is_hidden' => true]);
-
-                    break;
+            if ($type === 'App\\Models\\Post') {
+                Post::where('id', $id)->update(['is_hidden' => true]);
             }
         }
     }
 
-    private function getReportableContent($type, $id)
-    {
-        switch ($type) {
-            case 'post':
-                return Post::select('id', 'content', 'user_id', 'created_at')
-                    ->with('user:id,name,username')
-                    ->find($id);
-            case 'comment':
-                return Comment::select('id', 'content', 'user_id', 'post_id', 'created_at')
-                    ->with('user:id,name,username')
-                    ->find($id);
-            case 'user':
-                return User::select('id', 'name', 'username', 'email', 'created_at')
-                    ->find($id);
-            default:
-                return null;
-        }
-    }
-
-    private function takeAction($report, $action)
+    private function executeAction($report, $action)
     {
         switch ($action) {
-            case 'content_removed':
-                if ($report->reportable_type === 'post') {
-                    Post::where('id', $report->reportable_id)->update(['is_deleted' => true]);
-                } elseif ($report->reportable_type === 'comment') {
+            case 'remove_content':
+                if ($report->reportable_type === 'App\\Models\\Post') {
+                    Post::where('id', $report->reportable_id)->delete();
+                } elseif ($report->reportable_type === 'App\\Models\\Comment') {
                     Comment::where('id', $report->reportable_id)->delete();
                 }
-
                 break;
-
-            case 'user_suspended':
-                if ($report->reportable_type === 'user') {
+            case 'suspend_user':
+                if ($report->reportable_type === 'App\\Models\\User') {
                     User::where('id', $report->reportable_id)->update([
                         'is_suspended' => true,
                         'suspended_until' => now()->addDays(7),
                     ]);
                 }
-
                 break;
-
-            case 'user_banned':
-                if ($report->reportable_type === 'user') {
+            case 'ban_user':
+                if ($report->reportable_type === 'App\\Models\\User') {
                     User::where('id', $report->reportable_id)->update([
                         'is_banned' => true,
                         'banned_at' => now(),
                     ]);
                 }
-
                 break;
         }
     }

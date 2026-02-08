@@ -39,7 +39,7 @@ class PostPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasVerifiedEmail();
+        return $user->hasVerifiedEmail() && $user->can('post.create');
     }
 
     /**
@@ -47,21 +47,18 @@ class PostPolicy
      */
     public function update(User $user, Post $post): bool
     {
-        // Admin can always update
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-        
         // Only owner can update
         if ($user->id !== $post->user_id) {
             return false;
         }
         
-        // Allow updates within config timeout, but also check if post has been edited before
-        $canEdit = app()->environment('testing') || 
-                  ($post->created_at->diffInMinutes(now()) <= config('authentication.session.timeout_seconds', 7200) / 60 && !$post->updated_at->gt($post->created_at));
-                  
-        return $canEdit;
+        // Check permission
+        if (!$user->can('post.edit.own')) {
+            return false;
+        }
+        
+        // Check if post can be edited
+        return $post->canBeEdited();
     }
 
     /**
@@ -69,7 +66,13 @@ class PostPolicy
      */
     public function delete(User $user, Post $post): bool
     {
-        return $user->id === $post->user_id || $user->hasRole('admin');
+        // Can delete any post
+        if ($user->can('post.delete.any')) {
+            return true;
+        }
+        
+        // Can delete own post
+        return $user->id === $post->user_id && $user->can('post.delete.own');
     }
 
     /**

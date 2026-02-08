@@ -54,8 +54,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'refresh_token',
         'password_changed_at',
         'notification_preferences',
-        'blocked_users',
-        'muted_users'
     ];
 
     /**
@@ -98,8 +96,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'is_suspended' => 'boolean',
             'is_banned' => 'boolean',
             'notification_preferences' => 'array',
-            'blocked_users' => 'array',
-            'muted_users' => 'array',
         ];
     }
 
@@ -265,6 +261,66 @@ class User extends Authenticatable implements MustVerifyEmail
     public function communityJoinRequests()
     {
         return $this->hasMany(CommunityJoinRequest::class);
+    }
+
+    // Block relationships
+    public function blockedUsers()
+    {
+        return $this->belongsToMany(User::class, 'blocks', 'blocker_id', 'blocked_id')
+            ->withTimestamps();
+    }
+
+    public function blockedBy()
+    {
+        return $this->belongsToMany(User::class, 'blocks', 'blocked_id', 'blocker_id')
+            ->withTimestamps();
+    }
+
+    public function hasBlocked($userId): bool
+    {
+        return $this->blockedUsers()->where('users.id', $userId)->exists();
+    }
+
+    public function isBlockedBy($userId): bool
+    {
+        return $this->blockedBy()->where('users.id', $userId)->exists();
+    }
+
+    // Mute relationships
+    public function mutedUsers()
+    {
+        return $this->belongsToMany(User::class, 'mutes', 'muter_id', 'muted_id')
+            ->withPivot('expires_at')
+            ->withTimestamps();
+    }
+
+    public function mutedBy()
+    {
+        return $this->belongsToMany(User::class, 'mutes', 'muted_id', 'muter_id')
+            ->withPivot('expires_at')
+            ->withTimestamps();
+    }
+
+    public function hasMuted($userId): bool
+    {
+        return $this->mutedUsers()
+            ->where('users.id', $userId)
+            ->where(function($q) {
+                $q->whereNull('mutes.expires_at')
+                  ->orWhere('mutes.expires_at', '>', now());
+            })
+            ->exists();
+    }
+
+    public function isMutedBy($userId): bool
+    {
+        return $this->mutedBy()
+            ->where('users.id', $userId)
+            ->where(function($q) {
+                $q->whereNull('mutes.expires_at')
+                  ->orWhere('mutes.expires_at', '>', now());
+            })
+            ->exists();
     }
 
     /**

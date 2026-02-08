@@ -19,8 +19,7 @@ class ScheduledPostPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasVerifiedEmail() && 
-               ($user->hasRole('premium') || $user->hasRole('verified'));
+        return $user->hasVerifiedEmail() && $user->can('post.schedule');
     }
 
     public function update(User $user, ScheduledPost $scheduledPost): bool

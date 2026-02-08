@@ -14,9 +14,13 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('muter_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('muted_id')->constrained('users')->cascadeOnDelete();
+            $table->timestamp('expires_at')->nullable();
             $table->timestamps();
 
             $table->unique(['muter_id', 'muted_id']);
+            $table->index(['muter_id', 'muted_id']);
+            $table->index('muted_id');
+            $table->index('expires_at');
         });
     }
 

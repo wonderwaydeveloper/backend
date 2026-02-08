@@ -32,11 +32,16 @@ class PostObserver
 
     private function clearCaches(Post $post): void
     {
+        // Clear specific post cache
+        Cache::forget("post:{$post->id}");
+        
         // Clear trending hashtags
         Cache::forget('trending_hashtags');
 
-        // Clear public posts cache
-        Cache::flush(); // For now, we'll flush all cache. In production, use tags
+        // Clear public posts cache (first 10 pages)
+        for ($page = 1; $page <= 10; $page++) {
+            Cache::forget("public_posts:{$page}:20");
+        }
 
         // Clear user timeline caches
         $this->clearUserCaches($post->user_id);
@@ -50,7 +55,11 @@ class PostObserver
 
     private function clearUserCaches(int $userId): void
     {
-        // Clear timeline cache for all pages (simplified approach)
+        Cache::forget("timeline:user:{$userId}");
+        Cache::forget("timeline:{$userId}:20");
+        Cache::forget("following:{$userId}");
+        
+        // Clear timeline cache for multiple pages
         for ($page = 1; $page <= 10; $page++) {
             Cache::forget("timeline:user:{$userId}:page:{$page}");
         }

@@ -14,12 +14,8 @@ class ReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reportable_type' => 'required|string|in:post,comment,user,message',
-            'reportable_id' => 'required|integer',
-            'reason' => 'required|string|in:spam,harassment,inappropriate,copyright,other',
+            'reason' => 'required|string|in:spam,harassment,hate_speech,violence,nudity,other',
             'description' => 'nullable|string|max:500',
-            'evidence' => 'nullable|array|max:3',
-            'evidence.*' => 'image|max:2048'
         ];
     }
 }

@@ -13,6 +13,9 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
+        // Disable CSRF for tests
+        $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
+
         try {
             $this->artisan('db:seed', ['--class' => 'RoleSeeder']);
         } catch (\Exception $e) {

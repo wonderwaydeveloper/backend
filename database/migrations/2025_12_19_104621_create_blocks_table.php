@@ -14,9 +14,12 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('blocker_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('blocked_id')->constrained('users')->cascadeOnDelete();
+            $table->string('reason')->nullable();
             $table->timestamps();
 
             $table->unique(['blocker_id', 'blocked_id']);
+            $table->index(['blocker_id', 'blocked_id']);
+            $table->index('blocked_id');
         });
     }
 

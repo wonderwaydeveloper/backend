@@ -24,6 +24,8 @@ class CommentController extends Controller
 
     public function store(Request $request, Post $post)
     {
+        $this->authorize('create', Comment::class);
+        
         $request->validate([
             'content' => 'required|string|max:280',
         ]);

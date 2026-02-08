@@ -19,7 +19,7 @@ class CommentPolicy
 
     public function create(User $user): bool
     {
-        return $user->hasVerifiedEmail();
+        return $user->hasVerifiedEmail() && $user->can('comment.create');
     }
 
     public function update(User $user, Comment $comment): bool
@@ -29,7 +29,13 @@ class CommentPolicy
 
     public function delete(User $user, Comment $comment): bool
     {
-        return $user->id === $comment->user_id || $user->hasRole('admin');
+        // Can delete any comment
+        if ($user->can('comment.delete.any')) {
+            return true;
+        }
+        
+        // Can delete own comment
+        return $user->id === $comment->user_id && $user->can('comment.delete.own');
     }
 
     public function restore(User $user, Comment $comment): bool

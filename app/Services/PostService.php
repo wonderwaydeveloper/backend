@@ -82,7 +82,7 @@ class PostService implements PostServiceInterface
 
     public function getPublicPosts(int $page = 1, int $perPage = 20): LengthAwarePaginator
     {
-        return Post::published()
+        $query = Post::published()
             ->with([
                 'user:id,name,username,avatar',
                 'hashtags:id,name,slug',
@@ -91,8 +91,15 @@ class PostService implements PostServiceInterface
             ])
             ->withCount(['likes', 'comments', 'quotes'])
             ->whereNull('thread_id')
-            ->latest('published_at')
-            ->paginate($perPage, ['*'], 'page', $page);
+            ->latest('published_at');
+
+        // Exclude blocked/muted users if authenticated
+        if (auth()->check()) {
+            $query->whereNotIn('user_id', auth()->user()->blockedUsers()->pluck('users.id'))
+                  ->whereNotIn('user_id', auth()->user()->mutedUsers()->pluck('users.id'));
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function getTimelinePosts(int $userId, int $limit = 20): Collection
@@ -101,10 +108,15 @@ class PostService implements PostServiceInterface
 
         return Cache::remember($cacheKey, 300, function () use ($userId, $limit) {
             $followingIds = $this->getFollowingIds($userId);
+            $user = User::find($userId);
+            $blockedIds = $user->blockedUsers()->pluck('users.id')->toArray();
+            $mutedIds = $user->mutedUsers()->pluck('users.id')->toArray();
+            $excludedIds = array_merge($blockedIds, $mutedIds);
 
             return Post::forTimeline()
                 ->select(['id', 'user_id', 'content', 'created_at', 'likes_count', 'comments_count', 'image', 'gif_url', 'quoted_post_id'])
                 ->whereIn('user_id', $followingIds)
+                ->whereNotIn('user_id', $excludedIds)
                 ->whereNull('thread_id')
                 ->limit($limit)
                 ->get();
@@ -151,7 +163,7 @@ class PostService implements PostServiceInterface
     {
         $sanitizedQuery = $this->sanitizeSearchQuery($query);
         
-        return Post::published()
+        $queryBuilder = Post::published()
             ->where('content', 'LIKE', "%{$sanitizedQuery}%")
             ->with([
                 'user:id,name,username,avatar',
@@ -160,8 +172,17 @@ class PostService implements PostServiceInterface
             ->withCount(['likes', 'comments'])
             ->whereNull('thread_id')
             ->latest('published_at')
-            ->limit($limit)
-            ->get();
+            ->limit($limit);
+
+        // Exclude blocked/muted users if authenticated
+        if (auth()->check()) {
+            $blockedIds = auth()->user()->blockedUsers()->pluck('users.id')->toArray();
+            $mutedIds = auth()->user()->mutedUsers()->pluck('users.id')->toArray();
+            $excludedIds = array_merge($blockedIds, $mutedIds);
+            $queryBuilder->whereNotIn('user_id', $excludedIds);
+        }
+
+        return $queryBuilder->get();
     }
 
     /**
@@ -169,18 +190,20 @@ class PostService implements PostServiceInterface
      */
     public function createPost(PostDTO $postDTO, ?UploadedFile $image = null, ?UploadedFile $video = null): Post
     {
-        $postData = $postDTO->toArray();
-        $postData['content'] = $this->sanitizeContent($postData['content']);
+        return DB::transaction(function () use ($postDTO, $image, $video) {
+            $postData = $postDTO->toArray();
+            $postData['content'] = $this->sanitizeContent($postData['content']);
 
-        // Handle file uploads
-        $postData = $this->handleFileUploads($postData, $image, $video);
+            // Handle file uploads
+            $postData = $this->handleFileUploads($postData, $image, $video);
 
-        $post = $this->create($postData);
+            $post = $this->create($postData);
 
-        // Process post content and handle business logic
-        $this->processPostBusinessLogic($post, $postDTO->isDraft, $video);
+            // Process post content and handle business logic
+            $this->processPostBusinessLogic($post, $postDTO->isDraft, $video);
 
-        return $post->load('user:id,name,username,avatar', 'hashtags');
+            return $post->load('user:id,name,username,avatar', 'hashtags');
+        });
     }
 
     /**
@@ -236,9 +259,13 @@ class PostService implements PostServiceInterface
         $cacheKey = "timeline:user:{$user->id}";
         
         $posts = cache()->remember($cacheKey, 300, function () use ($user, $limit) {
-            // Simple optimized query
+            $blockedIds = $user->blockedUsers()->pluck('users.id')->toArray();
+            $mutedIds = $user->mutedUsers()->pluck('users.id')->toArray();
+            $excludedIds = array_merge($blockedIds, $mutedIds);
+
             return Post::with(['user:id,name,username,avatar'])
                 ->published()
+                ->whereNotIn('user_id', $excludedIds)
                 ->latest()
                 ->limit($limit)
                 ->get();
@@ -274,6 +301,9 @@ class PostService implements PostServiceInterface
         $quotePost = Post::create($quoteDTO->toArray());
 
         $this->processPostContent($quotePost);
+
+        // Increment quotes_count on the original post
+        Post::where('id', $quoteDTO->quotedPostId)->increment('quotes_count');
 
         broadcast(new PostPublished(
             $quotePost->load('user:id,name,username,avatar', 'quotedPost.user:id,name,username,avatar')
@@ -425,9 +455,21 @@ class PostService implements PostServiceInterface
      */
     private function sanitizeContent(string $content): string
     {
+        // Remove HTML tags
         $content = strip_tags($content);
+        
+        // Remove null bytes
         $content = str_replace(chr(0), '', $content);
+        
+        // Remove control characters except newlines and tabs
+        $content = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $content);
+        
+        // Remove invisible Unicode characters (zero-width spaces, etc)
+        $content = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $content);
+        
+        // Normalize whitespace
         $content = preg_replace('/\s+/', ' ', $content);
+        
         return trim($content);
     }
 }

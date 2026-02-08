@@ -9,6 +9,11 @@ class Repost extends Model
     protected $guarded = ['id'];
 
     protected $fillable = ['user_id', 'post_id', 'quote'];
+    
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
 
     public function user()
     {

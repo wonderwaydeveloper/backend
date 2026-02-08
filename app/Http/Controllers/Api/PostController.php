@@ -31,6 +31,8 @@ class PostController extends Controller
 
     public function store(StorePostRequest $request): JsonResponse
     {
+        $this->authorize('create', Post::class);
+        
         try {
             $dto = PostDTO::fromRequest($request->validated(), $request->user()->id);
             $post = $this->postService->createPost($dto, $request->file('image'), $request->file('video'));
@@ -42,7 +44,12 @@ class PostController extends Controller
 
     public function show(Post $post): JsonResponse
     {
+        $this->authorize('view', $post);
+        
         try {
+            // Track view count
+            $post->increment('views_count');
+            
             return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
         } catch (\Exception $e) {
             return response()->json(['error' => 'Post not found'], 404);
@@ -67,6 +74,18 @@ class PostController extends Controller
     {
         $result = $this->postService->toggleLike($post, auth()->user());
         return response()->json($result);
+    }
+
+    public function unlike(Post $post): JsonResponse
+    {
+        $result = $this->postService->toggleLike($post, auth()->user());
+        return response()->json($result);
+    }
+
+    public function likes(Post $post): JsonResponse
+    {
+        $likes = $post->likes()->with('user:id,name,username,avatar')->paginate(20);
+        return response()->json($likes);
     }
 
     public function timeline(): JsonResponse
@@ -124,5 +143,21 @@ class PostController extends Controller
     {
         $quotes = $this->postService->getPostQuotes($post);
         return response()->json(['data' => PostResource::collection($quotes)]);
+    }
+
+    /**
+     * Publish a draft post
+     */
+    public function publish(Post $post): JsonResponse
+    {
+        $this->authorize('update', $post);
+        
+        if (!$post->is_draft) {
+            return response()->json(['error' => 'Post is already published'], 400);
+        }
+        
+        $publishedPost = $this->postService->publishPost($post);
+        
+        return response()->json(new PostResource($publishedPost));
     }
 }

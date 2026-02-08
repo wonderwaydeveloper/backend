@@ -10,6 +10,8 @@ class ScheduledPostController extends Controller
 {
     public function store(Request $request)
     {
+        $this->authorize('create', ScheduledPost::class);
+        
         $validated = $request->validate([
             'content' => 'required|string|max:280',
             'scheduled_at' => 'required|date|after:now',
@@ -38,14 +40,10 @@ class ScheduledPostController extends Controller
         return response()->json($scheduledPosts);
     }
 
-    public function destroy(Request $request, $id)
+    public function destroy(ScheduledPost $scheduledPost)
     {
-        $scheduledPost = ScheduledPost::findOrFail($id);
-
-        if ($scheduledPost->user_id !== $request->user()->id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
+        $this->authorize('delete', $scheduledPost);
+        
         $scheduledPost->delete();
 
         return response()->json(['message' => 'Scheduled post deleted']);

@@ -160,14 +160,21 @@ Route::prefix('auth/social')->group(function () {
 
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
-    Route::apiResource('posts', PostController::class);
-    Route::put('/posts/{post}', [PostController::class, 'update']);
+    // Posts Routes
+    Route::post('posts', [PostController::class, 'store'])->middleware('permission:post.create');
+    Route::get('posts', [PostController::class, 'index']);
+    Route::get('posts/{post}', [PostController::class, 'show']);
+    Route::put('posts/{post}', [PostController::class, 'update'])->middleware('permission:post.edit.own');
+    Route::delete('posts/{post}', [PostController::class, 'destroy']);
     Route::get('/posts/{post}/edit-history', [PostController::class, 'editHistory']);
-    Route::post('/posts/{post}/like', [PostController::class, 'like']);
-    Route::post('/posts/{post}/quote', [PostController::class, 'quote']);
+    Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware('permission:post.like');
+    Route::delete('/posts/{post}/like', [PostController::class, 'unlike'])->middleware('permission:post.like');
+    Route::get('/posts/{post}/likes', [PostController::class, 'likes']);
+    Route::post('/posts/{post}/quote', [PostController::class, 'quote'])->middleware('permission:post.create');
+    Route::get('/posts/{post}/quotes', [PostController::class, 'quotes']);
+    Route::post('/posts/{post}/publish', [PostController::class, 'publish'])->middleware('permission:post.edit.own');
     Route::get('/timeline', [PostController::class, 'timeline'])->name('main.timeline');
     Route::get('/drafts', [PostController::class, 'drafts']);
-    Route::post('/posts/{post}/publish', [PostController::class, 'publish']);
 
     // Video routes
     Route::get('/videos/{video}/status', [VideoController::class, 'status']);
@@ -189,12 +196,12 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     // Public analytics tracking (no auth required)
     Route::post('/analytics/track', [AnalyticsController::class, 'trackEvent'])->withoutMiddleware(['auth:sanctum']);
 
-    Route::post('/threads', [ThreadController::class, 'create']);
+    Route::post('/threads', [ThreadController::class, 'create'])->middleware('permission:post.create');
     Route::get('/threads/{post}', [ThreadController::class, 'show']);
-    Route::post('/threads/{post}/add', [ThreadController::class, 'addToThread']);
+    Route::post('/threads/{post}/add', [ThreadController::class, 'addToThread'])->middleware('permission:post.create');
     Route::get('/threads/{post}/stats', [ThreadController::class, 'stats']);
 
-    Route::post('/scheduled-posts', [ScheduledPostController::class, 'store']);
+    Route::post('/scheduled-posts', [ScheduledPostController::class, 'store'])->middleware('permission:post.schedule');
     Route::get('/scheduled-posts', [ScheduledPostController::class, 'index']);
     Route::delete('/scheduled-posts/{scheduledPost}', [ScheduledPostController::class, 'destroy']);
 
@@ -202,21 +209,20 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::get('/gifs/trending', [GifController::class, 'trending']);
 
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
-    Route::post('/posts/{post}/bookmark', [BookmarkController::class, 'toggle']);
+    Route::post('/posts/{post}/bookmark', [BookmarkController::class, 'toggle'])->middleware('permission:post.bookmark');
 
-    Route::post('/posts/{post}/repost', [RepostController::class, 'repost']);
-    Route::get('/posts/{post}/quotes', [PostController::class, 'quotes']);
+    Route::post('/posts/{post}/repost', [RepostController::class, 'repost'])->middleware('permission:post.repost');
+    Route::delete('/posts/{post}/repost', [RepostController::class, 'unrepost'])->middleware('permission:post.repost');
+    Route::get('/posts/{post}/reposts', [RepostController::class, 'reposts']);
     Route::get('/my-reposts', [RepostController::class, 'myReposts']);
 
 
+    // Comments Routes
     Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
-    Route::post('/posts/{post}/comments', [CommentController::class, 'store']);
-
-
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
-        ->middleware('check.reply.permission');
+        ->middleware(['permission:comment.create', 'check.reply.permission']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-    Route::post('/comments/{comment}/like', [CommentController::class, 'like']);
+    Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
 
     Route::post('/users/{user}/follow', [FollowController::class, 'follow'])->middleware('throttle:30,1');
     Route::post('/users/{user}/follow-request', [FollowRequestController::class, 'send']);
@@ -365,10 +371,18 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/queue', [MonitoringController::class, 'queue']);
     });
 
-    Route::post('/users/{user}/block', [ProfileController::class, 'block']);
-    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock']);
-    Route::post('/users/{user}/mute', [ProfileController::class, 'mute']);
-    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute']);
+    Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware('throttle:10,1');
+    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock'])->middleware('throttle:10,1');
+    Route::post('/users/{user}/mute', [ProfileController::class, 'mute'])->middleware('throttle:20,1');
+    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute'])->middleware('throttle:20,1');
+
+    // Block/Mute Management
+    Route::prefix('blocked')->group(function () {
+        Route::get('/', [ProfileController::class, 'getBlockedUsers']);
+    });
+    Route::prefix('muted')->group(function () {
+        Route::get('/', [ProfileController::class, 'getMutedUsers']);
+    });
 
     // Phase 3: Notification Preferences
     Route::prefix('notifications/preferences')->group(function () {
@@ -386,9 +400,22 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::delete('/delete', [MediaController::class, 'deleteMedia']);
     });
 
-    // Content Moderation (User reporting only)
-    Route::prefix('moderation')->group(function () {
-        Route::post('/report', [ModerationController::class, 'reportContent']);
+    // Content Moderation & Reporting
+    Route::prefix('reports')->group(function () {
+        // User reporting
+        Route::post('/post/{post}', [ModerationController::class, 'reportPost'])->middleware('throttle:5,1');
+        Route::post('/user/{user}', [ModerationController::class, 'reportUser'])->middleware('throttle:5,1');
+        Route::post('/comment/{comment}', [ModerationController::class, 'reportComment'])->middleware('throttle:5,1');
+        Route::get('/my-reports', [ModerationController::class, 'myReports']);
+        
+        // Admin only
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/', [ModerationController::class, 'getReports']);
+            Route::get('/{report}', [ModerationController::class, 'showReport']);
+            Route::patch('/{report}/status', [ModerationController::class, 'updateReportStatus']);
+            Route::post('/{report}/action', [ModerationController::class, 'takeAction']);
+            Route::get('/stats/overview', [ModerationController::class, 'getContentStats']);
+        });
     });
 
     // Phase 3: Push Notifications

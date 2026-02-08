@@ -15,6 +15,8 @@ class ThreadController extends Controller
      */
     public function create(ThreadRequest $request)
     {
+        $this->authorize('create', Post::class);
+        
         $validated = $request->validated();
         $user = $request->user();
         $firstPost = null;
@@ -80,6 +82,8 @@ class ThreadController extends Controller
      */
     public function addToThread(Request $request, Post $post)
     {
+        $this->authorize('create', Post::class);
+        
         $request->validate([
             'content' => 'required|string|max:280',
             'image' => 'nullable|image|max:2048',
@@ -122,14 +126,23 @@ class ThreadController extends Controller
     public function stats(Post $post)
     {
         $threadRoot = $post->getThreadRoot();
-
+        $threadPostIds = $threadRoot->threadPosts()->pluck('id')->push($threadRoot->id);
+        
         $stats = [
-            'total_posts' => $threadRoot->threadPosts()->count() + 1,
-            'total_likes' => $threadRoot->likes()->count() + $threadRoot->threadPosts()->withCount('likes')->get()->sum('likes_count'),
-            'total_comments' => $threadRoot->comments()->count() + $threadRoot->threadPosts()->withCount('comments')->get()->sum('comments_count'),
-            'participants' => $threadRoot->threadPosts()->distinct('user_id')->count('user_id') + 1,
+            'total_posts' => $threadPostIds->count(),
+            'total_likes' => DB::table('likes')
+                ->whereIn('likeable_id', $threadPostIds)
+                ->where('likeable_type', Post::class)
+                ->count(),
+            'total_comments' => DB::table('comments')
+                ->whereIn('post_id', $threadPostIds)
+                ->count(),
+            'participants' => DB::table('posts')
+                ->whereIn('id', $threadPostIds)
+                ->distinct('user_id')
+                ->count('user_id'),
             'created_at' => $threadRoot->created_at,
-            'last_updated' => $threadRoot->threadPosts()->latest()->first()?->created_at ?? $threadRoot->created_at,
+            'last_updated' => $threadRoot->threadPosts()->latest()->value('created_at') ?? $threadRoot->created_at,
         ];
 
         return response()->json($stats);
