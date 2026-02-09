@@ -8,6 +8,7 @@ use App\Http\Requests\{StorePostRequest, UpdatePostRequest};
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Services\PostService;
+use App\Rules\ContentLength;
 use Illuminate\Http\{JsonResponse, Request};
 
 class PostController extends Controller
@@ -122,7 +123,7 @@ class PostController extends Controller
     public function quote(Request $request, Post $post): JsonResponse
     {
         $request->validate([
-            'content' => 'required|string|max:280'
+            'content' => ['required', new ContentLength('post')]
         ]);
         
         $quoteDTO = QuotePostDTO::fromRequest(

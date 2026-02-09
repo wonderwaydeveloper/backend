@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ContentLength, FileUpload};
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateCommentRequest extends FormRequest
@@ -14,8 +15,8 @@ class CreateCommentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'required|string|max:280|min:1',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
+            'content' => ['required', new ContentLength('comment')],
+            'image' => ['nullable', new FileUpload('avatar')],
             'gif_url' => 'nullable|url|max:500',
         ];
     }

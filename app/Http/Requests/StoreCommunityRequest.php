@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\FileUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCommunityRequest extends FormRequest
@@ -14,11 +15,11 @@ class StoreCommunityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:100|unique:communities,name',
-            'description' => 'required|string|max:500',
+            'name' => 'required|string|max:' . config('validation.content.community.name_max_length', 100) . '|unique:communities,name',
+            'description' => 'required|string|max:' . config('validation.content.community.description_max_length', 500),
             'privacy' => 'required|in:public,private,restricted',
-            'avatar' => 'nullable|image|max:2048',
-            'banner' => 'nullable|image|max:5120',
+            'avatar' => ['nullable', new FileUpload('avatar')],
+            'banner' => ['nullable', new FileUpload('image')],
             'rules' => 'nullable|array|max:10',
             'rules.*' => 'string|max:200',
             'settings' => 'nullable|array',

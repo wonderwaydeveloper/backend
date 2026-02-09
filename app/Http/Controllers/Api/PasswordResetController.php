@@ -84,7 +84,7 @@ class PasswordResetController extends Controller
             'contact' => 'required|string',
             'contact_type' => 'required|in:email,phone',
             'code' => 'required|string|size:6',
-            'password' => ['required', 'string', 'min:8', 'confirmed', new StrongPassword()]
+            'password' => ['required', 'string', 'min:' . config('validation.password.min_length', 8), 'confirmed', new StrongPassword()]
         ]);
 
         $success = $this->authService->resetPassword($request->code, $request->password, $request, $request->contact, $request->contact_type);

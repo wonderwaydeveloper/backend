@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ThreadRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
+use App\Rules\{ContentLength, FileUpload};
 use Illuminate\Http\Request;
 
 class ThreadController extends Controller
@@ -85,8 +86,8 @@ class ThreadController extends Controller
         $this->authorize('create', Post::class);
         
         $request->validate([
-            'content' => 'required|string|max:280',
-            'image' => 'nullable|image|max:2048',
+            'content' => ['required', new ContentLength('post')],
+            'image' => ['nullable', new FileUpload('avatar')],
         ]);
 
         $threadRoot = $post->getThreadRoot();

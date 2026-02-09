@@ -25,21 +25,30 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
+        'display_name',
         'username',
         'email',
         'phone',
         'password',
         'bio',
         'avatar',
-        'cover',
+        'cover', // Twitter's profile_banner_url equivalent
+        'profile_link_color',
+        'profile_text_color',
         'location',
         'website',
         'verified',
+        'verification_type',
+        'verified_at',
         'date_of_birth',
         'is_child',
         'subscription_plan',
         'is_premium',
-        'is_private',
+        'is_private', // Twitter's protected_tweets equivalent
+        'allow_dms_from',
+        'quality_filter',
+        'allow_sensitive_media',
+        'pinned_tweet_id',
         'google_id',
         'two_factor_enabled',
         'two_factor_secret',
@@ -83,11 +92,14 @@ class User extends Authenticatable implements MustVerifyEmail
             'password_changed_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'last_active_at' => 'datetime',
+            'verified_at' => 'datetime',
             'password' => 'hashed',
             'date_of_birth' => 'date',
             'is_child' => 'boolean',
             'is_premium' => 'boolean',
-            'is_private' => 'boolean',
+            'is_private' => 'boolean', // Twitter's protected_tweets
+            'quality_filter' => 'boolean',
+            'allow_sensitive_media' => 'boolean',
             'verified' => 'boolean',
             'two_factor_enabled' => 'boolean',
             'is_online' => 'boolean',
@@ -157,9 +169,51 @@ class User extends Authenticatable implements MustVerifyEmail
 
 
 
-    public function getAgeAttribute()
+    // Twitter-standard methods
+    public function getDisplayNameAttribute()
     {
-        return $this->date_of_birth?->age;
+        return $this->display_name ?: $this->name;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->verification_type !== 'none';
+    }
+
+    public function getVerificationBadge(): ?string
+    {
+        return match($this->verification_type) {
+            'blue' => '✓',
+            'gold' => '🏅',
+            'gray' => '⚪',
+            default => null
+        };
+    }
+
+    public function isProtected(): bool
+    {
+        return $this->is_private; // Twitter's protected_tweets equivalent
+    }
+
+    // Alias methods for Twitter compatibility
+    public function getTweetsCountAttribute()
+    {
+        return $this->posts_count; // Use existing posts_count
+    }
+
+    public function getProfileBannerUrlAttribute()
+    {
+        return $this->cover; // Use existing cover field
+    }
+
+    public function getProtectedTweetsAttribute()
+    {
+        return $this->is_private; // Use existing is_private field
+    }
+
+    public function pinnedTweet()
+    {
+        return $this->belongsTo(Post::class, 'pinned_tweet_id');
     }
 
 

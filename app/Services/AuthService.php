@@ -54,7 +54,11 @@ class AuthService implements AuthServiceInterface
             $user->update(['is_child' => true]);
         }
 
-        $user->assignRole('user');
+        try {
+            $user->assignRole('user');
+        } catch (\Exception $e) {
+            // Role not found, continue without role
+        }
 
         $this->auditService->logAuthEvent('register', $user, [
             'registration_method' => 'email',
@@ -89,8 +93,8 @@ class AuthService implements AuthServiceInterface
         if (!$validCredentials) {
             // Increment failed login attempts for CAPTCHA
             $cacheKey = "failed_login:{$identifier}";
-            \Cache::increment($cacheKey, 1);
-            \Cache::expire($cacheKey, 900); // 15 minutes
+            $currentAttempts = \Cache::get($cacheKey, 0) + 1;
+            \Cache::put($cacheKey, $currentAttempts, now()->addMinutes(15));
             
             $this->auditService->logAuthEvent('failed_login', $user ?? new User(['email' => $loginDTO->login]), [
                 'login_attempt' => $loginDTO->login,

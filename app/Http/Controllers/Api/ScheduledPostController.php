@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ScheduledPost;
+use App\Rules\ContentLength;
 use Illuminate\Http\Request;
 
 class ScheduledPostController extends Controller
@@ -13,7 +14,7 @@ class ScheduledPostController extends Controller
         $this->authorize('create', ScheduledPost::class);
         
         $validated = $request->validate([
-            'content' => 'required|string|max:280',
+            'content' => ['required', new ContentLength('post')],
             'scheduled_at' => 'required|date|after:now',
             'media_urls' => 'nullable|array',
             'reply_settings' => 'nullable|in:everyone,following,mentioned,none',

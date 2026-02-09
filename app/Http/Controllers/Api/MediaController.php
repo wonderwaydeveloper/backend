@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MediaUploadRequest;
 use App\Jobs\GenerateThumbnailJob;
+use App\Rules\FileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -53,7 +54,7 @@ class MediaController extends Controller
     public function uploadVideo(Request $request)
     {
         $request->validate([
-            'video' => 'required|mimes:mp4,mov,avi,wmv|max:51200', // 50MB max
+            'video' => ['required', new FileUpload('video')],
             'type' => 'in:post,story',
         ]);
 
@@ -95,7 +96,7 @@ class MediaController extends Controller
     public function uploadDocument(Request $request)
     {
         $request->validate([
-            'document' => 'required|mimes:pdf,doc,docx,txt|max:20480', // 20MB max
+            'document' => ['required', new FileUpload('media_general')],
         ]);
 
         try {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\FileUpload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AdvertisementRequest extends FormRequest
@@ -16,7 +17,7 @@ class AdvertisementRequest extends FormRequest
         return [
             'title' => 'required|string|max:100',
             'content' => 'required|string|max:300',
-            'image' => 'nullable|image|max:2048',
+            'image' => ['nullable', new FileUpload('avatar')],
             'target_url' => 'required|url|max:255',
             'budget' => 'required|numeric|min:10',
             'target_audience' => 'nullable|array',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\FileUpload;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -23,8 +24,8 @@ class UpdateCommunityRequest extends FormRequest
             ],
             'description' => 'sometimes|string|max:500',
             'privacy' => 'sometimes|in:public,private,restricted',
-            'avatar' => 'nullable|image|max:2048',
-            'banner' => 'nullable|image|max:5120',
+            'avatar' => ['nullable', new FileUpload('avatar')],
+            'banner' => ['nullable', new FileUpload('image')],
             'rules' => 'nullable|array|max:10',
             'rules.*' => 'string|max:200',
             'settings' => 'nullable|array',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Rules\ContentLength;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -12,7 +13,7 @@ class RepostController extends Controller
     public function repost(Request $request, Post $post)
     {
         $request->validate([
-            'quote' => 'nullable|string|max:280',
+            'quote' => ['nullable', new ContentLength('post')],
         ]);
 
         return DB::transaction(function () use ($request, $post) {

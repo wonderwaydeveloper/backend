@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ValidUsername, FileUpload, MinimumAge};
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
@@ -14,14 +16,14 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:50|min:1',
-            'username' => ['sometimes', 'string', 'max:15', 'unique:users,username,' . auth()->id(), 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
-            'bio' => 'sometimes|nullable|string|max:500',
-            'avatar' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
-            'cover' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
-            'location' => 'sometimes|nullable|string|max:100',
-            'website' => 'sometimes|nullable|url|max:255',
-            'date_of_birth' => 'sometimes|nullable|date|before:today',
+            'name' => 'sometimes|string|max:' . config('validation.user.name.max_length', 50) . '|min:1',
+            'username' => ['sometimes', new ValidUsername(auth()->id())],
+            'bio' => 'sometimes|nullable|string|max:' . config('validation.user.bio.max_length', 500),
+            'avatar' => ['sometimes', 'nullable', new FileUpload('avatar')],
+            'cover' => ['sometimes', 'nullable', new FileUpload('image')],
+            'location' => 'sometimes|nullable|string|max:' . config('validation.user.location.max_length', 100),
+            'website' => 'sometimes|nullable|url|max:' . config('validation.user.website.max_length', 255),
+            'date_of_birth' => ['sometimes', 'nullable', 'date', config('validation.date.before_rule', 'before:today'), new MinimumAge()],
         ];
     }
 

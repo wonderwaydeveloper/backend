@@ -224,17 +224,23 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
 
-    Route::post('/users/{user}/follow', [FollowController::class, 'follow'])->middleware('throttle:30,1');
+    // Follow/Unfollow Actions (ProfileController)
+    Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:30,1', 'can:follow,user']);
+    Route::post('/users/{user}/unfollow', [ProfileController::class, 'unfollow'])->middleware(['throttle:30,1', 'can:follow,user']);
+    
+    // Follow Requests
     Route::post('/users/{user}/follow-request', [FollowRequestController::class, 'send']);
     Route::get('/follow-requests', [FollowRequestController::class, 'index']);
     Route::post('/follow-requests/{followRequest}/accept', [FollowRequestController::class, 'accept']);
     Route::post('/follow-requests/{followRequest}/reject', [FollowRequestController::class, 'reject']);
+    
+    // Followers/Following Lists (FollowController)
     Route::get('/users/{user}/followers', [FollowController::class, 'followers']);
     Route::get('/users/{user}/following', [FollowController::class, 'following']);
 
-    Route::get('/users/{user}', [ProfileController::class, 'show']);
-    Route::get('/users/{user}/posts', [ProfileController::class, 'posts']);
-    Route::get('/users/{user}/media', [ProfileController::class, 'media']);
+    Route::get('/users/{user}', [ProfileController::class, 'show'])->middleware('can:view,user');
+    Route::get('/users/{user}/posts', [ProfileController::class, 'posts'])->middleware('can:view,user');
+    Route::get('/users/{user}/media', [ProfileController::class, 'media'])->middleware('can:view,user');
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy']);
     
@@ -371,10 +377,10 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/queue', [MonitoringController::class, 'queue']);
     });
 
-    Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware('throttle:10,1');
-    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock'])->middleware('throttle:10,1');
-    Route::post('/users/{user}/mute', [ProfileController::class, 'mute'])->middleware('throttle:20,1');
-    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute'])->middleware('throttle:20,1');
+    Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware(['throttle:10,1', 'can:block,user']);
+    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock'])->middleware(['throttle:10,1', 'can:block,user']);
+    Route::post('/users/{user}/mute', [ProfileController::class, 'mute'])->middleware(['throttle:20,1', 'can:mute,user']);
+    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute'])->middleware(['throttle:20,1', 'can:mute,user']);
 
     // Block/Mute Management
     Route::prefix('blocked')->group(function () {

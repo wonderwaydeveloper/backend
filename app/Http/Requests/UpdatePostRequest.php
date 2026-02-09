@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ContentLength, FileUpload};
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePostRequest extends FormRequest
@@ -14,9 +15,9 @@ class UpdatePostRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'required|string|max:280|min:1',
+            'content' => ['required', new ContentLength('post')],
             'edit_reason' => 'nullable|string|max:100',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,webp|max:2048',
+            'image' => ['nullable', new FileUpload('avatar')],
             'gif_url' => 'nullable|url|max:500',
         ];
     }

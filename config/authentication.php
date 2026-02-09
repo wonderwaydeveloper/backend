@@ -133,7 +133,6 @@ return [
     ],
     
     'file_upload' => [
-        'max_size' => env('FILE_UPLOAD_MAX_SIZE', 10485760), // 10MB
         'allowed_extensions' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
         'scan_for_malware' => env('FILE_SCAN_MALWARE', true),
         'max_video_duration' => env('FILE_UPLOAD_MAX_VIDEO_DURATION', 300), // 5 minutes

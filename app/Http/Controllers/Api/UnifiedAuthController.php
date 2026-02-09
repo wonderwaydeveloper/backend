@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\DTOs\LoginDTO;
+use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\{LoginRequest, PhoneVerificationRequest, PhoneLoginRequest, PhoneRegisterRequest};
+use App\Http\Requests\{LoginRequest, PhoneLoginRequest, PhoneRegisterRequest};
 use App\Models\{User, PhoneVerificationCode};
 use App\Services\{AuthService, EmailService, SmsService, TwoFactorService, PasswordSecurityService, DeviceFingerprintService};
-use App\Rules\{StrongPassword, MinimumAge};
+use App\Rules\{StrongPassword, MinimumAge, ValidUsername};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Cache, Hash};
 use Illuminate\Support\Str;
@@ -194,8 +195,8 @@ class UnifiedAuthController extends Controller
     public function multiStepStep1(Request $request): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|max:50',
-            'date_of_birth' => ['required', 'date', 'before:today', new MinimumAge()],
+            'name' => 'required|string|max:' . config('validation.user.name.max_length', 50),
+            'date_of_birth' => ['required', 'date', config('validation.date.before_rule', 'before:today'), new MinimumAge()],
             'contact' => 'required|string',
             'contact_type' => 'required|in:email,phone'
         ]);
@@ -273,8 +274,8 @@ class UnifiedAuthController extends Controller
     {
         $request->validate([
             'session_id' => 'required|uuid',
-            'username' => ['nullable', 'string', 'max:15', 'unique:users', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
-            'password' => ['required', 'string', 'min:8', 'confirmed', new StrongPassword()]
+            'username' => ['nullable', new ValidUsername()],
+            'password' => ['required', 'string', 'min:' . config('validation.password.min_length', 8), 'confirmed', new StrongPassword()]
         ]);
 
         $session = Cache::get("registration:{$request->session_id}");
@@ -343,6 +344,8 @@ class UnifiedAuthController extends Controller
 
             $token = app(\App\Services\SessionTimeoutService::class)->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
             Cache::forget("registration:{$request->session_id}");
+            
+            event(new UserRegistered($user));
 
             return response()->json([
                 'user' => $user,
@@ -738,7 +741,7 @@ class UnifiedAuthController extends Controller
     public function checkUsernameAvailability(Request $request): JsonResponse
     {
         $request->validate([
-            'username' => ['required', 'string', 'max:15', 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/'],
+            'username' => ['required', new ValidUsername()],
         ]);
 
         $available = !User::where('username', $request->username)->exists();

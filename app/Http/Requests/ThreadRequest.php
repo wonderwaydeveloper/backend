@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ContentLength, FileUpload};
 use Illuminate\Foundation\Http\FormRequest;
 
 class ThreadRequest extends FormRequest
@@ -15,9 +16,9 @@ class ThreadRequest extends FormRequest
     {
         return [
             'posts' => 'required|array|min:2|max:25',
-            'posts.*.content' => 'required|string|max:280',
+            'posts.*.content' => ['required', new ContentLength('post')],
             'media' => 'nullable|array|max:4',
-            'media.*' => 'file|mimes:jpeg,png,gif,mp4|max:10240'
+            'media.*' => ['file', new FileUpload('media_general')]
         ];
     }
 }

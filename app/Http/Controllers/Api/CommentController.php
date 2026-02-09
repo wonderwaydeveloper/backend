@@ -7,6 +7,7 @@ use App\Events\PostInteraction;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Rules\ContentLength;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
@@ -27,7 +28,7 @@ class CommentController extends Controller
         $this->authorize('create', Comment::class);
         
         $request->validate([
-            'content' => 'required|string|max:280',
+            'content' => ['required', new ContentLength('comment')],
         ]);
 
         $comment = $post->comments()->create([

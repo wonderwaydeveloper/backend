@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\DTOs\UserUpdateDTO;
+use App\Events\{UserBlocked, UserMuted, UserUpdated};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
@@ -10,6 +11,7 @@ use App\Models\User;
 use App\Models\Block;
 use App\Models\Mute;
 use App\Services\UserService;
+use App\Rules\{FileUpload};
 use Illuminate\Http\{JsonResponse, Request};
 
 class ProfileController extends Controller
@@ -20,17 +22,20 @@ class ProfileController extends Controller
 
     public function show(User $user): JsonResponse
     {
+        $this->authorize('view', $user);
         return response()->json(new UserResource($user->load(['followers', 'following'])));
     }
 
     public function posts(User $user): JsonResponse
     {
+        $this->authorize('view', $user);
         $posts = $this->userService->getUserPosts($user);
         return response()->json($posts);
     }
 
     public function media(User $user): JsonResponse
     {
+        $this->authorize('view', $user);
         $mediaPosts = $user->posts()
             ->whereHas('media')
             ->with(['media', 'user:id,name,username,avatar'])
@@ -43,15 +48,19 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
+        $this->authorize('update', $user);
+        
         $data = $request->validated();
         
-        // Handle file uploads
+        // Secure file upload handling
         if ($request->hasFile('avatar')) {
+            $request->validate(['avatar' => new FileUpload('avatar')]);
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
             $data['avatar'] = asset('storage/' . $avatarPath);
         }
         
         if ($request->hasFile('cover')) {
+            $request->validate(['cover' => new FileUpload('image')]);
             $coverPath = $request->file('cover')->store('covers', 'public');
             $data['cover'] = asset('storage/' . $coverPath);
         }
@@ -59,17 +68,21 @@ class ProfileController extends Controller
         $dto = UserUpdateDTO::fromArray($data);
         $updatedUser = $this->userService->updateUserProfile($user, $dto);
         
+        event(new UserUpdated($updatedUser, $data));
+        
         return response()->json(new UserResource($updatedUser));
     }
 
     public function follow(User $user): JsonResponse
     {
+        $this->authorize('follow', $user);
         $result = $this->userService->followUser(auth()->user(), $user);
         return response()->json($result);
     }
 
     public function unfollow(User $user): JsonResponse
     {
+        $this->authorize('follow', $user);
         $result = $this->userService->unfollowUser(auth()->user(), $user);
         return response()->json($result);
     }
@@ -139,11 +152,7 @@ class ProfileController extends Controller
     public function block(Request $request, User $user): JsonResponse
     {
         $currentUser = $request->user();
-        
-        // Prevent self-blocking
-        if ($currentUser->id === $user->id) {
-            return response()->json(['error' => 'Cannot block yourself'], 422);
-        }
+        $this->authorize('block', $user);
         
         $request->validate(['reason' => 'nullable|string|max:255']);
         
@@ -156,11 +165,15 @@ class ProfileController extends Controller
         $currentUser->following()->detach($user->id);
         $user->following()->detach($currentUser->id);
         
+        event(new UserBlocked($currentUser, $user));
+        
         return response()->json(['message' => 'User blocked successfully']);
     }
     
     public function unblock(Request $request, User $user): JsonResponse
     {
+        $this->authorize('block', $user);
+        
         $deleted = Block::where('blocker_id', $request->user()->id)
             ->where('blocked_id', $user->id)
             ->delete();
@@ -175,11 +188,7 @@ class ProfileController extends Controller
     public function mute(Request $request, User $user): JsonResponse
     {
         $currentUser = $request->user();
-        
-        // Prevent self-muting
-        if ($currentUser->id === $user->id) {
-            return response()->json(['error' => 'Cannot mute yourself'], 422);
-        }
+        $this->authorize('mute', $user);
         
         $request->validate(['expires_at' => 'nullable|date|after:now|before:+1 year']);
         
@@ -188,11 +197,15 @@ class ProfileController extends Controller
             ['expires_at' => $request->input('expires_at')]
         );
         
+        event(new UserMuted($currentUser, $user));
+        
         return response()->json(['message' => 'User muted successfully']);
     }
     
     public function unmute(Request $request, User $user): JsonResponse
     {
+        $this->authorize('mute', $user);
+        
         $deleted = Mute::where('muter_id', $request->user()->id)
             ->where('muted_id', $user->id)
             ->delete();
@@ -256,21 +269,26 @@ class ProfileController extends Controller
     
     public function deleteAccount(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $this->authorize('delete', $user);
+        
         $request->validate([
             'password' => 'required|string',
             'confirmation' => 'required|string|in:DELETE_MY_ACCOUNT'
         ]);
         
-        $user = $request->user();
-        
         if (!\Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Invalid password'], 422);
         }
         
-        // Delete user data
+        // Secure data deletion
         $user->tokens()->delete();
         $user->devices()->delete();
         $user->posts()->delete();
+        $user->notifications()->delete();
+        $user->bookmarks()->delete();
+        $user->following()->detach();
+        $user->followers()->detach();
         $user->delete();
         
         return response()->json(['message' => 'Account deleted successfully']);

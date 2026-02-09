@@ -39,12 +39,13 @@ class RateLimitingService
                 ];
             }
 
-            Cache::increment($key, 1, now()->addMinutes($config['window_minutes']));
+            $newAttempts = $attempts + 1;
+            Cache::put($key, $newAttempts, now()->addMinutes($config['window_minutes']));
             
             return [
                 'allowed' => true,
-                'attempts' => $attempts + 1,
-                'remaining' => max(0, $config['max_attempts'] - $attempts - 1)
+                'attempts' => $newAttempts,
+                'remaining' => max(0, $config['max_attempts'] - $newAttempts)
             ];
         } finally {
             $lock->release();
