@@ -16,52 +16,32 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens;
     use HasRoles;
 
-    protected $guarded = [
-        'id', 
-        'created_at', 
-        'updated_at', 
-        'email_verified_at',
-        'phone_verified_at',
-        'password_changed_at'
-    ];
-
     /**
-     * The attributes that are mass assignable.
+     * The attributes that are NOT mass assignable.
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'name',
-        'display_name',
-        'username',
-        'email',
-        'phone',
-        'password',
-        'bio',
-        'avatar',
-        'cover',
-        'profile_link_color',
-        'profile_text_color',
-        'location',
-        'website',
-        'date_of_birth',
-        'is_private',
-        'allow_dms_from',
-        'quality_filter',
-        'allow_sensitive_media',
-        'pinned_post_id',
-        'notification_preferences',
-        'email_notifications_enabled',
-        'two_factor_enabled',
-        'two_factor_secret',
-        'two_factor_backup_codes',
+    protected $guarded = [
+        'id',
+        'created_at',
+        'updated_at',
+        'email_verified_at',
+        'phone_verified_at',
+        'password_changed_at',
+        'verified',
+        'verification_type',
+        'verified_at',
+        'is_premium',
+        'is_flagged',
+        'is_suspended',
+        'is_banned',
         'followers_count',
         'following_count',
         'posts_count',
         'favourites_count',
         'listed_count',
-        'verified',
-        'verification_type',
+        'two_factor_enabled',
+        'two_factor_secret',
     ];
 
     /**

@@ -16,13 +16,8 @@ class Report extends Model
         'description',
     ];
 
-    protected $guarded = [
-        'id',
-        'status',
-        'reviewed_by',
-        'reviewed_at',
-        'action_taken',
-        'admin_notes'
+    protected $attributes = [
+        'status' => 'pending',
     ];
 
     protected $casts = [

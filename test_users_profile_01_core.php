@@ -105,9 +105,11 @@ class UsersProfileCompleteTest
 
         $this->test("User has required fillable fields", function() {
             $user = new User();
-            $fillable = $user->getFillable();
-            $required = ['username', 'email', 'password', 'display_name', 'bio', 'location', 'website', 'date_of_birth', 'is_private', 'verified'];
-            return count(array_intersect($required, $fillable)) >= 8;
+            // When using $guarded, all fields are fillable except those in $guarded
+            // So we check that dangerous fields are NOT fillable
+            $guarded = $user->getGuarded();
+            $dangerousFields = ['id', 'verified', 'is_premium', 'followers_count', 'following_count', 'posts_count'];
+            return count(array_intersect($dangerousFields, $guarded)) >= 5;
         });
 
         $this->test("User has followers relationship", function() {

@@ -59,31 +59,34 @@ try {
         'username' => 'intuser1_' . time(),
         'email' => 'intuser1_' . time() . '@test.com',
         'password' => Hash::make('password123'),
-        'email_verified_at' => now()
     ]);
+    $user1->email_verified_at = now();
+    $user1->save();
     
     $user2 = User::create([
         'name' => 'Integration User 2',
         'username' => 'intuser2_' . time(),
         'email' => 'intuser2_' . time() . '@test.com',
         'password' => Hash::make('password123'),
-        'email_verified_at' => now()
     ]);
+    $user2->email_verified_at = now();
+    $user2->save();
     
     $user3 = User::create([
         'name' => 'Integration User 3',
         'username' => 'intuser3_' . time(),
         'email' => 'intuser3_' . time() . '@test.com',
         'password' => Hash::make('password123'),
-        'email_verified_at' => now()
     ]);
+    $user3->email_verified_at = now();
+    $user3->save();
     
     $testUsers = [$user1, $user2, $user3];
     
     test("User creation", fn() => $user1->exists && $user2->exists && $user3->exists);
     test("User relationships exist", fn() => method_exists($user1, 'posts') && method_exists($user1, 'blockedUsers'));
     test("User has password hashed", fn() => Hash::check('password123', $user1->password));
-    test("User email verified", fn() => $user1->email_verified_at !== null);
+    test("User email verified", fn() => $user1->fresh()->email_verified_at !== null);
     test("User has followers relation", fn() => method_exists($user1, 'followers'));
     test("User has following relation", fn() => method_exists($user1, 'following'));
     test("User has Block/Mute methods", fn() => method_exists($user1, 'hasBlocked') && method_exists($user1, 'hasMuted'));
@@ -405,12 +408,12 @@ try {
     test("Cascade delete works", fn() => !Post::find($postId));
     
     // Unique constraints
-    test("Unique email constraint", function() {
+    test("Unique email constraint", function() use ($user1) {
         try {
             User::create([
                 'name' => 'Duplicate',
                 'username' => 'dup_' . time(),
-                'email' => 'intuser1_' . time() . '@test.com', // Same as user1
+                'email' => $user1->email, // Use existing email
                 'password' => Hash::make('password')
             ]);
             return false;

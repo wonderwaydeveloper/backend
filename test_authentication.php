@@ -636,8 +636,8 @@ test("2FA backup codes hashed", function() {
 
 test("2FA user fields exist", function() {
     $user = new User();
-    return in_array('two_factor_enabled', $user->getFillable()) &&
-           in_array('two_factor_secret', $user->getFillable());
+    return in_array('two_factor_enabled', $user->getGuarded()) &&
+           in_array('two_factor_secret', $user->getGuarded());
 });
 
 // پاکسازی

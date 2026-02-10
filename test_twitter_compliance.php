@@ -48,20 +48,24 @@ class TwitterStandardsComplianceTest
                     'username' => 'twittertest_' . time(),
                     'email' => 'twitter_' . time() . '@example.com',
                     'password' => Hash::make('password123'),
-                    'email_verified_at' => now(),
                     'display_name' => 'Twitter Display',
                     'bio' => 'Twitter bio test',
                     'location' => 'San Francisco, CA',
                     'website' => 'https://twitter.com',
-                    'verified' => true,
-                    'verification_type' => 'blue',
                     'is_private' => false,
-                    'followers_count' => 1000,
-                    'following_count' => 500,
-                    'posts_count' => 250,
-                    'favourites_count' => 100,
-                    'listed_count' => 50
                 ]);
+                
+                // Set guarded fields after creation
+                $user->email_verified_at = now();
+                $user->verified = true;
+                $user->verification_type = 'blue';
+                $user->followers_count = 1000;
+                $user->following_count = 500;
+                $user->posts_count = 250;
+                $user->favourites_count = 100;
+                $user->listed_count = 50;
+                $user->save();
+                
                 $this->testUsers[] = $user;
 
                 $resource = new UserResource($user);
@@ -423,8 +427,10 @@ class TwitterStandardsComplianceTest
                     $user2 = $this->testUsers[1];
                     
                     // Reset counters
-                    $user1->update(['following_count' => 0]);
-                    $user2->update(['followers_count' => 0]);
+                    $user1->following_count = 0;
+                    $user1->save();
+                    $user2->followers_count = 0;
+                    $user2->save();
                     
                     // Follow and update counters
                     $user1->following()->attach($user2->id);
@@ -611,20 +617,22 @@ class TwitterStandardsComplianceTest
                         'username' => 'workflow1_' . time(),
                         'email' => 'workflow1_' . time() . '@test.com',
                         'password' => Hash::make('password123'),
-                        'email_verified_at' => now(),
-                        'following_count' => 0,
-                        'followers_count' => 0
                     ]);
+                    $user1->email_verified_at = now();
+                    $user1->following_count = 0;
+                    $user1->followers_count = 0;
+                    $user1->save();
                     
                     $user2 = User::create([
                         'name' => 'Workflow User 2',
                         'username' => 'workflow2_' . time(),
                         'email' => 'workflow2_' . time() . '@test.com',
                         'password' => Hash::make('password123'),
-                        'email_verified_at' => now(),
-                        'following_count' => 0,
-                        'followers_count' => 0
                     ]);
+                    $user2->email_verified_at = now();
+                    $user2->following_count = 0;
+                    $user2->followers_count = 0;
+                    $user2->save();
                     
                     $this->testUsers[] = $user1;
                     $this->testUsers[] = $user2;
@@ -704,11 +712,15 @@ class TwitterStandardsComplianceTest
                     'username' => 'popular_' . time(),
                     'email' => 'popular_' . time() . '@test.com',
                     'password' => Hash::make('password123'),
-                    'followers_count' => 1000000,
-                    'following_count' => 5000,
-                    'posts_count' => 50000,
                     'email_verified_at' => now()
                 ]);
+                
+                // Set counter fields after creation since they're guarded
+                $user->followers_count = 1000000;
+                $user->following_count = 5000;
+                $user->posts_count = 50000;
+                $user->save();
+                
                 $this->testUsers[] = $user;
                 
                 // Refresh to ensure data is saved correctly

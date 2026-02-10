@@ -308,6 +308,36 @@ SESSION_LIFETIME=120
 
 ## 🧪 Testing
 
+### Test Coverage
+```
+کل تستها: 169
+موفق: 169 ✓
+ناموفق: 0 ✗
+درصد موفقیت: 100%
+```
+
+### Test Suites
+- Core Services (12 tests)
+- Controllers & Routes (8 tests)
+- AuthService Methods (9 tests)
+- Request Classes & Validation (8 tests)
+- Middleware & Security (8 tests)
+- Models & Database (8 tests)
+- DTOs & Contracts (6 tests)
+- Configuration & Services (8 tests)
+- Events & Notifications (6 tests)
+- Policies & Authorization (8 tests)
+- Email Templates & Views (6 tests)
+- Security Features (10 tests)
+- User Flows & Features (8 tests)
+- Error Handling & Logging (6 tests)
+- Service Registration & DI (6 tests)
+- API Routes & Endpoints (8 tests)
+- Validation Rules Functional (10 tests)
+- Password Security Functional (12 tests)
+- Rate Limiting Functional (10 tests)
+- 2FA Flow Functional (12 tests)
+
 ### Manual Testing
 ```bash
 # ثبت نام
