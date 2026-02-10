@@ -10,6 +10,7 @@ return new class () extends Migration {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('display_name')->nullable(); // Twitter standard
             $table->string('username')->unique();
             $table->string('email')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
@@ -22,14 +23,22 @@ return new class () extends Migration {
             $table->timestamp('phone_verified_at')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->text('bio')->nullable();
+            $table->unsignedBigInteger('pinned_post_id')->nullable(); // Our system uses posts
             $table->string('avatar')->nullable();
             $table->string('cover')->nullable();
+            $table->string('profile_link_color', 7)->default('#1DA1F2'); // Twitter standard
+            $table->string('profile_text_color', 7)->default('#14171A'); // Twitter standard
             $table->string('location')->nullable();
             $table->string('website')->nullable();
             $table->boolean('verified')->default(false);
+            $table->enum('verification_type', ['none', 'blue', 'gold', 'gray'])->default('none'); // Twitter standard
+            $table->timestamp('verified_at')->nullable(); // Twitter standard
             $table->boolean('is_online')->default(false);
             $table->timestamp('last_seen_at')->nullable();
             $table->boolean('is_private')->default(false);
+            $table->enum('allow_dms_from', ['everyone', 'following', 'none'])->default('everyone'); // Twitter standard
+            $table->boolean('quality_filter')->default(true); // Twitter standard
+            $table->boolean('allow_sensitive_media')->default(false); // Twitter standard
             $table->boolean('is_child')->default(false);
             $table->boolean('two_factor_enabled')->default(false);
             $table->string('two_factor_secret')->nullable();
@@ -37,6 +46,8 @@ return new class () extends Migration {
             $table->unsignedInteger('followers_count')->default(0);
             $table->unsignedInteger('following_count')->default(0);
             $table->unsignedInteger('posts_count')->default(0);
+            $table->unsignedInteger('listed_count')->default(0); // Twitter standard
+            $table->unsignedInteger('favourites_count')->default(0); // Twitter standard
             $table->boolean('email_notifications_enabled')->default(true);
             $table->string('google_id')->nullable();
             $table->timestamp('last_active_at')->nullable();
@@ -53,6 +64,8 @@ return new class () extends Migration {
             $table->index('email');
             $table->index('username');
             $table->index('phone');
+            $table->index('display_name'); // Twitter standard
+            $table->index('verification_type'); // Twitter standard
             $table->index('email_verification_token');
             $table->index('refresh_token');
             $table->index(['is_online', 'last_seen_at']);

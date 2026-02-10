@@ -16,7 +16,14 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens;
     use HasRoles;
 
-    protected $guarded = ['id'];
+    protected $guarded = [
+        'id', 
+        'created_at', 
+        'updated_at', 
+        'email_verified_at',
+        'phone_verified_at',
+        'password_changed_at'
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -32,37 +39,22 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'bio',
         'avatar',
-        'cover', // Twitter's profile_banner_url equivalent
+        'cover',
         'profile_link_color',
         'profile_text_color',
         'location',
         'website',
-        'verified',
-        'verification_type',
-        'verified_at',
         'date_of_birth',
-        'is_child',
-        'subscription_plan',
-        'is_premium',
-        'is_private', // Twitter's protected_tweets equivalent
+        'is_private',
         'allow_dms_from',
         'quality_filter',
         'allow_sensitive_media',
-        'pinned_tweet_id',
-        'google_id',
+        'pinned_post_id',
+        'notification_preferences',
+        'email_notifications_enabled',
         'two_factor_enabled',
         'two_factor_secret',
         'two_factor_backup_codes',
-        'is_online',
-        'last_seen_at',
-        'last_active_at',
-        'email_notifications_enabled',
-        'email_verification_token',
-        'email_verified_at',
-        'phone_verified_at',
-        'refresh_token',
-        'password_changed_at',
-        'notification_preferences',
     ];
 
     /**
@@ -172,12 +164,12 @@ class User extends Authenticatable implements MustVerifyEmail
     // Twitter-standard methods
     public function getDisplayNameAttribute()
     {
-        return $this->display_name ?: $this->name;
+        return $this->attributes['display_name'] ?? $this->attributes['name'];
     }
 
     public function isVerified(): bool
     {
-        return $this->verification_type !== 'none';
+        return $this->verification_type && $this->verification_type !== 'none';
     }
 
     public function getVerificationBadge(): ?string
@@ -211,9 +203,9 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->is_private; // Use existing is_private field
     }
 
-    public function pinnedTweet()
+    public function pinnedPost()
     {
-        return $this->belongsTo(Post::class, 'pinned_tweet_id');
+        return $this->belongsTo(Post::class, 'pinned_post_id');
     }
 
 

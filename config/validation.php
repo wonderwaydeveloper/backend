@@ -30,14 +30,17 @@ return [
     'content' => [
         'post' => [
             'max_length' => 280,
+            'min_length' => 1,
             'max_links' => 2,
             'max_mentions' => 5,
         ],
         'comment' => [
             'max_length' => 280,
+            'min_length' => 1,
         ],
         'message' => [
             'max_length' => 1000,
+            'min_length' => 1,
         ],
         'community' => [
             'name_max_length' => 100,
@@ -48,18 +51,22 @@ return [
     'file_upload' => [
         'image' => [
             'max_size_kb' => 5120, // 5MB
+            'allowed_types' => ['jpeg', 'png', 'jpg', 'gif', 'webp'],
             'allowed_mimes' => 'jpeg,png,jpg,gif,webp',
         ],
         'avatar' => [
             'max_size_kb' => 2048, // 2MB
+            'allowed_types' => ['jpeg', 'png', 'jpg', 'gif'],
             'allowed_mimes' => 'jpeg,png,jpg,gif',
         ],
         'video' => [
             'max_size_kb' => 102400, // 100MB
+            'allowed_types' => ['mp4', 'mov', 'avi', 'mkv', 'webm'],
             'allowed_mimes' => 'mp4,mov,avi,mkv,webm',
         ],
         'media_general' => [
             'max_size_kb' => 10240, // 10MB
+            'allowed_types' => ['jpeg', 'png', 'gif', 'webp', 'mp4', 'mov'],
             'allowed_mimes' => 'jpeg,png,gif,webp,mp4,mov',
         ],
     ],

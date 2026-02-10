@@ -47,6 +47,11 @@ class Post extends Model
         'is_edited' => 'boolean',
     ];
 
+    public function setContentAttribute($value)
+    {
+        $this->attributes['content'] = strip_tags($value);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class)->select(['id', 'name', 'username', 'avatar']);

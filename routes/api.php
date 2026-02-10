@@ -165,7 +165,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::get('posts', [PostController::class, 'index']);
     Route::get('posts/{post}', [PostController::class, 'show']);
     Route::put('posts/{post}', [PostController::class, 'update'])->middleware('permission:post.edit.own');
-    Route::delete('posts/{post}', [PostController::class, 'destroy']);
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->middleware('permission:post.delete.own');
     Route::get('/posts/{post}/edit-history', [PostController::class, 'editHistory']);
     Route::post('/posts/{post}/like', [PostController::class, 'like'])->middleware('permission:post.like');
     Route::delete('/posts/{post}/like', [PostController::class, 'unlike'])->middleware('permission:post.like');

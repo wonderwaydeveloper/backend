@@ -17,7 +17,7 @@ class UserUpdateDTO
         public readonly ?string $profile_link_color = null,
         public readonly ?string $profile_text_color = null,
         public readonly ?string $dateOfBirth = null,
-        public readonly ?int $pinned_tweet_id = null,
+        public readonly ?int $pinned_post_id = null,
         public readonly ?string $allow_dms_from = null,
         public readonly ?bool $quality_filter = null,
         public readonly ?bool $allow_sensitive_media = null
@@ -36,7 +36,7 @@ class UserUpdateDTO
             profile_link_color: $request->profile_link_color,
             profile_text_color: $request->profile_text_color,
             dateOfBirth: $request->date_of_birth,
-            pinned_tweet_id: $request->pinned_tweet_id,
+            pinned_post_id: $request->pinned_post_id,
             allow_dms_from: $request->allow_dms_from,
             quality_filter: $request->quality_filter,
             allow_sensitive_media: $request->allow_sensitive_media
@@ -56,7 +56,7 @@ class UserUpdateDTO
             profile_link_color: $data['profile_link_color'] ?? null,
             profile_text_color: $data['profile_text_color'] ?? null,
             dateOfBirth: $data['date_of_birth'] ?? null,
-            pinned_tweet_id: $data['pinned_tweet_id'] ?? null,
+            pinned_post_id: $data['pinned_post_id'] ?? null,
             allow_dms_from: $data['allow_dms_from'] ?? null,
             quality_filter: $data['quality_filter'] ?? null,
             allow_sensitive_media: $data['allow_sensitive_media'] ?? null
@@ -76,7 +76,7 @@ class UserUpdateDTO
             'profile_link_color' => $this->profile_link_color,
             'profile_text_color' => $this->profile_text_color,
             'date_of_birth' => $this->dateOfBirth,
-            'pinned_tweet_id' => $this->pinned_tweet_id,
+            'pinned_post_id' => $this->pinned_post_id,
             'allow_dms_from' => $this->allow_dms_from,
             'quality_filter' => $this->quality_filter,
             'allow_sensitive_media' => $this->allow_sensitive_media,

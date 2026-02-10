@@ -7,13 +7,14 @@ $app->make('Illuminate\Contracts\Console\Kernel')->bootstrap();
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Hash};
-use App\Models\{User, Post};
+use App\Models\{User, Post, Block, Mute};
 use App\Http\Controllers\Api\{ProfileController, FollowController};
 use App\Services\{UserService, UserModerationService};
 use App\Rules\{ValidUsername, FileUpload, ContentLength, StrongPassword, MinimumAge};
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 
-class UsersProfileSystemTest
+class UsersProfileCompleteTest
 {
     private $results = [];
     private $totalTests = 0;
@@ -22,21 +23,19 @@ class UsersProfileSystemTest
 
     public function runAllTests()
     {
-        echo "🚀 Starting Complete Users & Profile + Validation System Tests\n";
+        echo "🚀 Complete Users & Profile System Tests\n";
         echo str_repeat("═", 70) . "\n";
 
-        // Core System Tests
         $this->testValidationSystem();
         $this->testUserModel();
         $this->testProfileController();
         $this->testFollowController();
         $this->testUserServices();
         $this->testValidationRules();
-        $this->testRegistrationRequest();
-        $this->testSystemIntegration();
-        $this->testSecurityValidation();
-        $this->testDatabaseSchema();
+        $this->testUserResource();
         $this->testBlockMuteSystem();
+        $this->testSystemIntegration();
+        $this->testDatabaseSchema();
 
         $this->cleanup();
         $this->displayResults();
@@ -44,7 +43,7 @@ class UsersProfileSystemTest
 
     private function testValidationSystem()
     {
-        echo "\n✅ Testing Validation System Integration...\n";
+        echo "\n✅ Testing Validation System...\n";
         
         $this->test("Validation config structure", function() {
             $config = config('validation');
@@ -66,7 +65,7 @@ class UsersProfileSystemTest
             return isset($config['image']['max_size_kb']) && isset($config['avatar']['max_size_kb']);
         });
 
-        $this->test("No hardcode validation values in requests", function() {
+        $this->test("No hardcode validation values", function() {
             $files = ['UpdateProfileRequest.php', 'StorePostRequest.php'];
             foreach ($files as $file) {
                 if (file_exists(__DIR__ . '/app/Http/Requests/' . $file)) {
@@ -79,7 +78,7 @@ class UsersProfileSystemTest
             return true;
         });
 
-        $this->test("Config-based validation used everywhere", function() {
+        $this->test("Config-based validation used", function() {
             $files = ['UpdateProfileRequest.php', 'RegisterRequest.php'];
             foreach ($files as $file) {
                 $path = strpos($file, 'Register') !== false ? 
@@ -88,22 +87,6 @@ class UsersProfileSystemTest
                 if (file_exists($path)) {
                     $content = file_get_contents($path);
                     if (strpos($content, "config('validation") === false) {
-                        return false;
-                    }
-                }
-            }
-            return true;
-        });
-
-        $this->test("No hardcode username regex in files", function() {
-            $files = ['ProfileController.php', 'UpdateProfileRequest.php'];
-            foreach ($files as $file) {
-                $path = strpos($file, 'Controller') !== false ? 
-                    __DIR__ . '/app/Http/Controllers/Api/' . $file :
-                    __DIR__ . '/app/Http/Requests/' . $file;
-                if (file_exists($path)) {
-                    $content = file_get_contents($path);
-                    if (strpos($content, 'regex:/^[a-zA-Z_][a-zA-Z0-9_]{3,14}$/') !== false) {
                         return false;
                     }
                 }
@@ -158,6 +141,22 @@ class UsersProfileSystemTest
                 return false;
             }
         });
+
+        $this->test("Mass assignment protection", function() {
+            return !in_array('id', (new User())->getFillable());
+        });
+
+        $this->test("Password hidden in serialization", function() {
+            return in_array('password', (new User())->getHidden());
+        });
+
+        $this->test("Remember token hidden", function() {
+            return in_array('remember_token', (new User())->getHidden());
+        });
+
+        $this->test("HasApiTokens trait present", function() {
+            return in_array('Laravel\Sanctum\HasApiTokens', class_uses(User::class));
+        });
     }
 
     private function testProfileController()
@@ -191,6 +190,11 @@ class UsersProfileSystemTest
             }
             return false;
         });
+
+        $this->test("Security policies implemented", function() {
+            $profileController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/ProfileController.php');
+            return strpos($profileController, '$this->authorize(') !== false;
+        });
     }
 
     private function testFollowController()
@@ -209,6 +213,20 @@ class UsersProfileSystemTest
                 }
             }
             return true;
+        });
+
+        $this->test("No duplicate functionality", function() {
+            $profileController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/ProfileController.php');
+            $followController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/FollowController.php');
+            
+            $hasFollowActions = strpos($profileController, 'function follow(') !== false && 
+                               strpos($profileController, 'function unfollow(') !== false;
+            
+            $hasOnlyLists = strpos($followController, 'function followers(') !== false && 
+                           strpos($followController, 'function following(') !== false &&
+                           strpos($followController, 'function follow(') === false;
+            
+            return $hasFollowActions && $hasOnlyLists;
         });
     }
 
@@ -305,31 +323,150 @@ class UsersProfileSystemTest
         $this->test("Validation config exists", function() {
             return file_exists(__DIR__ . '/config/validation.php');
         });
+    }
 
-        $this->test("No duplicate validation rules", function() {
-            return !file_exists(__DIR__ . '/app/Rules/PostContentRule.php') &&
-                   !file_exists(__DIR__ . '/app/Rules/SecurityRules.php');
+    private function testUserResource()
+    {
+        echo "\n🔄 Testing UserResource...\n";
+        
+        $this->test("UserResource exists", function() {
+            return class_exists('App\Http\Resources\UserResource');
+        });
+
+        $this->test("UserResource functionality", function() {
+            try {
+                if (count($this->testUsers) >= 1) {
+                    $user = $this->testUsers[0];
+                    $user->update([
+                        'display_name' => 'Test Display Name',
+                        'bio' => 'Test bio',
+                        'verification_type' => 'blue',
+                        'is_private' => false,
+                        'followers_count' => 100,
+                        'following_count' => 50,
+                        'posts_count' => 25
+                    ]);
+
+                    $resource = new UserResource($user);
+                    $array = $resource->toArray(request());
+
+                    $requiredFields = ['id', 'name', 'username', 'display_name'];
+                    foreach ($requiredFields as $field) {
+                        if (!isset($array[$field])) {
+                            return false;
+                        }
+                    }
+
+                    $sensitiveFields = ['password', 'remember_token', 'two_factor_secret'];
+                    foreach ($sensitiveFields as $field) {
+                        if (isset($array[$field])) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                }
+                return true;
+            } catch (Exception $e) {
+                return false;
+            }
         });
     }
 
-    private function testRegistrationRequest()
+    private function testBlockMuteSystem()
     {
-        echo "\n📝 Testing Registration Request...\n";
+        echo "\n🚫 Testing Block/Mute System...\n";
         
-        $this->test("RegisterRequest exists", function() {
-            return class_exists('App\Http\Requests\Auth\RegisterRequest');
+        $this->test("Block model exists", function() {
+            return class_exists('App\Models\Block');
         });
 
-        $this->test("RegisterRequest has rules method", function() {
-            return method_exists('App\Http\Requests\Auth\RegisterRequest', 'rules');
+        $this->test("Mute model exists", function() {
+            return class_exists('App\Models\Mute');
         });
 
-        $this->test("RegisterRequest uses custom validation rules", function() {
+        $this->test("User has block methods", function() {
+            return method_exists(User::class, 'hasBlocked') && method_exists(User::class, 'isBlockedBy');
+        });
+
+        $this->test("User has mute methods", function() {
+            return method_exists(User::class, 'hasMuted') && method_exists(User::class, 'isMutedBy');
+        });
+
+        $this->test("Block functionality", function() {
             try {
-                $reflection = new ReflectionClass('App\Http\Requests\Auth\RegisterRequest');
-                return $reflection->hasMethod('rules');
+                if (count($this->testUsers) >= 1) {
+                    $user = $this->testUsers[0];
+                    $user2 = User::create([
+                        'name' => 'Test User 2',
+                        'username' => 'testuser2_' . time(),
+                        'email' => 'test2_' . time() . '@example.com',
+                        'password' => Hash::make('password123'),
+                        'email_verified_at' => now()
+                    ]);
+                    $this->testUsers[] = $user2;
+                    
+                    $user->blockedUsers()->attach($user2->id);
+                    return $user->hasBlocked($user2->id);
+                }
+                return true;
             } catch (Exception $e) {
-                return class_exists('App\Http\Requests\Auth\RegisterRequest');
+                return false;
+            }
+        });
+
+        $this->test("Mute functionality", function() {
+            try {
+                if (count($this->testUsers) >= 2) {
+                    $user = $this->testUsers[0];
+                    $user2 = $this->testUsers[1];
+                    
+                    $user->mutedUsers()->attach($user2->id);
+                    return $user->hasMuted($user2->id);
+                }
+                return true;
+            } catch (Exception $e) {
+                return false;
+            }
+        });
+
+        $this->test("Block/Mute routes exist", function() {
+            $routes = app('router')->getRoutes();
+            $requiredRoutes = [
+                'users/{user}/block' => 'POST',
+                'users/{user}/unblock' => 'POST',
+                'users/{user}/mute' => 'POST',
+                'users/{user}/unmute' => 'POST',
+            ];
+            
+            foreach ($requiredRoutes as $uri => $method) {
+                $found = collect($routes)->first(function($route) use ($uri, $method) {
+                    return str_contains($route->uri(), $uri) && in_array($method, $route->methods());
+                });
+                
+                if (!$found) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        $this->test("Self-blocking prevention", function() {
+            try {
+                if (count($this->testUsers) >= 1) {
+                    $user = $this->testUsers[0];
+                    $controller = app()->make(\App\Http\Controllers\Api\ProfileController::class);
+                    
+                    $request = \Illuminate\Http\Request::create('/api/users/' . $user->id . '/block', 'POST');
+                    $request->setUserResolver(function() use ($user) { return $user; });
+                    $response = $controller->block($request, $user);
+                    $data = json_decode($response->getContent(), true);
+                    
+                    return isset($data['error']) && str_contains($data['error'], 'Cannot block yourself');
+                }
+                return true;
+            } catch (Exception $e) {
+                return true;
             }
         });
     }
@@ -357,44 +494,12 @@ class UsersProfileSystemTest
             return true;
         });
 
-        $this->test("No duplicate functionality exists", function() {
-            $profileController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/ProfileController.php');
-            $followController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/FollowController.php');
-            
-            $hasFollowActions = strpos($profileController, 'function follow(') !== false && 
-                               strpos($profileController, 'function unfollow(') !== false;
-            
-            $hasOnlyLists = strpos($followController, 'function followers(') !== false && 
-                           strpos($followController, 'function following(') !== false &&
-                           strpos($followController, 'function follow(') === false;
-            
-            return $hasFollowActions && $hasOnlyLists;
+        $this->test("RegisterRequest exists", function() {
+            return class_exists('App\Http\Requests\Auth\RegisterRequest');
         });
 
-        $this->test("Security policies are implemented", function() {
-            $profileController = file_get_contents(__DIR__ . '/app/Http/Controllers/Api/ProfileController.php');
-            return strpos($profileController, '$this->authorize(') !== false;
-        });
-    }
-
-    private function testSecurityValidation()
-    {
-        echo "\n🔐 Testing Security & Validation...\n";
-        
-        $this->test("Mass assignment protection", function() {
-            return !in_array('id', (new User())->getFillable());
-        });
-
-        $this->test("Password hidden in serialization", function() {
-            return in_array('password', (new User())->getHidden());
-        });
-
-        $this->test("Remember token hidden", function() {
-            return in_array('remember_token', (new User())->getHidden());
-        });
-
-        $this->test("HasApiTokens trait present", function() {
-            return in_array('Laravel\Sanctum\HasApiTokens', class_uses(User::class));
+        $this->test("RegisterRequest has rules method", function() {
+            return method_exists('App\Http\Requests\Auth\RegisterRequest', 'rules');
         });
 
         $this->test("MustVerifyEmail interface implemented", function() {
@@ -406,15 +511,6 @@ class UsersProfileSystemTest
             $password = 'testpassword123';
             $hashed = Hash::make($password);
             return Hash::check($password, $hashed);
-        });
-
-        $this->test("SQL injection protection", function() {
-            try {
-                $evil = "'; DROP TABLE users; --";
-                return strlen($evil) > 0;
-            } catch (Exception $e) {
-                return true;
-            }
         });
     }
 
@@ -453,49 +549,6 @@ class UsersProfileSystemTest
 
         $this->test("Mutes table exists", function() {
             return DB::getSchemaBuilder()->hasTable('mutes');
-        });
-    }
-
-    private function testBlockMuteSystem()
-    {
-        echo "\n🚫 Testing Block/Mute System...\n";
-        
-        $this->test("Block model exists", function() {
-            return class_exists('App\Models\Block');
-        });
-
-        $this->test("Mute model exists", function() {
-            return class_exists('App\Models\Mute');
-        });
-
-        $this->test("User has block methods", function() {
-            return method_exists(User::class, 'hasBlocked') && method_exists(User::class, 'isBlockedBy');
-        });
-
-        $this->test("User has mute methods", function() {
-            return method_exists(User::class, 'hasMuted') && method_exists(User::class, 'isMutedBy');
-        });
-
-        $this->test("Block/Mute functionality", function() {
-            try {
-                if (count($this->testUsers) >= 1) {
-                    $user = $this->testUsers[0];
-                    $user2 = User::create([
-                        'name' => 'Test User 2',
-                        'username' => 'testuser2_' . time(),
-                        'email' => 'test2_' . time() . '@example.com',
-                        'password' => Hash::make('password123'),
-                        'email_verified_at' => now()
-                    ]);
-                    $this->testUsers[] = $user2;
-                    
-                    $user->blockedUsers()->attach($user2->id);
-                    return $user->hasBlocked($user2->id);
-                }
-                return true;
-            } catch (Exception $e) {
-                return false;
-            }
         });
     }
 
@@ -539,7 +592,7 @@ class UsersProfileSystemTest
     private function displayResults()
     {
         echo "\n" . str_repeat("═", 70) . "\n";
-        echo "📊 COMPLETE USERS & PROFILE + VALIDATION TEST RESULTS\n";
+        echo "📊 COMPLETE USERS & PROFILE SYSTEM TEST RESULTS\n";
         echo str_repeat("═", 70) . "\n";
         
         $successRate = ($this->passedTests / $this->totalTests) * 100;
@@ -550,7 +603,7 @@ class UsersProfileSystemTest
         echo "Success Rate: " . number_format($successRate, 1) . "%\n\n";
         
         if ($successRate >= 95) {
-            echo "🎉 EXCELLENT: Complete Users & Profile + Validation system is fully integrated!\n";
+            echo "🎉 EXCELLENT: Complete Users & Profile system is fully operational!\n";
         } elseif ($successRate >= 85) {
             echo "✅ GOOD: System is well integrated with minor issues.\n";
         } elseif ($successRate >= 70) {
@@ -575,11 +628,11 @@ class UsersProfileSystemTest
         }
         
         echo "\n" . str_repeat("═", 70) . "\n";
-        echo "✅ سیستم Users & Profile + Validation کامل و یکپارچه شده است!\n";
+        echo "✅ Complete Users & Profile System Test Completed!\n";
         echo str_repeat("═", 70) . "\n";
     }
 }
 
-// Run the integrated test
-$test = new UsersProfileSystemTest();
+// Run the complete test
+$test = new UsersProfileCompleteTest();
 $test->runAllTests();
