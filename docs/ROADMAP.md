@@ -1,13 +1,15 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-10  
-**پیشرفت کلی:** 15.9% (7/44 سیستم)
+**پیشرفت کلی:** 25.9% (7/27 سیستم)
+
+> **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
 ---
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 7/44 (15.9%)
+### ✅ سیستمهای تکمیل شده: 7/27 (25.9%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -53,183 +55,216 @@
 
 ---
 
-## 🎯 اولویتبندی سیستمها
+## 🎯 اولویتبندی سیستمها (بر اساس SYSTEMS_LIST.md)
 
-### 🔴 حیاتی - فاز 1 (6 سیستم)
+### 🔴 حیاتی - فاز 1 (11 سیستم)
 
-#### ✅ 1. Authentication (تکمیل)
-- 99.3% test coverage
-- 12 لایه امنیتی
+#### ✅ 1. Authentication & Security (تکمیل)
+- **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController, DeviceController, AuditController
+- **Features:** Login/Logout, Multi-step Registration, Email/Phone Verification, 2FA, Password Management, Device Verification, Security Events, Audit Logs
+- **Coverage:** 99.3% (355 tests)
+- **Security:** 12 لایه امنیتی
 
-#### ✅ 2. Authorization (تکمیل)
-- 100% test coverage
-- Permission-based
+#### ✅ 2. Posts & Content (تکمیل)
+- **Controllers:** PostController, ThreadController, ScheduledPostController, VideoController
+- **Features:** Post Management, Post Interactions, Threads, Scheduled Posts, Video Processing
+- **Coverage:** 100% (203 tests)
+- **Integration:** Block/Mute integrated
 
-#### ✅ 3. Posts System (تکمیل)
-- 100% test coverage
-- Block/Mute integrated
+#### ✅ 3. Profile & Account (تکمیل)
+- **Controller:** ProfileController
+- **Features:** Profile Management, Settings, Account Management
+- **Coverage:** 100% (157 tests)
+- **Security:** Privacy settings, Account export/deletion
 
-#### ✅ 4. Users & Profile (تکمیل)
-- 100% test coverage
-- Profile management کامل
-- Privacy settings
-- Account management
-- User relationships
+#### ⏳ 4. Comments (در حال انجام)
+- **Controller:** CommentController
+- **Features:** Comment CRUD, Comment Likes
+- **Priority:** High (required for Posts)
 
-#### ⏳ 5. Media System
-- Image upload/processing
-- Video upload/processing
-- GIF integration
-- CDN integration
+#### ⏳ 5. Social Features
+- **Controllers:** FollowController, FollowRequestController
+- **Features:** Follow System, Follow Requests, Block/Mute
+- **Priority:** High (core social functionality)
 
-#### ⏳ 6. Search System
-- User search
-- Post search
-- Hashtag search
-- Advanced filters
+#### ⏳ 6. Search & Discovery
+- **Controllers:** SearchController, SuggestionController, TrendingController
+- **Features:** Multi-type Search, User Suggestions, Trending Content
+- **Priority:** High (content discovery)
 
----
+#### ⏳ 7. Messaging
+- **Controller:** MessageController
+- **Features:** Direct Messages, Conversations, Read Receipts, Typing Indicators
+- **Priority:** High (user engagement)
 
-### 🟡 مهم - فاز 2 (10 سیستم)
+#### ⏳ 8. Notifications
+- **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
+- **Features:** Multi-channel Notifications, Preferences, Push Notifications
+- **Priority:** High (user retention)
 
-#### 7. Notifications
-- Push notifications
-- Email notifications
-- In-app notifications
-- Preferences
+#### ⏳ 9. Bookmarks & Reposts
+- **Controllers:** BookmarkController, RepostController
+- **Features:** Bookmark Management, Repost System
+- **Priority:** High (content engagement)
 
-#### 8. Messaging
-- Direct messages
-- Conversations
-- Read receipts
-- Typing indicators
+#### ⏳ 10. Hashtags
+- **Controller:** HashtagController
+- **Features:** Trending Hashtags, Search, Suggestions
+- **Priority:** High (content discovery)
 
-#### 9. Timeline
-- Following timeline
-- Recommended timeline
-- Real-time updates
-
-#### 10. Follow System
-- Follow/Unfollow
-- Follow requests
-- Followers/Following lists
-
-#### ✅ 11. Moderation (تکمیل - Report)
-- Content reporting
-- Admin actions
-- Auto-moderation
-
-#### 12. Performance Monitoring
-- Metrics tracking
-- Performance dashboard
-- Alerts
-
-#### 13. Audit System
-- Activity logs
-- Security events
-- Compliance
-
-#### 14. Social Auth
-- Google OAuth
-- Apple Sign In
-- Facebook Login
-
-#### 15. Device Management
-- Device tracking
-- Trusted devices
-- Security alerts
-
-#### 16. Admin Panel
-- User management
-- Content moderation
-- Analytics dashboard
+#### ⏳ 11. Moderation & Reporting
+- **Controller:** ModerationController
+- **Features:** User/Content Reporting, Admin Panel
+- **Priority:** High (platform safety)
 
 ---
 
-### 🟢 تکمیلی - فاز 3 (28 سیستم)
+### 🟡 مهم - فاز 2 (8 سیستم)
 
-#### قابلیتهای پیشرفته (17-28)
-17. Trending
-18. Analytics
-19. Bookmarks
-20. Suggestions
-21. Polls
-22. Communities
-23. Threads
-24. Lists
-25. Scheduled Posts
-26. Spaces
-27. Moments
-28. Hashtags
+#### 12. Communities
+- **Controllers:** CommunityController, CommunityNoteController
+- **Features:** Community Management, Community Notes, Member Management
+- **Priority:** Medium (advanced social features)
 
-#### زیرساخت و بهینهسازی (29-38)
-29. A/B Testing
-30. Conversion Tracking
-31. Auto Scaling
-32. GraphQL API
-33. Performance Optimization
-34. Cache Management
-35. Queue Management
-36. Load Balancing
-37. CDN Integration
-38. Database Sharding
+#### 13. Spaces (Audio Rooms)
+- **Controller:** SpaceController
+- **Features:** Audio Rooms, Participant Management, Real-time Audio
+- **Priority:** Medium (advanced engagement)
 
-#### امنیت پیشرفته (39-44)
-39. Bot Detection
-40. Spam Detection (Advanced)
-41. Rate Limiting (Advanced)
-42. Security Monitoring
-43. Secrets Management
-44. Localization
+#### 14. Lists
+- **Controller:** ListController
+- **Features:** User Lists, List Management, List Discovery
+- **Priority:** Medium (content organization)
+
+#### 15. Polls
+- **Controller:** PollController
+- **Features:** Poll Creation, Voting, Results
+- **Priority:** Medium (content engagement)
+
+#### 16. Mentions
+- **Controller:** MentionController
+- **Features:** User Mentions, Search, Notifications
+- **Priority:** Medium (user interaction)
+
+#### 17. Media Management
+- **Controller:** MediaController
+- **Features:** Advanced Media Upload, Processing, Management
+- **Priority:** Medium (content quality)
+
+#### 18. Moments
+- **Controller:** MomentController
+- **Features:** Moment Creation, Curation, Management
+- **Priority:** Medium (content curation)
+
+#### 19. Real-time Features
+- **Controllers:** OnlineStatusController, TimelineController
+- **Features:** Live Updates, Online Status, Real-time Timeline
+- **Priority:** Medium (user experience)
+
+---
+
+### 🟢 تکمیلی - فاز 3 (8 سیستم)
+
+#### 20. Analytics
+- **Controllers:** AnalyticsController, ConversionController
+- **Features:** User Analytics, Post Analytics, Conversion Tracking
+- **Priority:** Low (business intelligence)
+
+#### 21. A/B Testing
+- **Controller:** ABTestController
+- **Features:** Test Management, User Assignment, Event Tracking
+- **Priority:** Low (optimization)
+
+#### 22. Monetization
+- **Controllers:** AdvertisementController, CreatorFundController, PremiumController
+- **Features:** Ads, Creator Fund, Premium Subscriptions
+- **Priority:** Low (revenue)
+
+#### 23. Performance & Monitoring
+- **Controllers:** PerformanceController, MonitoringController, AutoScalingController
+- **Features:** Performance Dashboard, System Monitoring, Auto-scaling
+- **Priority:** Low (infrastructure)
+
+#### 24. Device Management
+- **Controller:** DeviceController (Enhanced)
+- **Features:** Advanced Device Management, Security Checks
+- **Priority:** Low (security enhancement)
+
+#### 25. Subscriptions
+- **Controller:** SubscriptionController
+- **Features:** Subscription Management, Plans, Billing
+- **Priority:** Low (business model)
+
+#### 26. GIF Integration
+- **Controller:** GifController
+- **Features:** GIF Search, Trending GIFs
+- **Priority:** Low (content enhancement)
+
+#### 27. GraphQL
+- **Controller:** GraphQLController
+- **Features:** GraphQL API, Query Optimization
+- **Priority:** Low (API enhancement)
 
 ---
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی)
-- ✅ Posts System (تکمیل)
-- ✅ Block/Mute (تکمیل)
-- ✅ Report System (تکمیل)
-- ✅ Users & Profile (تکمیل)
-- ⏳ Media System (در حال انجام)
-- ⏳ Search System
+### Q1 2026 (فاز 1 - حیاتی) - 27% تکمیل
+- ✅ Authentication & Security (تکمیل)
+- ✅ Posts & Content (تکمیل)
+- ✅ Profile & Account (تکمیل)
+- ✅ Block/Mute Integration (تکمیل)
+- ⏳ Comments (در حال انجام)
+- ⏳ Social Features (Follow System)
+- ⏳ Search & Discovery
+- ⏳ Messaging
+- ⏳ Notifications
+- ⏳ Bookmarks & Reposts
+- ⏳ Hashtags
 
-### Q2 2026 (فاز 2 - مهم)
-- Notifications
-- Messaging
-- Timeline
-- Follow System
-- Performance Monitoring
-- Audit System
+### Q2 2026 (فاز 1 ادامه + فاز 2 شروع)
+- ⏳ Moderation & Reporting (تکمیل فاز 1)
+- Communities (شروع فاز 2)
+- Spaces (Audio Rooms)
+- Lists Management
+- Polls
+- Mentions
+- Media Management
+- Moments
 
-### Q3 2026 (فاز 2 ادامه)
-- Social Auth
-- Device Management
-- Admin Panel
-- قابلیتهای پیشرفته (بخشی)
+### Q3 2026 (فاز 2 ادامه + فاز 3 شروع)
+- Real-time Features (تکمیل فاز 2)
+- Analytics (شروع فاز 3)
+- A/B Testing
+- Performance & Monitoring
+- Device Management Enhancement
 
 ### Q4 2026 (فاز 3 - تکمیلی)
-- قابلیتهای پیشرفته (ادامه)
-- زیرساخت و بهینهسازی
-- امنیت پیشرفته
+- Monetization
+- Subscriptions
+- GIF Integration
+- GraphQL API
+- Advanced Features & Optimizations
 
 ---
 
-## 🎯 بعدی: Media System
+## 🎯 بعدی: Comments System
 
 ### چرا این سیستم؟
-1. **وابستگی**: Users & Profile System تکمیل شده
-2. **اولویت**: حیاتی برای محتوا
-3. **پیچیدگی**: بالا
-4. **تأثیر**: بالا
+1. **وابستگی**: Posts System تکمیل شده
+2. **اولویت**: حیاتی برای تعامل کاربران
+3. **پیچیدگی**: متوسط
+4. **تأثیر**: بالا (engagement)
+5. **Controller موجود**: CommentController در SYSTEMS_LIST
 
-### اجزای کلیدی:
-- ⏳ Image upload/processing
-- ⏳ Video upload/processing
-- ⏳ GIF integration
-- ⏳ CDN integration
-- ⏳ Media validation
-- ⏳ File optimization
+### اجزای کلیدی (بر اساس SYSTEMS_LIST):
+- ⏳ GET `/posts/{post}/comments` - لیست کامنتها
+- ⏳ POST `/posts/{post}/comments` - ایجاد کامنت
+- ⏳ DELETE `/comments/{comment}` - حذف کامنت
+- ⏳ POST `/comments/{comment}/like` - لایک کامنت
+- ⏳ Comment validation & security
+- ⏳ Integration with notifications
+- ⏳ Block/Mute integration
 
 ### معیارهای موفقیت:
 - [ ] 100% test coverage
@@ -237,6 +272,8 @@
 - [ ] Performance < 100ms
 - [ ] Documentation
 - [ ] Integration tests
+- [ ] Block/Mute integration
+- [ ] Spam detection
 
 ---
 
