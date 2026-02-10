@@ -279,6 +279,35 @@
 
 ## 📊 معیارهای کیفیت
 
+> **📋 برای جزئیات کامل معیارهای بررسی، به فایل [`SYSTEM_REVIEW_CRITERIA.md`](./SYSTEM_REVIEW_CRITERIA.md) مراجعه کنید.**
+
+### الزامات هر سیستم:
+1. **Tests**: ≥95% coverage
+2. **Security**: حداقل 8 لایه
+3. **Performance**: Response time < 100ms
+4. **Documentation**: مستندات کامل
+5. **Integration**: تست یکپارچگی
+
+### معیارهای استاندارد (100 امتیاز):
+- Architecture & Code (20%)
+- Database & Schema (15%)
+- API & Routes (15%)
+- Security (20%)
+- Validation (10%)
+- Business Logic (10%)
+- Integration (5%)
+- Testing (5%)
+
+### معیار تکمیل:
+- 95-100%: ✅ Complete (Production ready)
+- 85-94%: 🟡 Good (Minor fixes)
+- 70-84%: 🟠 Moderate (Improvements needed)
+- <70%: 🔴 Poor (Major work needed)
+
+---
+
+## 📊 معیارهای کیفیت
+
 ### الزامات هر سیستم:
 1. **Tests**: ≥95% coverage
 2. **Security**: حداقل 8 لایه

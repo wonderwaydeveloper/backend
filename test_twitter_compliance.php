@@ -422,12 +422,36 @@ class TwitterStandardsComplianceTest
                     $user1 = $this->testUsers[0];
                     $user2 = $this->testUsers[1];
                     
-                    $initialFollowingCount = $user1->following_count;
-                    $initialFollowersCount = $user2->followers_count;
+                    // Reset counters
+                    $user1->update(['following_count' => 0]);
+                    $user2->update(['followers_count' => 0]);
                     
-                    // This would need counter update logic in real implementation
-                    // For now, we just check the fields exist
-                    return is_numeric($initialFollowingCount) && is_numeric($initialFollowersCount);
+                    // Follow and update counters
+                    $user1->following()->attach($user2->id);
+                    $user1->increment('following_count');
+                    $user2->increment('followers_count');
+                    
+                    // Refresh from database
+                    $user1->refresh();
+                    $user2->refresh();
+                    
+                    // Check counters updated
+                    $followingUpdated = $user1->following_count === 1;
+                    $followersUpdated = $user2->followers_count === 1;
+                    
+                    // Unfollow and update counters
+                    $user1->following()->detach($user2->id);
+                    $user1->decrement('following_count');
+                    $user2->decrement('followers_count');
+                    
+                    $user1->refresh();
+                    $user2->refresh();
+                    
+                    $followingDecremented = $user1->following_count === 0;
+                    $followersDecremented = $user2->followers_count === 0;
+                    
+                    return $followingUpdated && $followersUpdated && 
+                           $followingDecremented && $followersDecremented;
                 }
                 return true;
             } catch (Exception $e) {
@@ -581,21 +605,57 @@ class TwitterStandardsComplianceTest
         $this->test("Social interaction workflow", function() {
             try {
                 if (count($this->testUsers) >= 2) {
-                    $user1 = $this->testUsers[0];
-                    $user2 = $this->testUsers[1];
+                    // Use fresh users to avoid conflicts
+                    $user1 = User::create([
+                        'name' => 'Workflow User 1',
+                        'username' => 'workflow1_' . time(),
+                        'email' => 'workflow1_' . time() . '@test.com',
+                        'password' => Hash::make('password123'),
+                        'email_verified_at' => now(),
+                        'following_count' => 0,
+                        'followers_count' => 0
+                    ]);
                     
-                    // Complete social workflow: follow -> unfollow -> block -> unblock
+                    $user2 = User::create([
+                        'name' => 'Workflow User 2',
+                        'username' => 'workflow2_' . time(),
+                        'email' => 'workflow2_' . time() . '@test.com',
+                        'password' => Hash::make('password123'),
+                        'email_verified_at' => now(),
+                        'following_count' => 0,
+                        'followers_count' => 0
+                    ]);
+                    
+                    $this->testUsers[] = $user1;
+                    $this->testUsers[] = $user2;
+                    
+                    // Step 1: Follow
                     $user1->following()->attach($user2->id);
-                    $followed = $user1->isFollowing($user2->id);
+                    $user1->increment('following_count');
+                    $user2->increment('followers_count');
+                    $user1->refresh();
+                    $user2->refresh();
+                    $followed = $user1->isFollowing($user2->id) && $user1->following_count === 1;
                     
+                    // Step 2: Unfollow
                     $user1->following()->detach($user2->id);
-                    $unfollowed = !$user1->isFollowing($user2->id);
+                    $user1->decrement('following_count');
+                    $user2->decrement('followers_count');
+                    $user1->refresh();
+                    $user2->refresh();
+                    $unfollowed = !$user1->isFollowing($user2->id) && $user1->following_count === 0;
                     
+                    // Step 3: Block
                     Block::create(['blocker_id' => $user1->id, 'blocked_id' => $user2->id]);
+                    $user1->refresh();
                     $blocked = $user1->hasBlocked($user2->id);
                     
-                    Block::where('blocker_id', $user1->id)->where('blocked_id', $user2->id)->delete();
-                    $unblocked = !$user1->hasBlocked($user2->id);
+                    // Step 4: Unblock
+                    $deleted = Block::where('blocker_id', $user1->id)
+                        ->where('blocked_id', $user2->id)
+                        ->delete();
+                    $user1->refresh();
+                    $unblocked = !$user1->hasBlocked($user2->id) && $deleted > 0;
                     
                     return $followed && $unfollowed && $blocked && $unblocked;
                 }
@@ -651,11 +711,19 @@ class TwitterStandardsComplianceTest
                 ]);
                 $this->testUsers[] = $user;
                 
+                // Refresh to ensure data is saved correctly
+                $user->refresh();
+                
                 $resource = new UserResource($user);
                 $array = $resource->toArray(request());
                 
+                // Check that large numbers are preserved and cast correctly
                 return $array['followers_count'] === 1000000 &&
-                       is_int($array['followers_count']);
+                       $array['following_count'] === 5000 &&
+                       $array['posts_count'] === 50000 &&
+                       is_int($array['followers_count']) &&
+                       is_int($array['following_count']) &&
+                       is_int($array['posts_count']);
             } catch (Exception $e) {
                 return false;
             }

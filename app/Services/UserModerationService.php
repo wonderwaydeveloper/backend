@@ -14,9 +14,18 @@ class UserModerationService
             'blocked_id' => $targetUser->id
         ]);
 
-        // Auto-unfollow
-        $user->following()->detach($targetUser->id);
-        $targetUser->following()->detach($user->id);
+        // Auto-unfollow with counter updates
+        if ($user->following()->where('following_id', $targetUser->id)->exists()) {
+            $user->following()->detach($targetUser->id);
+            $user->decrement('following_count');
+            $targetUser->decrement('followers_count');
+        }
+        
+        if ($targetUser->following()->where('following_id', $user->id)->exists()) {
+            $targetUser->following()->detach($user->id);
+            $targetUser->decrement('following_count');
+            $user->decrement('followers_count');
+        }
 
         event(new UserBlocked($user, $targetUser));
 

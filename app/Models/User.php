@@ -55,6 +55,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'two_factor_enabled',
         'two_factor_secret',
         'two_factor_backup_codes',
+        'followers_count',
+        'following_count',
+        'posts_count',
+        'favourites_count',
+        'listed_count',
+        'verified',
+        'verification_type',
     ];
 
     /**
