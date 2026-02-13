@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TrendingRequest;
+use App\Http\Resources\TrendingResource;
 use App\Services\TrendingService;
 use Illuminate\Http\Request;
 
@@ -26,20 +28,15 @@ class TrendingController extends Controller
      *     @OA\Response(response=200, description="Trending hashtags")
      * )
      */
-    public function hashtags(Request $request)
+    public function hashtags(TrendingRequest $request)
     {
-        $request->validate([
-            'limit' => 'nullable|integer|min:1|max:50',
-            'timeframe' => 'nullable|integer|min:1|max:168', // Max 7 days
-        ]);
-
         $hashtags = $this->trendingService->getTrendingHashtags(
             $request->input('limit', 10),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
-            'data' => $hashtags,
+            'data' => TrendingResource::collection($hashtags),
             'meta' => [
                 'limit' => $request->input('limit', 10),
                 'timeframe_hours' => $request->input('timeframe', 24),
@@ -59,20 +56,15 @@ class TrendingController extends Controller
      *     @OA\Response(response=200, description="Trending posts")
      * )
      */
-    public function posts(Request $request)
+    public function posts(TrendingRequest $request)
     {
-        $request->validate([
-            'limit' => 'nullable|integer|min:1|max:100',
-            'timeframe' => 'nullable|integer|min:1|max:168',
-        ]);
-
         $posts = $this->trendingService->getTrendingPosts(
             $request->input('limit', 20),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
-            'data' => $posts,
+            'data' => TrendingResource::collection($posts),
             'meta' => [
                 'limit' => $request->input('limit', 20),
                 'timeframe_hours' => $request->input('timeframe', 24),
@@ -92,20 +84,15 @@ class TrendingController extends Controller
      *     @OA\Response(response=200, description="Trending users")
      * )
      */
-    public function users(Request $request)
+    public function users(TrendingRequest $request)
     {
-        $request->validate([
-            'limit' => 'nullable|integer|min:1|max:50',
-            'timeframe' => 'nullable|integer|min:1|max:720', // Max 30 days
-        ]);
-
         $users = $this->trendingService->getTrendingUsers(
             $request->input('limit', 10),
             $request->input('timeframe', 168)
         );
 
         return response()->json([
-            'data' => $users,
+            'data' => TrendingResource::collection($users),
             'meta' => [
                 'limit' => $request->input('limit', 10),
                 'timeframe_hours' => $request->input('timeframe', 168),

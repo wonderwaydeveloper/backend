@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\TrendingUpdated;
 use App\Models\Hashtag;
 use App\Models\Post;
 use App\Models\User;
@@ -232,6 +233,9 @@ class TrendingService
         $this->getTrendingHashtags();
         $this->getTrendingPosts();
         $this->getTrendingUsers();
+        
+        // Dispatch event
+        event(new TrendingUpdated('all', 3));
 
         return [
             'hashtags_updated' => true,

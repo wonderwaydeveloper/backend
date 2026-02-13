@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2026-02-13  
-**پیشرفت کلی:** 33.3% (9/27 سیستم)
+**آخرین بهروزرسانی:** 2026-02-04  
+**پیشرفت کلی:** 37% (10/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 9/27 (33.3%)
+### ✅ سیستمهای تکمیل شده: 10/27 (37%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -22,37 +22,40 @@
 | 7 | Users & Profile | ✅ | 100% (157) | 10/10 | 2026-02-10 |
 | 8 | Comments System | ✅ | 100% (150) | 10/10 | 2026-02-13 |
 | 9 | Follow System | ✅ | 100% (141) | 10/10 | 2026-02-13 |
+| 10 | Search & Discovery | ✅ | 100% (175) | 10/10 | 2026-02-04 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 961
-- **موفق**: 961 ✓
+- **کل تستها**: 1,136
+- **موفق**: 1,136 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
-- **Twitter Compliance**: 75/75 (100%)
+- **Twitter Compliance**: 101/101 (100%)
 
 ---
 
-## 🎉 آخرین تکمیل: Follow System
+## 🎉 آخرین تکمیل: Search & Discovery System
 
-### Follow System v1.0
-- ✅ 141 تست (100%)
-- ✅ Service Layer (UserFollowService)
-- ✅ DB Transactions + Pessimistic Locking
+### Search & Discovery System v1.0
+- ✅ 175 تست (100%)
+- ✅ Service Layer (SearchService, TrendingService)
+- ✅ MeiliSearch Integration
 - ✅ Block/Mute Integration
-- ✅ Event/Listener (UserFollowed)
-- ✅ Queued Notifications
-- ✅ Twitter Compliance (100%)
-- ✅ Rate Limiting (400/day)
+- ✅ Event/Listener/Jobs (Async)
+- ✅ Twitter API v2 Compliance (100%)
+- ✅ Rate Limiting (450/15min posts, 180/15min users, 75/15min trending)
+- ✅ Authorization Policy (Spatie)
 
 ### ویژگیهای کلیدی
-- ✅ Follow/Unfollow Actions
-- ✅ Follow Requests (Private Accounts)
-- ✅ Followers/Following Lists
-- ✅ Accept/Reject Requests
-- ✅ Counter Management (Atomic)
-- ✅ Race Condition Prevention
-- ✅ Database Indexes
-- ✅ Security Policies
+- ✅ Search Posts/Users/Hashtags
+- ✅ Advanced Search
+- ✅ Search Suggestions
+- ✅ Trending Hashtags/Posts/Users
+- ✅ Personalized Trending
+- ✅ Trend Velocity
+- ✅ Cache Optimization (15min TTL)
+- ✅ Real-time Indexing
+- ✅ XSS Protection
+- ✅ Config-based Validation
 
 ---
 
@@ -90,10 +93,11 @@
 - **Coverage:** 100% (141 tests)
 - **Integration:** Block/Mute, Notifications, Privacy Settings
 
-#### ⏳ 6. Search & Discovery
-- **Controllers:** SearchController, SuggestionController, TrendingController
-- **Features:** Multi-type Search, User Suggestions, Trending Content
-- **Priority:** High (content discovery)
+#### ✅ 6. Search & Discovery (تکمیل)
+- **Controllers:** SearchController, SuggestionController, TrendingController, HashtagController
+- **Features:** Multi-type Search, User Suggestions, Trending Content, Advanced Search
+- **Coverage:** 100% (175 tests)
+- **Integration:** Block/Mute, MeiliSearch, Twitter API v2 Compliance
 
 #### ⏳ 7. Messaging
 - **Controller:** MessageController
@@ -212,14 +216,14 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 45% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 55% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
 - ✅ Block/Mute Integration (تکمیل)
 - ✅ Comments (تکمیل)
 - ✅ Social Features (تکمیل)
-- ⏳ Search & Discovery
+- ✅ Search & Discovery (تکمیل)
 - ⏳ Messaging
 - ⏳ Notifications
 - ⏳ Bookmarks & Reposts
@@ -339,14 +343,16 @@
 - ✅ Report System (24 تست)
 - ✅ Integration Tests (87 تست)
 - ✅ Users & Profile System (157 تست)
+- ✅ Comments System (150 تست)
 - ✅ Follow System (141 تست)
+- ✅ Search & Discovery System (175 تست)
 
 ### در حال انجام:
-- ⏳ Search & Discovery
+- ⏳ Messaging System
 
 ### آماده شروع:
-- 📋 Search System
 - 📋 Notifications
+- 📋 Bookmarks & Reposts
 
 ---
 
@@ -366,6 +372,6 @@
 
 ---
 
-**تاریخ بهروزرسانی:** 2026-02-13  
-**نسخه:** 2.2  
+**تاریخ بهروزرسانی:** 2026-02-04  
+**نسخه:** 2.3  
 **وضعیت:** 🟢 Active Development

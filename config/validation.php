@@ -27,6 +27,41 @@ return [
         'before_rule' => 'before:today',
     ],
     
+    'search' => [
+        'query' => [
+            'min_length' => 1,
+            'max_length' => 500, // Twitter standard
+        ],
+        'posts' => [
+            'per_page' => 20,
+            'max_per_page' => 100, // Twitter standard
+        ],
+        'users' => [
+            'per_page' => 20,
+            'max_per_page' => 100, // Twitter standard
+        ],
+        'hashtags' => [
+            'per_page' => 20,
+            'max_per_page' => 100, // Twitter standard
+        ],
+        'rate_limits' => [
+            'posts' => 450, // 450 requests per 15 minutes (Twitter standard)
+            'users' => 180, // 180 requests per 15 minutes (Twitter standard)
+            'window' => 15, // 15 minutes
+        ],
+    ],
+    
+    'trending' => [
+        'limit' => [
+            'default' => 10,
+            'max' => 100,
+        ],
+        'timeframe' => [
+            'default' => 24,
+            'max' => 720,
+        ],
+    ],
+    
     'content' => [
         'post' => [
             'max_length' => 280,

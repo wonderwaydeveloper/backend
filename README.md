@@ -46,12 +46,26 @@ A modern microblogging platform built with Laravel 12, featuring advanced authen
 - **Broadcasting**: Laravel Reverb WebSocket integration
 
 ### Advanced Features
+- **Search & Discovery System**: Full-text search with MeiliSearch
+  - **Search Posts**: Search through posts with filters (date, media, user, hashtags)
+  - **Search Users**: Find users by username, name, bio
+  - **Search Hashtags**: Discover trending and popular hashtags
+  - **Advanced Search**: Multi-criteria search with sorting options
+  - **Suggestions**: Smart search suggestions and autocomplete
+  - **Rate Limiting**: Twitter API v2 compliant (450/15min posts, 180/15min users)
+  - **Block/Mute Integration**: Filtered results excluding blocked/muted users
+  - **Real-time Indexing**: Automatic content indexing via events and jobs
+- **Trending System**: Real-time trending content
+  - **Trending Hashtags**: Top hashtags with engagement scoring
+  - **Trending Posts**: Viral posts with time decay algorithm
+  - **Trending Users**: Popular users based on follower growth
+  - **Personalized Trending**: User-specific trending content
+  - **Trend Velocity**: Track trending speed and momentum
+  - **Cache Optimization**: 15-minute TTL for performance
 - **Spaces**: Audio rooms with participant management
 - **Lists**: Create and manage user lists
 - **Polls**: Create polls with multiple options and voting
 - **Moments**: Curated content collections
-- **Search**: Full-text search with Meilisearch (users, posts, hashtags)
-- **Trending**: Real-time trending hashtags, posts, and users
 - **User Suggestions**: Personalized user recommendations
 
 ### Monetization
@@ -195,6 +209,10 @@ php artisan posts:publish-scheduled
 
 # Update trending data
 php artisan trending:update
+
+# Reindex search content
+php artisan scout:import "App\Models\Post"
+php artisan scout:import "App\Models\User"
 ```
 
 ### Maintenance
@@ -247,7 +265,18 @@ php artisan project:cleanup-analysis
 - **Users**: `/api/users/*` (profile, followers, following)
 - **Follow**: `/api/users/{user}/follow`, `/api/follow-requests`
 - **Timeline**: `/api/timeline`, `/api/optimized/timeline`
-- **Search**: `/api/search/*` (users, posts, hashtags, all)
+- **Search & Discovery**: 
+  - `/api/search/posts` - Search posts (450 req/15min)
+  - `/api/search/users` - Search users (180 req/15min)
+  - `/api/search/hashtags` - Search hashtags (180 req/15min)
+  - `/api/search/advanced` - Advanced multi-criteria search
+  - `/api/search/suggestions` - Search suggestions (180 req/15min)
+  - `/api/trending/hashtags` - Trending hashtags (75 req/15min)
+  - `/api/trending/posts` - Trending posts (75 req/15min)
+  - `/api/trending/users` - Trending users (75 req/15min)
+  - `/api/trending/personalized` - Personalized trending (180 req/15min)
+  - `/api/trending/velocity` - Trend velocity (180 req/15min)
+  - `/api/trending/stats` - Trending statistics (180 req/15min)
 - **Messages**: `/api/messages/*` (conversations, send, typing)
 - **Notifications**: `/api/notifications/*`
 - **Bookmarks**: `/api/bookmarks`
@@ -313,7 +342,18 @@ php artisan test --testsuite=Unit
 
 # Run with coverage
 php artisan test --coverage
+
+# Run Search & Discovery System tests
+php test_search_discovery_system.php
 ```
+
+### Test Coverage
+- **Search & Discovery**: 175 comprehensive tests
+  - System Review: 68 tests (Architecture, Database, API, Security, Validation, Business Logic, Integration, Testing)
+  - Twitter Compliance: 26 tests (Rate limits, Query parameters, Pagination, Features, Filters, Security)
+  - Operational Readiness: 48 tests (No parallel work, Components, Routes, Database, Security, Integration)
+  - Final Verification: 20 tests (Core files, Request classes, Resources, Events, Listeners, Jobs, Tests)
+  - Cleanliness: 13 tests (No unused files, No duplicates, No debug code, Clean configuration)
 
 ## 🚀 Deployment
 

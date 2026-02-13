@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\SearchPerformed;
 use Illuminate\Support\Facades\Log;
 use MeiliSearch\Client;
 
@@ -94,6 +95,31 @@ class SearchService
             }
 
             $results = $this->client->index('posts')->search($query, $searchParams);
+            
+            // Filter out posts from blocked/muted users
+            if (auth()->check()) {
+                $blockedIds = \DB::table('blocks')
+                    ->where('blocker_id', auth()->id())
+                    ->pluck('blocked_id')
+                    ->toArray();
+                    
+                $mutedIds = \DB::table('mutes')
+                    ->where('muter_id', auth()->id())
+                    ->pluck('muted_id')
+                    ->toArray();
+                    
+                $excludeIds = array_merge($blockedIds, $mutedIds);
+                
+                if (!empty($excludeIds)) {
+                    $results['hits'] = array_filter($results['hits'], function($post) use ($excludeIds) {
+                        return !in_array($post['user_id'] ?? 0, $excludeIds);
+                    });
+                    $results['hits'] = array_values($results['hits']);
+                }
+            }
+            
+            // Dispatch search event
+            event(new SearchPerformed(auth()->id(), $query, 'posts', $results['estimatedTotalHits']));
 
             return [
                 'data' => $results['hits'],
@@ -156,6 +182,28 @@ class SearchService
             }
 
             $results = $this->client->index('users')->search($query, $searchParams);
+            
+            // Filter out blocked/muted users
+            if (auth()->check()) {
+                $blockedIds = \DB::table('blocks')
+                    ->where('blocker_id', auth()->id())
+                    ->pluck('blocked_id')
+                    ->toArray();
+                    
+                $mutedIds = \DB::table('mutes')
+                    ->where('muter_id', auth()->id())
+                    ->pluck('muted_id')
+                    ->toArray();
+                    
+                $excludeIds = array_merge($blockedIds, $mutedIds);
+                
+                if (!empty($excludeIds)) {
+                    $results['hits'] = array_filter($results['hits'], function($user) use ($excludeIds) {
+                        return !in_array($user['id'] ?? 0, $excludeIds);
+                    });
+                    $results['hits'] = array_values($results['hits']);
+                }
+            }
 
             return [
                 'data' => $results['hits'],

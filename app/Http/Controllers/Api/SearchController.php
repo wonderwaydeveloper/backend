@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SearchPostsRequest;
+use App\Http\Requests\SearchUsersRequest;
+use App\Http\Requests\SearchHashtagsRequest;
+use App\Http\Resources\SearchResultResource;
 use App\Services\SearchService;
 use Illuminate\Http\Request;
 
@@ -32,21 +36,10 @@ class SearchController extends Controller
      *     @OA\Response(response=200, description="Search results")
      * )
      */
-    public function posts(Request $request)
+    public function posts(SearchPostsRequest $request)
     {
-        $request->validate([
-            'q' => 'required|string|min:1|max:100',
-            'page' => 'nullable|integer|min:1',
-            'user_id' => 'nullable|integer|exists:users,id',
-            'has_media' => 'nullable|boolean',
-            'date_from' => 'nullable|date',
-            'date_to' => 'nullable|date|after_or_equal:date_from',
-            'min_likes' => 'nullable|integer|min:0',
-            'hashtags' => 'nullable|array',
-            'hashtags.*' => 'string|max:50',
-            'sort' => 'nullable|in:relevance,latest,oldest,popular',
-        ]);
-
+        $this->authorize('search', auth()->user());
+        
         $filters = $request->only([
             'user_id', 'has_media', 'date_from', 'date_to',
             'min_likes', 'hashtags', 'sort',
@@ -76,17 +69,8 @@ class SearchController extends Controller
      *     @OA\Response(response=200, description="User search results")
      * )
      */
-    public function users(Request $request)
+    public function users(SearchUsersRequest $request)
     {
-        $request->validate([
-            'q' => 'required|string|min:1|max:50',
-            'page' => 'nullable|integer|min:1',
-            'verified' => 'nullable|boolean',
-            'min_followers' => 'nullable|integer|min:0',
-            'location' => 'nullable|string|max:100',
-            'sort' => 'nullable|in:relevance,followers,newest',
-        ]);
-
         $filters = $request->only([
             'verified', 'min_followers', 'location', 'sort',
         ]);
@@ -113,15 +97,8 @@ class SearchController extends Controller
      *     @OA\Response(response=200, description="Hashtag search results")
      * )
      */
-    public function hashtags(Request $request)
+    public function hashtags(SearchHashtagsRequest $request)
     {
-        $request->validate([
-            'q' => 'required|string|min:1|max:50',
-            'page' => 'nullable|integer|min:1',
-            'min_posts' => 'nullable|integer|min:0',
-            'sort' => 'nullable|in:relevance,popular,recent',
-        ]);
-
         $filters = $request->only(['min_posts', 'sort']);
 
         $results = $this->searchService->searchHashtags(
@@ -168,6 +145,8 @@ class SearchController extends Controller
      */
     public function advanced(Request $request)
     {
+        $this->authorize('advanced', auth()->user());
+        
         $request->validate([
             'q' => 'required|string|min:1|max:100',
             'type' => 'nullable|in:posts,users,hashtags',

@@ -256,13 +256,17 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/delete-account', [ProfileController::class, 'deleteAccount']);
     });
     
-    Route::get('/search/users', [SearchController::class, 'users']);
-    Route::get('/search/posts', [SearchController::class, 'posts']);
-    Route::get('/search/hashtags', [SearchController::class, 'hashtags']);
-    Route::get('/search/all', [SearchController::class, 'all']);
-    Route::get('/search/advanced', [SearchController::class, 'advanced']);
-    Route::get('/search/suggestions', [SearchController::class, 'suggestions']);
-    Route::get('/suggestions/users', [SuggestionController::class, 'users']);
+    // Search Routes - Twitter Standard Rate Limits
+    Route::prefix('search')->group(function () {
+        Route::get('/posts', [SearchController::class, 'posts'])->middleware('throttle:450,15'); // 450/15min
+        Route::get('/users', [SearchController::class, 'users'])->middleware('throttle:180,15'); // 180/15min
+        Route::get('/hashtags', [SearchController::class, 'hashtags'])->middleware('throttle:180,15');
+        Route::get('/all', [SearchController::class, 'all'])->middleware('throttle:180,15');
+        Route::get('/advanced', [SearchController::class, 'advanced'])->middleware('throttle:180,15');
+        Route::get('/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:180,15');
+    });
+    
+    Route::get('/suggestions/users', [SuggestionController::class, 'users'])->middleware('throttle:180,15'); // Twitter: 180/15min
 
     Route::post('/devices/register', [DeviceController::class, 'register']);
     Route::delete('/devices/{token}', [DeviceController::class, 'unregister']);
@@ -294,21 +298,24 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel']);
     Route::get('/subscription/history', [SubscriptionController::class, 'history']);
 
-    Route::get('/hashtags/trending', [HashtagController::class, 'trending']);
-    Route::get('/hashtags/search', [HashtagController::class, 'search']);
-    Route::get('/hashtags/suggestions', [HashtagController::class, 'suggestions']);
-    Route::get('/hashtags/{hashtag:slug}', [HashtagController::class, 'show']);
+    // Hashtag Routes - Twitter Standard Rate Limits
+    Route::prefix('hashtags')->group(function () {
+        Route::get('/trending', [HashtagController::class, 'trending'])->middleware('throttle:75,15'); // 75/15min
+        Route::get('/search', [HashtagController::class, 'search'])->middleware('throttle:180,15'); // 180/15min
+        Route::get('/suggestions', [HashtagController::class, 'suggestions'])->middleware('throttle:180,15');
+        Route::get('/{hashtag:slug}', [HashtagController::class, 'show'])->middleware('throttle:900,15'); // 900/15min
+    });
 
-    // Advanced Trending Routes
+    // Advanced Trending Routes - Twitter Standard Rate Limits
     Route::prefix('trending')->group(function () {
-        Route::get('/hashtags', [TrendingController::class, 'hashtags']);
-        Route::get('/posts', [TrendingController::class, 'posts']);
-        Route::get('/users', [TrendingController::class, 'users']);
-        Route::get('/personalized', [TrendingController::class, 'personalized']);
-        Route::get('/velocity/{type}/{id}', [TrendingController::class, 'velocity']);
-        Route::get('/all', [TrendingController::class, 'all']);
-        Route::get('/stats', [TrendingController::class, 'stats']);
-        Route::post('/refresh', [TrendingController::class, 'refresh']);
+        Route::get('/hashtags', [TrendingController::class, 'hashtags'])->middleware('throttle:75,15'); // 75/15min
+        Route::get('/posts', [TrendingController::class, 'posts'])->middleware('throttle:75,15');
+        Route::get('/users', [TrendingController::class, 'users'])->middleware('throttle:75,15');
+        Route::get('/personalized', [TrendingController::class, 'personalized'])->middleware('throttle:75,15');
+        Route::get('/velocity/{type}/{id}', [TrendingController::class, 'velocity'])->middleware('throttle:180,15');
+        Route::get('/all', [TrendingController::class, 'all'])->middleware('throttle:75,15');
+        Route::get('/stats', [TrendingController::class, 'stats'])->middleware('throttle:180,15');
+        Route::post('/refresh', [TrendingController::class, 'refresh'])->middleware('throttle:15,15'); // 15/15min
     });
 
     // Spaces (Audio Rooms) Routes
