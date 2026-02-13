@@ -162,38 +162,14 @@ class UserService implements UserServiceInterface
     // Delegate to specialized services
     public function follow(int $userId, int $targetUserId): bool
     {
-        $result = $this->followService->follow($userId, $targetUserId);
-        
-        // Update counter caches
-        $this->updateCounterCaches($userId, $targetUserId, 'follow');
-        
-        return $result;
+        // Counter updates are now handled inside transaction in UserFollowService
+        return $this->followService->follow($userId, $targetUserId);
     }
 
     public function unfollow(int $userId, int $targetUserId): bool
     {
-        $result = $this->followService->unfollow($userId, $targetUserId);
-        
-        // Update counter caches
-        $this->updateCounterCaches($userId, $targetUserId, 'unfollow');
-        
-        return $result;
-    }
-    
-    private function updateCounterCaches(int $userId, int $targetUserId, string $action): void
-    {
-        $user = User::find($userId);
-        $targetUser = User::find($targetUserId);
-        
-        if ($user && $targetUser) {
-            if ($action === 'follow') {
-                $user->increment('following_count');
-                $targetUser->increment('followers_count');
-            } elseif ($action === 'unfollow') {
-                $user->decrement('following_count');
-                $targetUser->decrement('followers_count');
-            }
-        }
+        // Counter updates are now handled inside transaction in UserFollowService
+        return $this->followService->unfollow($userId, $targetUserId);
     }
 
     public function blockUser(User $user, User $targetUser): array

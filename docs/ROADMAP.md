@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-13  
-**پیشرفت کلی:** 29.6% (8/27 سیستم)
+**پیشرفت کلی:** 33.3% (9/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 8/27 (29.6%)
+### ✅ سیستمهای تکمیل شده: 9/27 (33.3%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -21,38 +21,38 @@
 | 6 | Integration | ✅ | 100% (87) | 9.5/10 | 2026-02-08 |
 | 7 | Users & Profile | ✅ | 100% (157) | 10/10 | 2026-02-10 |
 | 8 | Comments System | ✅ | 100% (150) | 10/10 | 2026-02-13 |
+| 9 | Follow System | ✅ | 100% (141) | 10/10 | 2026-02-13 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 820
-- **موفق**: 820 ✓
+- **کل تستها**: 961
+- **موفق**: 961 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
-- **Twitter Compliance**: 60/60 (100%)
+- **Twitter Compliance**: 75/75 (100%)
 
 ---
 
-## 🎉 آخرین تکمیل: Comments System
+## 🎉 آخرین تکمیل: Follow System
 
-### Comments System v1.0
-- ✅ 150 تست (100%)
-- ✅ Service Layer (CommentService)
-- ✅ Repository Pattern
-- ✅ Transaction Support
+### Follow System v1.0
+- ✅ 141 تست (100%)
+- ✅ Service Layer (UserFollowService)
+- ✅ DB Transactions + Pessimistic Locking
 - ✅ Block/Mute Integration
-- ✅ XSS Sanitization
-- ✅ Spam Detection
-- ✅ Twitter Compliance (96.7%)
+- ✅ Event/Listener (UserFollowed)
 - ✅ Queued Notifications
+- ✅ Twitter Compliance (100%)
+- ✅ Rate Limiting (400/day)
 
 ### ویژگیهای کلیدی
-- ✅ Comment CRUD (create, delete)
-- ✅ Comment Likes (toggle)
-- ✅ Pagination & Sorting
-- ✅ Draft Post Protection
-- ✅ Counter Management
+- ✅ Follow/Unfollow Actions
+- ✅ Follow Requests (Private Accounts)
+- ✅ Followers/Following Lists
+- ✅ Accept/Reject Requests
+- ✅ Counter Management (Atomic)
+- ✅ Race Condition Prevention
 - ✅ Database Indexes
 - ✅ Security Policies
-- ✅ Clean Architecture
 
 ---
 
@@ -84,10 +84,11 @@
 - **Coverage:** 100% (150 tests)
 - **Integration:** Block/Mute, Spam Detection, Notifications
 
-#### ⏳ 5. Social Features
-- **Controllers:** FollowController, FollowRequestController
-- **Features:** Follow System, Follow Requests, Block/Mute
-- **Priority:** High (core social functionality)
+#### ✅ 5. Social Features (تکمیل)
+- **Controllers:** FollowController, FollowRequestController, ProfileController
+- **Features:** Follow System, Follow Requests, Followers/Following Lists
+- **Coverage:** 100% (141 tests)
+- **Integration:** Block/Mute, Notifications, Privacy Settings
 
 #### ⏳ 6. Search & Discovery
 - **Controllers:** SearchController, SuggestionController, TrendingController
@@ -211,13 +212,13 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 36% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 45% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
 - ✅ Block/Mute Integration (تکمیل)
 - ✅ Comments (تکمیل)
-- ⏳ Social Features (Follow System)
+- ✅ Social Features (تکمیل)
 - ⏳ Search & Discovery
 - ⏳ Messaging
 - ⏳ Notifications
@@ -250,14 +251,14 @@
 
 ---
 
-## 🎯 بعدی: Social Features (Follow System)
+## 🎯 بعدی: Search & Discovery
 
 ### چرا این سیستم؟
-1. **وابستگی**: Profile & Users تکمیل شده
-2. **اولویت**: حیاتی برای شبکه اجتماعی
-3. **پیچیدگی**: متوسط
-4. **تأثیر**: بالا (core social functionality)
-5. **Controllers موجود**: FollowController, FollowRequestController
+1. **وابستگی**: Users, Posts, Hashtags موجود است
+2. **اولویت**: حیاتی برای content discovery
+3. **پیچیدگی**: متوسط تا بالا
+4. **تأثیر**: بالا (user engagement)
+5. **Controllers موجود**: SearchController, SuggestionController, TrendingController
 
 ### اجزای کلیدی:
 - ⏳ POST `/users/{user}/follow` - دنبال کردن
@@ -338,10 +339,10 @@
 - ✅ Report System (24 تست)
 - ✅ Integration Tests (87 تست)
 - ✅ Users & Profile System (157 تست)
-- ✅ Comments System (150 تست)
+- ✅ Follow System (141 تست)
 
 ### در حال انجام:
-- ⏳ Social Features (Follow System)
+- ⏳ Search & Discovery
 
 ### آماده شروع:
 - 📋 Search System

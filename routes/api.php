@@ -224,9 +224,9 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
 
-    // Follow/Unfollow Actions (ProfileController)
-    Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:30,1', 'can:follow,user']);
-    Route::post('/users/{user}/unfollow', [ProfileController::class, 'unfollow'])->middleware(['throttle:30,1', 'can:follow,user']);
+    // Follow/Unfollow Actions (ProfileController) - Twitter Standard: 400 follows per day
+    Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:400,1440', 'can:follow,user']);
+    Route::post('/users/{user}/unfollow', [ProfileController::class, 'unfollow'])->middleware(['throttle:400,1440', 'can:follow,user']);
     
     // Follow Requests
     Route::post('/users/{user}/follow-request', [FollowRequestController::class, 'send']);

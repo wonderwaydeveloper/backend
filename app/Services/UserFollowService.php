@@ -3,24 +3,73 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Events\UserFollowed;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class UserFollowService
 {
     public function follow(int $userId, int $targetUserId): bool
     {
-        $user = User::findOrFail($userId);
-        
-        if (!$user->following()->where('following_id', $targetUserId)->exists()) {
-            $user->following()->attach($targetUserId);
-            return true;
+        try {
+            return DB::transaction(function () use ($userId, $targetUserId) {
+                $user = User::lockForUpdate()->findOrFail($userId);
+                $targetUser = User::lockForUpdate()->findOrFail($targetUserId);
+                
+                // Check if already following
+                if ($user->following()->where('following_id', $targetUserId)->exists()) {
+                    return false;
+                }
+                
+                // Create follow relationship
+                $user->following()->attach($targetUserId);
+                
+                // Update counters atomically
+                $user->increment('following_count');
+                $targetUser->increment('followers_count');
+                
+                // Dispatch follow event for notifications
+                event(new UserFollowed($targetUser, $user));
+                
+                return true;
+            });
+        } catch (\Exception $e) {
+            Log::error('Follow failed', [
+                'user_id' => $userId,
+                'target_user_id' => $targetUserId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
         }
-        return false;
     }
 
     public function unfollow(int $userId, int $targetUserId): bool
     {
-        $user = User::findOrFail($userId);
-        return $user->following()->detach($targetUserId) > 0;
+        try {
+            return DB::transaction(function () use ($userId, $targetUserId) {
+                $user = User::lockForUpdate()->findOrFail($userId);
+                $targetUser = User::lockForUpdate()->findOrFail($targetUserId);
+                
+                // Remove follow relationship
+                $detached = $user->following()->detach($targetUserId);
+                
+                if ($detached > 0) {
+                    // Update counters atomically
+                    $user->decrement('following_count');
+                    $targetUser->decrement('followers_count');
+                    return true;
+                }
+                
+                return false;
+            });
+        } catch (\Exception $e) {
+            Log::error('Unfollow failed', [
+                'user_id' => $userId,
+                'target_user_id' => $targetUserId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
     }
 
     public function getFollowers(int $userId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
