@@ -5,13 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Events\CommentCreated;
 use App\Events\PostInteraction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CreateCommentRequest;
 use App\Models\Comment;
 use App\Models\Post;
-use App\Rules\ContentLength;
+use App\Services\CommentService;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    public function __construct(
+        private CommentService $commentService
+    ) {}
+
     public function index(Post $post)
     {
         $comments = $post->comments()
@@ -23,68 +28,59 @@ class CommentController extends Controller
         return response()->json($comments);
     }
 
-    public function store(Request $request, Post $post)
+    public function store(CreateCommentRequest $request, Post $post)
     {
         $this->authorize('create', Comment::class);
-        
-        $request->validate([
-            'content' => ['required', new ContentLength('comment')],
-        ]);
 
-        $comment = $post->comments()->create([
-            'user_id' => $request->user()->id,
-            'content' => $request->input('content'),
-        ]);
+        try {
+            $comment = $this->commentService->createComment(
+                $post,
+                $request->user(),
+                $request->input('content')
+            );
 
-        // Process mentions in comment
-        $mentionedUsers = $comment->processMentions($comment->content);
+            // Process mentions
+            $comment->processMentions($comment->content);
 
-        // Fire comment created event
-        event(new CommentCreated($comment, $request->user()));
+            // Fire event (queued notification)
+            event(new CommentCreated($comment, $request->user()));
 
-        // Broadcast real-time interaction
-        broadcast(new PostInteraction($post, 'comment', $request->user(), [
-            'comment' => [
-                'id' => $comment->id,
-                'content' => $comment->content,
-                'user' => $comment->user->only(['id', 'name', 'username', 'avatar']),
-            ],
-        ]));
+            // Broadcast real-time
+            broadcast(new PostInteraction($post, 'comment', $request->user(), [
+                'comment' => [
+                    'id' => $comment->id,
+                    'content' => $comment->content,
+                    'user' => $comment->user->only(['id', 'name', 'username', 'avatar']),
+                ],
+            ]));
 
-        $post->increment('comments_count');
-        $comment->load('user:id,name,username,avatar');
+            $comment->load('user:id,name,username,avatar');
 
-        return response()->json($comment, 201);
+            return response()->json($comment, 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
     public function destroy(Comment $comment)
     {
         $this->authorize('delete', $comment);
 
-        if ($comment->post->comments_count > 0) {
-            $comment->post->decrement('comments_count');
+        try {
+            $this->commentService->deleteComment($comment);
+            return response()->json(['message' => 'Comment deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-        $comment->delete();
-
-        return response()->json(['message' => 'Comment deleted successfully']);
     }
 
     public function like(Comment $comment)
     {
-        $user = auth()->user();
-
-        if ($comment->isLikedBy($user->id)) {
-            $comment->likes()->where('user_id', $user->id)->delete();
-            if ($comment->likes_count > 0) {
-                $comment->decrement('likes_count');
-            }
-            $liked = false;
-        } else {
-            $comment->likes()->create(['user_id' => $user->id]);
-            $comment->increment('likes_count');
-            $liked = true;
+        try {
+            $result = $this->commentService->toggleLike($comment, auth()->user());
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
         }
-
-        return response()->json(['liked' => $liked, 'likes_count' => $comment->likes_count]);
     }
 }

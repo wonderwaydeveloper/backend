@@ -20,6 +20,7 @@ return new class () extends Migration {
             
             // Performance indexes
             $table->index(['post_id', 'created_at'], 'comments_post_index');
+            $table->index('user_id', 'comments_user_index');
         });
     }
 

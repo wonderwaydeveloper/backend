@@ -4,8 +4,9 @@ namespace App\Listeners;
 
 use App\Events\CommentCreated;
 use App\Services\NotificationService;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendCommentNotification
+class SendCommentNotification implements ShouldQueue
 {
     public function __construct(
         private NotificationService $notificationService

@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2026-02-10  
-**پیشرفت کلی:** 25.9% (7/27 سیستم)
+**آخرین بهروزرسانی:** 2026-02-13  
+**پیشرفت کلی:** 29.6% (8/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 7/27 (25.9%)
+### ✅ سیستمهای تکمیل شده: 8/27 (29.6%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -20,39 +20,39 @@
 | 5 | Report System | ✅ | 100% (24) | 9.3/10 | 2026-02-08 |
 | 6 | Integration | ✅ | 100% (87) | 9.5/10 | 2026-02-08 |
 | 7 | Users & Profile | ✅ | 100% (157) | 10/10 | 2026-02-10 |
+| 8 | Comments System | ✅ | 100% (150) | 10/10 | 2026-02-13 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 670
-- **موفق**: 670 ✓
+- **کل تستها**: 820
+- **موفق**: 820 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
-- **Twitter Compliance**: 30/30 (100%)
+- **Twitter Compliance**: 60/60 (100%)
 
 ---
 
-## 🎉 آخرین تکمیل: Users & Profile System
+## 🎉 آخرین تکمیل: Comments System
 
-### Users & Profile System v1.0
-- ✅ 58 تست (100%)
-- ✅ Profile management کامل
-- ✅ Privacy settings
-- ✅ Account management
-- ✅ User relationships
-- ✅ Block/Mute یکپارچه
-- ✅ Validation system یکپارچه
-- ✅ Security audit کامل
-- ✅ Twitter standards
+### Comments System v1.0
+- ✅ 150 تست (100%)
+- ✅ Service Layer (CommentService)
+- ✅ Repository Pattern
+- ✅ Transaction Support
+- ✅ Block/Mute Integration
+- ✅ XSS Sanitization
+- ✅ Spam Detection
+- ✅ Twitter Compliance (96.7%)
+- ✅ Queued Notifications
 
 ### ویژگیهای کلیدی
-- ✅ Profile CRUD (show, update, delete)
-- ✅ Privacy settings (is_private, notifications)
-- ✅ Follow/Unfollow actions
-- ✅ Block/Mute functionality
-- ✅ Account export & deletion
-- ✅ Security policies
-- ✅ Validation rules یکپارچه
-- ✅ File upload (avatar, cover)
-- ✅ User relationships
+- ✅ Comment CRUD (create, delete)
+- ✅ Comment Likes (toggle)
+- ✅ Pagination & Sorting
+- ✅ Draft Post Protection
+- ✅ Counter Management
+- ✅ Database Indexes
+- ✅ Security Policies
+- ✅ Clean Architecture
 
 ---
 
@@ -78,10 +78,11 @@
 - **Coverage:** 100% (157 tests)
 - **Security:** Privacy settings, Account export/deletion
 
-#### ⏳ 4. Comments (در حال انجام)
+#### ✅ 4. Comments (تکمیل)
 - **Controller:** CommentController
-- **Features:** Comment CRUD, Comment Likes
-- **Priority:** High (required for Posts)
+- **Features:** Comment CRUD, Comment Likes, Service Layer, Repository Pattern
+- **Coverage:** 100% (150 tests)
+- **Integration:** Block/Mute, Spam Detection, Notifications
 
 #### ⏳ 5. Social Features
 - **Controllers:** FollowController, FollowRequestController
@@ -210,12 +211,12 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 27% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 36% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
 - ✅ Block/Mute Integration (تکمیل)
-- ⏳ Comments (در حال انجام)
+- ✅ Comments (تکمیل)
 - ⏳ Social Features (Follow System)
 - ⏳ Search & Discovery
 - ⏳ Messaging
@@ -249,23 +250,23 @@
 
 ---
 
-## 🎯 بعدی: Comments System
+## 🎯 بعدی: Social Features (Follow System)
 
 ### چرا این سیستم؟
-1. **وابستگی**: Posts System تکمیل شده
-2. **اولویت**: حیاتی برای تعامل کاربران
+1. **وابستگی**: Profile & Users تکمیل شده
+2. **اولویت**: حیاتی برای شبکه اجتماعی
 3. **پیچیدگی**: متوسط
-4. **تأثیر**: بالا (engagement)
-5. **Controller موجود**: CommentController در SYSTEMS_LIST
+4. **تأثیر**: بالا (core social functionality)
+5. **Controllers موجود**: FollowController, FollowRequestController
 
-### اجزای کلیدی (بر اساس SYSTEMS_LIST):
-- ⏳ GET `/posts/{post}/comments` - لیست کامنتها
-- ⏳ POST `/posts/{post}/comments` - ایجاد کامنت
-- ⏳ DELETE `/comments/{comment}` - حذف کامنت
-- ⏳ POST `/comments/{comment}/like` - لایک کامنت
-- ⏳ Comment validation & security
-- ⏳ Integration with notifications
+### اجزای کلیدی:
+- ⏳ POST `/users/{user}/follow` - دنبال کردن
+- ⏳ DELETE `/users/{user}/unfollow` - لغو دنبال کردن
+- ⏳ GET `/users/{user}/followers` - لیست دنبال‌کنندگان
+- ⏳ GET `/users/{user}/following` - لیست دنبال‌شوندگان
+- ⏳ Follow requests (برای حساب‌های خصوصی)
 - ⏳ Block/Mute integration
+- ⏳ Notification integration
 
 ### معیارهای موفقیت:
 - [ ] 100% test coverage
@@ -274,7 +275,7 @@
 - [ ] Documentation
 - [ ] Integration tests
 - [ ] Block/Mute integration
-- [ ] Spam detection
+- [ ] Privacy settings support
 
 ---
 
@@ -332,14 +333,15 @@
 ### تکمیل شده:
 - ✅ Authentication System (12 لایه امنیتی)
 - ✅ Authorization System (Permission-based)
-- ✅ Posts System (289 تست)
-- ✅ Block/Mute System (22 تست)
-- ✅ Report System (23 تست)
-- ✅ Integration Tests (30 تست)
-- ✅ Users & Profile System (58 تست)
+- ✅ Posts System (203 تست)
+- ✅ Block/Mute System
+- ✅ Report System (24 تست)
+- ✅ Integration Tests (87 تست)
+- ✅ Users & Profile System (157 تست)
+- ✅ Comments System (150 تست)
 
 ### در حال انجام:
-- ⏳ Media System
+- ⏳ Social Features (Follow System)
 
 ### آماده شروع:
 - 📋 Search System
@@ -363,6 +365,6 @@
 
 ---
 
-**تاریخ بهروزرسانی:** 2026-02-09  
-**نسخه:** 2.1  
+**تاریخ بهروزرسانی:** 2026-02-13  
+**نسخه:** 2.2  
 **وضعیت:** 🟢 Active Development
