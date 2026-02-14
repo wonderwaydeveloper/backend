@@ -16,7 +16,7 @@ class ListRequest extends FormRequest
         return [
             'name' => 'required|string|max:50',
             'description' => 'nullable|string|max:200',
-            'is_private' => 'boolean',
+            'privacy' => 'required|in:public,private',
             'banner_image' => 'nullable|image|max:1024'
         ];
     }

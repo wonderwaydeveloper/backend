@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-15  
-**پیشرفت کلی:** 59% (16/27 سیستم)
+**پیشرفت کلی:** 63% (17/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 16/27 (59%)
+### ✅ سیستمهای تکمیل شده: 17/27 (63%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -30,44 +30,46 @@
 | 15 | Moderation & Reporting | ✅ | 100% (89) | 10/10 | 2026-02-14 |
 | 16 | Communities System | ✅ | 100% (72) | 10/10 | 2026-02-15 |
 | 17 | Spaces (Audio Rooms) | ✅ | 100% (155) | 10/10 | 2026-02-15 |
+| 18 | Lists Management | ✅ | 100% (125) | 10/10 | 2026-02-15 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,949
-- **موفق**: 1,949 ✓
+- **کل تستها**: 2,074
+- **موفق**: 2,074 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Spaces (Audio Rooms) System
+## 🎉 آخرین تکمیل: Lists Management System
 
-### Spaces System v1.0
-- ✅ 155 تست (100%)
+### Lists System v1.0
+- ✅ 125 تست (100%)
 - ✅ Service Layer + Repository Pattern
-- ✅ Audio Rooms Management (CRUD)
-- ✅ Participant Management (Join/Leave/Role)
-- ✅ Privacy Controls (Public/Followers/Invited)
-- ✅ Role System (Host/Co-host/Speaker/Listener)
-- ✅ Scheduled Spaces Support
+- ✅ List Management (CRUD)
+- ✅ Member Management (Add/Remove)
+- ✅ Subscribe/Unsubscribe System
+- ✅ Privacy Controls (Public/Private)
+- ✅ List Discovery
 - ✅ Real-time Broadcasting (PresenceChannel)
 - ✅ Block/Mute Integration
 - ✅ Notification System Integration
-- ✅ 8 Permissions System
+- ✅ 5 Permissions System
 - ✅ Twitter/X Standards Compliance (100%)
 - ✅ ROADMAP Compliance (100/100)
 
 ### ویژگیهای کلیدی
-- ✅ Space CRUD (Create, Read, Update, Delete, End)
-- ✅ Privacy Levels (public, followers, invited)
-- ✅ Participant Roles (host, co_host, speaker, listener)
-- ✅ Join/Leave System with Counter Management
-- ✅ Role Management (Host can change roles)
-- ✅ Mute Functionality
-- ✅ Scheduled Spaces (scheduled_at support)
-- ✅ Real-time Events (4 events: Join, Leave, End, RoleChanged)
-- ✅ Block/Mute Check in canJoin()
+- ✅ List CRUD (Create, Read, Update, Delete)
+- ✅ Privacy Levels (public, private)
+- ✅ Member Management (Add/Remove with Block/Mute check)
+- ✅ Subscribe/Unsubscribe System
+- ✅ Counter Management (members_count, subscribers_count)
+- ✅ List Discovery (Public lists)
+- ✅ List Posts Timeline
+- ✅ Real-time Events (4 events: Created, MemberAdded, MemberRemoved, Subscribed)
+- ✅ Block/Mute Check in addMember() and subscribe()
 - ✅ Notification Listeners (Queued)
 - ✅ Complete Architecture (Controller → Service → Repository → Model)
+- ✅ Transaction Safety (DB::transaction)
 
 ---
 
@@ -160,10 +162,14 @@
 - **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
 - **Architecture:** Complete Service Layer + Repository Pattern
 
-#### 14. Lists
+#### ✅ 14. Lists (تکمیل)
 - **Controller:** ListController
-- **Features:** User Lists, List Management, List Discovery
-- **Priority:** Medium (content organization)
+- **Services:** ListService, ListMemberService
+- **Repositories:** EloquentListRepository, EloquentListMemberRepository
+- **Features:** List Management, Member Management, Subscribe/Unsubscribe, List Discovery
+- **Coverage:** 100% (125 tests)
+- **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
+- **Architecture:** Complete Service Layer + Repository Pattern
 
 #### 15. Polls
 - **Controller:** PollController
@@ -254,7 +260,7 @@
 
 - ✅ Communities (تکمیل)
 - ✅ Spaces (Audio Rooms) (تکمیل)
-- Lists Management
+- ✅ Lists Management (تکمیل)
 - Polls
 - Mentions
 - Media Management
@@ -374,9 +380,9 @@
 - ✅ Moderation & Reporting System (89 تست)
 
 ### آماده شروع:
-- 📋 Lists Management
 - 📋 Polls
 - 📋 Mentions
+- 📋 Media Management
 
 ---
 
@@ -397,5 +403,5 @@
 ---
 
 **تاریخ بهروزرسانی:** 2026-02-15  
-**نسخه:** 2.8  
+**نسخه:** 2.9  
 **وضعیت:** 🟢 Active Development

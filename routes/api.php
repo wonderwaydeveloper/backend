@@ -332,15 +332,15 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     // Lists Routes
     Route::prefix('lists')->group(function () {
         Route::get('/', [ListController::class, 'index']);
-        Route::post('/', [ListController::class, 'store']);
+        Route::post('/', [ListController::class, 'store'])->middleware('permission:list.create');
         Route::get('/discover', [ListController::class, 'discover']);
         Route::get('/{list}', [ListController::class, 'show']);
-        Route::put('/{list}', [ListController::class, 'update']);
-        Route::delete('/{list}', [ListController::class, 'destroy']);
-        Route::post('/{list}/members', [ListController::class, 'addMember']);
-        Route::delete('/{list}/members/{user}', [ListController::class, 'removeMember']);
-        Route::post('/{list}/subscribe', [ListController::class, 'subscribe']);
-        Route::post('/{list}/unsubscribe', [ListController::class, 'unsubscribe']);
+        Route::put('/{list}', [ListController::class, 'update'])->middleware('permission:list.update.own');
+        Route::delete('/{list}', [ListController::class, 'destroy'])->middleware('permission:list.delete.own');
+        Route::post('/{list}/members', [ListController::class, 'addMember'])->middleware('permission:list.manage.members');
+        Route::delete('/{list}/members/{user}', [ListController::class, 'removeMember'])->middleware('permission:list.manage.members');
+        Route::post('/{list}/subscribe', [ListController::class, 'subscribe'])->middleware('permission:list.subscribe');
+        Route::post('/{list}/unsubscribe', [ListController::class, 'unsubscribe'])->middleware('permission:list.subscribe');
         Route::get('/{list}/posts', [ListController::class, 'posts']);
     });
 

@@ -6,32 +6,29 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class SpacePermissionSeeder extends Seeder
+class ListPermissionSeeder extends Seeder
 {
     public function run(): void
     {
         $permissions = [
-            'space.create',
-            'space.join',
-            'space.leave',
-            'space.manage.own',
-            'space.delete.own',
-            'space.update.own',
-            'space.manage.roles',
-            'space.end.own',
+            'list.create',
+            'list.update.own',
+            'list.delete.own',
+            'list.manage.members',
+            'list.subscribe',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
         }
 
-        // Assign permissions to roles
+        // Assign to user role
         $userRole = Role::where('name', 'user')->first();
         if ($userRole) {
             $permissionModels = Permission::whereIn('name', $permissions)->get();
             $userRole->permissions()->syncWithoutDetaching($permissionModels);
         }
 
-        $this->command->info('Space permissions created successfully!');
+        $this->command->info('List permissions created successfully!');
     }
 }

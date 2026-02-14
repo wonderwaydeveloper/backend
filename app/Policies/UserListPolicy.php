@@ -14,12 +14,10 @@ class UserListPolicy
 
     public function view(User $user, UserList $list): bool
     {
-        // Public lists
-        if ($list->is_public) {
+        if ($list->privacy === 'public') {
             return true;
         }
 
-        // Own list
         return $user->id === $list->user_id;
     }
 

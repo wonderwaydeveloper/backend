@@ -61,6 +61,16 @@ class AppServiceProvider extends ServiceProvider
             \App\Contracts\Repositories\SpaceParticipantRepositoryInterface::class,
             \App\Repositories\Eloquent\EloquentSpaceParticipantRepository::class
         );
+
+        // Register List Repositories
+        $this->app->bind(
+            \App\Contracts\Repositories\ListRepositoryInterface::class,
+            \App\Repositories\Eloquent\EloquentListRepository::class
+        );
+        $this->app->bind(
+            \App\Contracts\Repositories\ListMemberRepositoryInterface::class,
+            \App\Repositories\Eloquent\EloquentListMemberRepository::class
+        );
     }
 
     /**
@@ -77,6 +87,10 @@ class AppServiceProvider extends ServiceProvider
         // Space Events
         Event::listen(\App\Events\SpaceParticipantJoined::class, \App\Listeners\SendSpaceNotification::class);
         Event::listen(\App\Events\SpaceEnded::class, \App\Listeners\SendSpaceNotification::class);
+
+        // List Events
+        Event::listen(\App\Events\ListMemberAdded::class, \App\Listeners\SendListNotification::class);
+        Event::listen(\App\Events\ListSubscribed::class, \App\Listeners\SendListNotification::class);
 
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);

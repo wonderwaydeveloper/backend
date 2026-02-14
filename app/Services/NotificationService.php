@@ -171,6 +171,29 @@ class NotificationService implements NotificationServiceInterface
         $this->sendPushNotification($user, 'space_ended', $space->host->name);
     }
 
+    public function notifyListMemberAdded($user, $list)
+    {
+        $notification = $this->sendToUser($user, 'list_member_added', [
+            'list_id' => $list->id,
+            'list_name' => $list->name,
+            'owner_name' => $list->owner->name,
+        ]);
+
+        $this->sendPushNotification($user, 'list_member_added', $list->owner->name);
+    }
+
+    public function notifyListSubscribed($owner, $user, $list)
+    {
+        $notification = $this->sendToUser($owner, 'list_subscribed', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'list_id' => $list->id,
+            'list_name' => $list->name,
+        ]);
+
+        $this->sendPushNotification($owner, 'list_subscribed', $user->name);
+    }
+
     private function createNotification($user, $type, $data)
     {
         try {
@@ -310,6 +333,8 @@ class NotificationService implements NotificationServiceInterface
             'repost' => 'New Repost',
             'space_join' => 'Space Participant',
             'space_ended' => 'Space Ended',
+            'list_member_added' => 'Added to List',
+            'list_subscribed' => 'List Subscriber',
         ];
 
         return $titles[$type] ?? 'New Notification';
@@ -325,6 +350,8 @@ class NotificationService implements NotificationServiceInterface
             'repost' => 'reposted your post',
             'space_join' => 'joined your space',
             'space_ended' => 'ended the space',
+            'list_member_added' => 'added you to a list',
+            'list_subscribed' => 'subscribed to your list',
         ];
 
         return $messages[$type] ?? 'New notification';
