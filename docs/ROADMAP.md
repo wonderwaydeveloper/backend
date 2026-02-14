@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2026-02-13  
-**پیشرفت کلی:** 48% (13/27 سیستم)
+**آخرین بهروزرسانی:** 2026-02-14  
+**پیشرفت کلی:** 52% (14/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 13/27 (48%)
+### ✅ سیستمهای تکمیل شده: 14/27 (52%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -26,39 +26,40 @@
 | 11 | Messaging System | ✅ | 100% (125) | 10/10 | 2026-02-13 |
 | 12 | Notifications System | ✅ | 100% (161) | 10/10 | 2026-02-13 |
 | 13 | Bookmarks & Reposts | ✅ | 100% (135) | 10/10 | 2026-02-13 |
+| 14 | Hashtags System | ✅ | 100% (76) | 10/10 | 2026-02-14 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,557
-- **موفق**: 1,557 ✓
+- **کل تستها**: 1,633
+- **موفق**: 1,633 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Bookmarks & Reposts System
+## 🎉 آخرین تکمیل: Hashtags System
 
-### Bookmarks & Reposts System v1.0
-- ✅ 135 تست (100%)
-- ✅ Bookmark Toggle (add/remove)
-- ✅ Repost/Unrepost
-- ✅ Quote Tweet Support
-- ✅ Counter Management (atomic)
-- ✅ Integration با Notifications
+### Hashtags System v1.0
+- ✅ 76 تست (100%)
+- ✅ Trending Hashtags (TrendingService integration)
+- ✅ Hashtag Search (with caching)
+- ✅ Hashtag Details (posts, velocity, trending info)
+- ✅ Personalized Suggestions
 - ✅ Twitter Standards Compliance (100%)
-- ✅ No Parallel Work (Single Implementation)
-- ✅ Authorization Policy (BookmarkPolicy)
+- ✅ No Parallel Work (uses TrendingService)
+- ✅ ROADMAP Compliance (100/100)
+- ✅ Security: 18 layers
 
 ### ویژگیهای کلیدی
-- ✅ Bookmark Management (toggle, list)
-- ✅ Repost System (repost, unrepost)
-- ✅ Quote Tweet (with text)
-- ✅ Counter Management (reposts_count)
+- ✅ Trending Algorithm (top 10, 24h window)
+- ✅ Multi-level Caching (900s - 3600s)
+- ✅ Unicode Hashtag Support
+- ✅ Automatic Extraction from Text
+- ✅ Posts Count Tracking
 - ✅ Pagination (20 per page)
-- ✅ Eager Loading (post.user)
-- ✅ Unique Constraints (no duplicates)
-- ✅ DB Transactions (race condition prevention)
-- ✅ Event-driven (PostReposted event)
-- ✅ Notification Integration
+- ✅ Trend Velocity Tracking
+- ✅ Rate Limiting (75/15, 180/15, 900/15)
+- ✅ Post System Integration
+- ✅ SearchController Integration
 
 ---
 
@@ -120,10 +121,11 @@
 - **Coverage:** 100% (135 tests)
 - **Integration:** Notifications, Twitter Standards
 
-#### ⏳ 10. Hashtags
+#### ✅ 10. Hashtags (تکمیل)
 - **Controller:** HashtagController
-- **Features:** Trending Hashtags, Search, Suggestions
-- **Priority:** High (content discovery)
+- **Features:** Trending Hashtags, Search, Suggestions, Details
+- **Coverage:** 100% (76 tests)
+- **Integration:** TrendingService, Post System, SearchController
 
 #### ⏳ 11. Moderation & Reporting
 - **Controller:** ModerationController
@@ -222,7 +224,7 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 82% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 91% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
@@ -233,7 +235,7 @@
 - ✅ Messaging (تکمیل)
 - ✅ Notifications (تکمیل)
 - ✅ Bookmarks & Reposts (تکمیل)
-- ⏳ Hashtags
+- ✅ Hashtags (تکمیل)
 
 ### Q2 2026 (فاز 1 ادامه + فاز 2 شروع)
 - ⏳ Moderation & Reporting (تکمیل فاز 1)
@@ -355,9 +357,10 @@
 - ✅ Messaging System (125 تست)
 - ✅ Notifications System (161 تست)
 - ✅ Bookmarks & Reposts System (135 تست)
+- ✅ Hashtags System (76 تست)
 
 ### در حال انجام:
-- ⏳ Hashtags System
+- ⏳ Moderation & Reporting
 
 ### آماده شروع:
 - 📋 Notifications
@@ -381,6 +384,6 @@
 
 ---
 
-**تاریخ بهروزرسانی:** 2026-02-13  
-**نسخه:** 2.5  
+**تاریخ بهروزرسانی:** 2026-02-14  
+**نسخه:** 2.6  
 **وضعیت:** 🟢 Active Development
