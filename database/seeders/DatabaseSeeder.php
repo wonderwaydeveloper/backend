@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             SpacePermissionSeeder::class,
             ListPermissionSeeder::class,
+            PollPermissionSeeder::class,
             AdminSeeder::class,
         ]);
     }

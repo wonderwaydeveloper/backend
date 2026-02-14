@@ -18,6 +18,7 @@ return new class () extends Migration {
             $table->timestamps();
 
             $table->unique(['user_id', 'poll_id']);
+            $table->index(['poll_id', 'user_id']);
         });
     }
 

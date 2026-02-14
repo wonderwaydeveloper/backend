@@ -345,9 +345,10 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     });
 
     // Poll routes
-    Route::post('/polls', [PollController::class, 'store']);
-    Route::post('/polls/{poll}/vote/{option}', [PollController::class, 'vote']);
-    Route::get('/polls/{poll}/results', [PollController::class, 'results']);
+    Route::post('/polls', [PollController::class, 'store'])->middleware(['permission:poll.create', 'throttle:10,1']);
+    Route::post('/polls/{poll}/vote/{option}', [PollController::class, 'vote'])->middleware(['permission:poll.vote', 'throttle:20,1']);
+    Route::get('/polls/{poll}/results', [PollController::class, 'results'])->middleware('throttle:60,1');
+    Route::delete('/polls/{poll}', [PollController::class, 'destroy'])->middleware(['permission:poll.delete.own', 'throttle:10,1']);
 
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);

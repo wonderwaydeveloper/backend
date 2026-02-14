@@ -14,12 +14,14 @@ class Poll extends Model
     protected $fillable = [
         'post_id',
         'question',
+        'multiple_choice',
         'ends_at',
         'total_votes',
     ];
 
     protected $casts = [
         'ends_at' => 'datetime',
+        'multiple_choice' => 'boolean',
     ];
 
     public function post(): BelongsTo

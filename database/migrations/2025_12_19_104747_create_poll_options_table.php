@@ -16,6 +16,8 @@ return new class () extends Migration {
             $table->string('text');
             $table->unsignedInteger('votes_count')->default(0);
             $table->timestamps();
+            
+            $table->index('poll_id');
         });
     }
 

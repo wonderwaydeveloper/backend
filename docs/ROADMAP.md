@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-15  
-**پیشرفت کلی:** 63% (17/27 سیستم)
+**پیشرفت کلی:** 67% (18/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 17/27 (63%)
+### ✅ سیستمهای تکمیل شده: 18/27 (67%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -31,16 +31,48 @@
 | 16 | Communities System | ✅ | 100% (72) | 10/10 | 2026-02-15 |
 | 17 | Spaces (Audio Rooms) | ✅ | 100% (155) | 10/10 | 2026-02-15 |
 | 18 | Lists Management | ✅ | 100% (125) | 10/10 | 2026-02-15 |
+| 19 | Polls System | ✅ | 100% (84) | 10/10 | 2026-02-15 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 2,074
-- **موفق**: 2,074 ✓
+- **کل تستها**: 2,158
+- **موفق**: 2,158 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Lists Management System
+## 🎉 آخرین تکمیل: Polls System
+
+### Polls System v1.0
+- ✅ 84 تست (100%)
+- ✅ Service Layer (PollService)
+- ✅ Policy (PollPolicy)
+- ✅ Poll CRUD (Create, Vote, Results, Delete)
+- ✅ Twitter/X Standards (2-4 options, 1-168 hours)
+- ✅ Multiple Choice Support
+- ✅ One Vote Per User (UNIQUE constraint)
+- ✅ Real-time Broadcasting (PollVoted event)
+- ✅ Block/Mute Integration
+- ✅ Notification System Integration
+- ✅ 3 Permissions System
+- ✅ Config-based Validation
+- ✅ Rate Limiting (10/1, 20/1, 60/1)
+- ✅ ROADMAP Compliance (100/100)
+
+### ویژگیهای کلیدی
+- ✅ Poll Creation (attached to Post)
+- ✅ Vote System (with expiration check)
+- ✅ Results Display (with percentage)
+- ✅ Multiple Choice Support
+- ✅ Block/Mute Check in vote()
+- ✅ Event Broadcasting (PollVoted)
+- ✅ Notification Listeners (SendPollNotification)
+- ✅ Transaction Safety (DB::transaction)
+- ✅ Complete Architecture (Controller → Service → Model)
+
+---
+
+## 🎉 قبلی: Lists Management System
 
 ### Lists System v1.0
 - ✅ 125 تست (100%)
@@ -171,10 +203,12 @@
 - **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
 - **Architecture:** Complete Service Layer + Repository Pattern
 
-#### 15. Polls
+#### ✅ 15. Polls (تکمیل)
 - **Controller:** PollController
-- **Features:** Poll Creation, Voting, Results
-- **Priority:** Medium (content engagement)
+- **Service:** PollService
+- **Features:** Poll Creation, Voting, Results, Multiple Choice
+- **Coverage:** 100% (84 tests)
+- **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
 
 #### 16. Mentions
 - **Controller:** MentionController
@@ -261,7 +295,7 @@
 - ✅ Communities (تکمیل)
 - ✅ Spaces (Audio Rooms) (تکمیل)
 - ✅ Lists Management (تکمیل)
-- Polls
+- ✅ Polls (تکمیل)
 - Mentions
 - Media Management
 - Moments
@@ -378,11 +412,15 @@
 - ✅ Bookmarks & Reposts System (135 تست)
 - ✅ Hashtags System (76 تست)
 - ✅ Moderation & Reporting System (89 تست)
+- ✅ Communities System (72 تست)
+- ✅ Spaces System (155 تست)
+- ✅ Lists System (125 تست)
+- ✅ Polls System (84 تست)
 
 ### آماده شروع:
-- 📋 Polls
 - 📋 Mentions
 - 📋 Media Management
+- 📋 Moments
 
 ---
 
@@ -403,5 +441,5 @@
 ---
 
 **تاریخ بهروزرسانی:** 2026-02-15  
-**نسخه:** 2.9  
+**نسخه:** 3.0  
 **وضعیت:** 🟢 Active Development

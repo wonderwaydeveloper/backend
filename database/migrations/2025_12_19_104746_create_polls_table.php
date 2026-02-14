@@ -14,9 +14,12 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('post_id')->constrained()->cascadeOnDelete();
             $table->string('question');
+            $table->boolean('multiple_choice')->default(false);
             $table->timestamp('ends_at');
             $table->unsignedInteger('total_votes')->default(0);
             $table->timestamps();
+            
+            $table->index('ends_at');
         });
     }
 

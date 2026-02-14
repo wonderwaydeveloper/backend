@@ -194,6 +194,18 @@ class NotificationService implements NotificationServiceInterface
         $this->sendPushNotification($owner, 'list_subscribed', $user->name);
     }
 
+    public function notifyPollVoted($owner, $voter, $poll)
+    {
+        $notification = $this->sendToUser($owner, 'poll_voted', [
+            'user_id' => $voter->id,
+            'user_name' => $voter->name,
+            'poll_id' => $poll->id,
+            'poll_question' => $poll->question,
+        ]);
+
+        $this->sendPushNotification($owner, 'poll_voted', $voter->name);
+    }
+
     private function createNotification($user, $type, $data)
     {
         try {
@@ -335,6 +347,7 @@ class NotificationService implements NotificationServiceInterface
             'space_ended' => 'Space Ended',
             'list_member_added' => 'Added to List',
             'list_subscribed' => 'List Subscriber',
+            'poll_voted' => 'Poll Vote',
         ];
 
         return $titles[$type] ?? 'New Notification';
@@ -352,6 +365,7 @@ class NotificationService implements NotificationServiceInterface
             'space_ended' => 'ended the space',
             'list_member_added' => 'added you to a list',
             'list_subscribed' => 'subscribed to your list',
+            'poll_voted' => 'voted on your poll',
         ];
 
         return $messages[$type] ?? 'New notification';

@@ -92,6 +92,9 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(\App\Events\ListMemberAdded::class, \App\Listeners\SendListNotification::class);
         Event::listen(\App\Events\ListSubscribed::class, \App\Listeners\SendListNotification::class);
 
+        // Poll Events
+        Event::listen(\App\Events\PollVoted::class, \App\Listeners\SendPollNotification::class);
+
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
 
@@ -104,6 +107,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\ScheduledPost::class, \App\Policies\ScheduledPostPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Space::class, \App\Policies\SpacePolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\UserList::class, \App\Policies\UserListPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Poll::class, \App\Policies\PollPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\AuditLog::class, \App\Policies\AuditLogPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\UserPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Message::class, \App\Policies\MessagePolicy::class);
