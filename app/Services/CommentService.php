@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
+use App\Notifications\MentionNotification;
 use Illuminate\Support\Facades\DB;
 
 class CommentService
@@ -45,6 +46,12 @@ class CommentService
             if ($spamResult['is_spam'] && $spamResult['score'] >= 80) {
                 DB::rollBack();
                 throw new \Exception('Comment detected as spam');
+            }
+
+            // Process mentions
+            $mentionedUsers = $comment->processMentions($content);
+            foreach ($mentionedUsers as $mentionedUser) {
+                $mentionedUser->notify(new MentionNotification($user, $comment));
             }
 
             DB::commit();

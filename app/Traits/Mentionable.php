@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Events\UserMentioned;
 use App\Models\Mention;
 use App\Models\User;
 
@@ -47,6 +48,9 @@ trait Mentionable
                 $this->mentions()->firstOrCreate([
                     'user_id' => $user->id,
                 ]);
+
+                // Broadcast event
+                event(new UserMentioned($user, auth()->user(), $this));
 
                 $mentionedUsers[] = $user;
             }

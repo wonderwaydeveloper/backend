@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-15  
-**پیشرفت کلی:** 67% (18/27 سیستم)
+**پیشرفت کلی:** 70% (19/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 18/27 (67%)
+### ✅ سیستمهای تکمیل شده: 19/27 (70%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -32,16 +32,49 @@
 | 17 | Spaces (Audio Rooms) | ✅ | 100% (155) | 10/10 | 2026-02-15 |
 | 18 | Lists Management | ✅ | 100% (125) | 10/10 | 2026-02-15 |
 | 19 | Polls System | ✅ | 100% (84) | 10/10 | 2026-02-15 |
+| 20 | Mentions System | ✅ | 100% (57) | 10/10 | 2026-02-15 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 2,158
-- **موفق**: 2,158 ✓
+- **کل تستها**: 2,215
+- **موفق**: 2,215 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Polls System
+## 🎉 آخرین تکمیل: Mentions System
+
+### Mentions System v1.0
+- ✅ 57 تست (100%)
+- ✅ Service Layer (MentionService)
+- ✅ Policy (MentionPolicy)
+- ✅ Request Validation (MentionRequest)
+- ✅ API Resources (MentionResource)
+- ✅ Event Broadcasting (UserMentioned)
+- ✅ Queued Listener (SendMentionNotification)
+- ✅ @username Pattern Extraction
+- ✅ Block/Mute Integration
+- ✅ Polymorphic Relations (Post/Comment)
+- ✅ Real-time Notifications
+- ✅ 2 Permissions System
+- ✅ Rate Limiting (60/1)
+- ✅ Twitter Standards Compliance (100%)
+- ✅ ROADMAP Compliance (100/100)
+
+### ویژگیهای کلیدی
+- ✅ Search Users for Mention
+- ✅ Get My Mentions
+- ✅ Get Mentions for Content
+- ✅ Auto-process @username in Posts/Comments
+- ✅ Block/Mute Check in searchUsers()
+- ✅ Event Broadcasting (UserMentioned)
+- ✅ Notification Listeners (Queued)
+- ✅ UNIQUE Constraint (no duplicate mentions)
+- ✅ Complete Architecture (Controller → Service → Model)
+
+---
+
+## 🎉 قبلی: Polls System
 
 ### Polls System v1.0
 - ✅ 84 تست (100%)
@@ -210,10 +243,12 @@
 - **Coverage:** 100% (84 tests)
 - **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
 
-#### 16. Mentions
+#### ✅ 16. Mentions (تکمیل)
 - **Controller:** MentionController
-- **Features:** User Mentions, Search, Notifications
-- **Priority:** Medium (user interaction)
+- **Service:** MentionService
+- **Features:** User Mentions, Search, Notifications, @username Pattern
+- **Coverage:** 100% (57 tests)
+- **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
 
 #### 17. Media Management
 - **Controller:** MediaController
@@ -416,11 +451,12 @@
 - ✅ Spaces System (155 تست)
 - ✅ Lists System (125 تست)
 - ✅ Polls System (84 تست)
+- ✅ Mentions System (57 تست)
 
 ### آماده شروع:
-- 📋 Mentions
 - 📋 Media Management
 - 📋 Moments
+- 📋 Real-time Features
 
 ---
 

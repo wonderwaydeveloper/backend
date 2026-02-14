@@ -442,10 +442,11 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Mention System
     Route::prefix('mentions')->group(function () {
-        Route::get('/search-users', [MentionController::class, 'searchUsers']);
-        Route::get('/my-mentions', [MentionController::class, 'getUserMentions']);
+        Route::get('/search-users', [MentionController::class, 'searchUsers'])->middleware(['permission:mention.view', 'throttle:60,1']);
+        Route::get('/my-mentions', [MentionController::class, 'getUserMentions'])->middleware(['permission:mention.view', 'throttle:60,1']);
         Route::get('/{type}/{id}', [MentionController::class, 'getMentions'])
-            ->where('type', 'post|comment');
+            ->where('type', 'post|comment')
+            ->middleware('throttle:60,1');
     });
 
     // Real-time Features
