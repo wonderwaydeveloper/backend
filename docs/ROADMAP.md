@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2026-02-04  
-**پیشرفت کلی:** 37% (10/27 سیستم)
+**آخرین بهروزرسانی:** 2026-02-13  
+**پیشرفت کلی:** 41% (11/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 10/27 (37%)
+### ✅ سیستمهای تکمیل شده: 11/27 (41%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -23,39 +23,40 @@
 | 8 | Comments System | ✅ | 100% (150) | 10/10 | 2026-02-13 |
 | 9 | Follow System | ✅ | 100% (141) | 10/10 | 2026-02-13 |
 | 10 | Search & Discovery | ✅ | 100% (175) | 10/10 | 2026-02-04 |
+| 11 | Messaging System | ✅ | 100% (125) | 10/10 | 2026-02-13 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,136
-- **موفق**: 1,136 ✓
+- **کل تستها**: 1,261
+- **موفق**: 1,261 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
-- **Twitter Compliance**: 101/101 (100%)
+- **Twitter Compliance**: 105/105 (100%)
 
 ---
 
-## 🎉 آخرین تکمیل: Search & Discovery System
+## 🎉 آخرین تکمیل: Messaging System
 
-### Search & Discovery System v1.0
-- ✅ 175 تست (100%)
-- ✅ Service Layer (SearchService, TrendingService)
-- ✅ MeiliSearch Integration
+### Messaging System v1.0
+- ✅ 125 تست (100%)
+- ✅ Service Layer (MessageService)
+- ✅ Real-time Broadcasting (MessageSent, UserTyping)
 - ✅ Block/Mute Integration
 - ✅ Event/Listener/Jobs (Async)
 - ✅ Twitter API v2 Compliance (100%)
-- ✅ Rate Limiting (450/15min posts, 180/15min users, 75/15min trending)
-- ✅ Authorization Policy (Spatie)
+- ✅ Rate Limiting (60/min)
+- ✅ Authorization Policy (MessagePolicy)
 
 ### ویژگیهای کلیدی
-- ✅ Search Posts/Users/Hashtags
-- ✅ Advanced Search
-- ✅ Search Suggestions
-- ✅ Trending Hashtags/Posts/Users
-- ✅ Personalized Trending
-- ✅ Trend Velocity
-- ✅ Cache Optimization (15min TTL)
-- ✅ Real-time Indexing
-- ✅ XSS Protection
-- ✅ Config-based Validation
+- ✅ Direct Messages (text/media/GIF)
+- ✅ Conversations Management
+- ✅ Read Receipts
+- ✅ Typing Indicator
+- ✅ Unread Count
+- ✅ Private Channels
+- ✅ XSS Protection (strip_tags)
+- ✅ DB Transactions
+- ✅ Media Processing (Queue)
+- ✅ Content Moderation
 
 ---
 
@@ -99,10 +100,11 @@
 - **Coverage:** 100% (175 tests)
 - **Integration:** Block/Mute, MeiliSearch, Twitter API v2 Compliance
 
-#### ⏳ 7. Messaging
+#### ✅ 7. Messaging (تکمیل)
 - **Controller:** MessageController
 - **Features:** Direct Messages, Conversations, Read Receipts, Typing Indicators
-- **Priority:** High (user engagement)
+- **Coverage:** 100% (125 tests)
+- **Integration:** Block/Mute, Real-time Broadcasting, Queue
 
 #### ⏳ 8. Notifications
 - **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
@@ -216,7 +218,7 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 55% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 64% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
@@ -224,7 +226,7 @@
 - ✅ Comments (تکمیل)
 - ✅ Social Features (تکمیل)
 - ✅ Search & Discovery (تکمیل)
-- ⏳ Messaging
+- ✅ Messaging (تکمیل)
 - ⏳ Notifications
 - ⏳ Bookmarks & Reposts
 - ⏳ Hashtags
@@ -346,9 +348,10 @@
 - ✅ Comments System (150 تست)
 - ✅ Follow System (141 تست)
 - ✅ Search & Discovery System (175 تست)
+- ✅ Messaging System (125 تست)
 
 ### در حال انجام:
-- ⏳ Messaging System
+- ⏳ Notifications System
 
 ### آماده شروع:
 - 📋 Notifications
@@ -372,6 +375,6 @@
 
 ---
 
-**تاریخ بهروزرسانی:** 2026-02-04  
-**نسخه:** 2.3  
+**تاریخ بهروزرسانی:** 2026-02-13  
+**نسخه:** 2.4  
 **وضعیت:** 🟢 Active Development

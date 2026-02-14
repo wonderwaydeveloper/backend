@@ -2,14 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\CommentCreated;
-use App\Events\PostLiked;
-use App\Events\PostReposted;
-use App\Events\UserFollowed;
-use App\Listeners\SendCommentNotification;
-use App\Listeners\SendFollowNotification;
-use App\Listeners\SendLikeNotification;
-use App\Listeners\SendRepostNotification;
+use App\Events\{CommentCreated, MessageSent, PostLiked, PostReposted, UserFollowed};
+use App\Listeners\{SendCommentNotification, SendFollowNotification, SendLikeNotification, SendMessageNotification, SendRepostNotification};
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -68,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(UserFollowed::class, SendFollowNotification::class);
         Event::listen(PostReposted::class, SendRepostNotification::class);
         Event::listen(CommentCreated::class, SendCommentNotification::class);
+        Event::listen(MessageSent::class, SendMessageNotification::class);
 
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);

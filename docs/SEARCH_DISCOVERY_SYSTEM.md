@@ -409,12 +409,129 @@ return [
 ```env
 # MeiliSearch
 MEILISEARCH_HOST=http://127.0.0.1:7700
-MEILISEARCH_KEY=your-master-key
+MEILISEARCH_KEY=masterKey123
 
 # Scout
 SCOUT_DRIVER=meilisearch
 SCOUT_QUEUE=true
+SCOUT_CHUNK_SIZE=500
+SCOUT_SOFT_DELETE=false
 ```
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+- PHP 8.2+
+- Composer
+- MySQL 8.0+
+- Redis
+- **MeiliSearch** (for search functionality)
+
+### Step 1: Install MeiliSearch
+
+#### Option 1: Direct Download (Windows)
+```bash
+# Download latest version
+curl -L https://github.com/meilisearch/meilisearch/releases/latest/download/meilisearch-windows-amd64.exe -o meilisearch.exe
+
+# Run MeiliSearch
+meilisearch.exe --master-key=masterKey123
+```
+
+#### Option 2: Docker (Recommended)
+```bash
+# Run MeiliSearch container
+docker run -d -p 7700:7700 \
+  -e MEILI_MASTER_KEY=masterKey123 \
+  -v meili_data:/meili_data \
+  --name meilisearch \
+  getmeili/meilisearch:latest
+
+# Check status
+docker ps | grep meilisearch
+```
+
+#### Option 3: Linux/macOS
+```bash
+# Install
+curl -L https://install.meilisearch.com | sh
+
+# Run
+meilisearch --master-key=masterKey123
+```
+
+### Step 2: Configure Laravel
+
+**Update `.env` file:**
+```env
+MEILISEARCH_HOST=http://127.0.0.1:7700
+MEILISEARCH_KEY=masterKey123
+
+SCOUT_DRIVER=meilisearch
+SCOUT_QUEUE=true
+SCOUT_CHUNK_SIZE=500
+SCOUT_SOFT_DELETE=false
+```
+
+### Step 3: Index Existing Data
+
+```bash
+# Import Posts
+php artisan scout:import "App\Models\Post"
+
+# Import Users
+php artisan scout:import "App\Models\User"
+
+# Import Hashtags (if needed)
+php artisan scout:import "App\Models\Hashtag"
+```
+
+### Step 4: Start Queue Worker
+
+```bash
+# For async indexing
+php artisan queue:work
+```
+
+### Step 5: Verify Installation
+
+```bash
+# Check MeiliSearch health
+curl http://127.0.0.1:7700/health
+
+# Expected response: {"status":"available"}
+
+# Check indexes
+curl -H "Authorization: Bearer masterKey123" \
+  http://127.0.0.1:7700/indexes
+
+# Test search
+curl -X GET "http://localhost:8000/api/search/posts?q=test" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Accept: application/json"
+```
+
+---
+
+## 🔄 Alternative: Database Driver
+
+اگر نمیخواهید MeiliSearch نصب کنید، میتوانید از Database driver استفاده کنید:
+
+```env
+SCOUT_DRIVER=database
+```
+
+**مزایا:**
+- نیازی به نصب MeiliSearch نیست
+- راهاندازی سریعتر
+
+**معایب:**
+- کندتر از MeiliSearch
+- بدون typo tolerance
+- بدون faceted search
+- بدون ranking customization
 
 ---
 
