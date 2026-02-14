@@ -59,6 +59,11 @@ class Post extends Model
         return $this->belongsTo(User::class)->select(['id', 'name', 'username', 'avatar']);
     }
 
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
     public function comments()
     {
         return $this->hasMany(Comment::class);

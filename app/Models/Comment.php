@@ -37,6 +37,11 @@ class Comment extends Model
         return $this->morphMany(Like::class, 'likeable');
     }
 
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
     public function isLikedBy($userId)
     {
         return $this->likes()->where('user_id', $userId)->exists();

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             ListPermissionSeeder::class,
             PollPermissionSeeder::class,
             MentionPermissionSeeder::class,
+            MediaPermissionSeeder::class,
             AdminSeeder::class,
         ]);
     }

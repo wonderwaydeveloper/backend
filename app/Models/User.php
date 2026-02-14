@@ -264,6 +264,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Mention::class);
     }
 
+    public function media()
+    {
+        return $this->hasMany(Media::class);
+    }
+
     public function moments()
     {
         return $this->hasMany(Moment::class);

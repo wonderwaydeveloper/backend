@@ -112,6 +112,7 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\UserList::class, \App\Policies\UserListPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Poll::class, \App\Policies\PollPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Mention::class, \App\Policies\MentionPolicy::class);
+        \Illuminate\Support\Facades\Gate::policy(\App\Models\Media::class, \App\Policies\MediaPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\AuditLog::class, \App\Policies\AuditLogPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\User::class, \App\Policies\UserPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Message::class, \App\Policies\MessagePolicy::class);

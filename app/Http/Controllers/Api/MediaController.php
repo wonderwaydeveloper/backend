@@ -4,211 +4,88 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MediaUploadRequest;
-use App\Jobs\GenerateThumbnailJob;
-use App\Rules\FileUpload;
+use App\Http\Resources\MediaResource;
+use App\Models\Media;
+use App\Services\MediaService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\ImageManager;
 
 class MediaController extends Controller
 {
+    public function __construct(private MediaService $mediaService)
+    {
+    }
+
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', Media::class);
+
+        $type = $request->query('type');
+        $media = $this->mediaService->getUserMedia($request->user(), $type);
+
+        return MediaResource::collection($media);
+    }
+
+    public function show(Media $media)
+    {
+        $this->authorize('view', $media);
+
+        return new MediaResource($media);
+    }
+
     public function uploadImage(MediaUploadRequest $request)
     {
-        $validated = $request->validated();
-        
-        try {
-            $file = $validated['image'];
-            $quality = 85;
+        $this->authorize('create', Media::class);
 
-            // Generate unique filename
-            $filename = $this->generateFilename($file->getClientOriginalExtension());
-            $path = "media/images/" . date('Y/m/d');
+        $media = $this->mediaService->uploadImage(
+            $request->file('image'),
+            $request->user(),
+            $request->input('alt_text'),
+            $request->input('type', 'post')
+        );
 
-            // Process and optimize image
-            $processedImage = $this->processImage($file, 'post', $quality);
-
-            // Store processed image
-            $fullPath = "{$path}/{$filename}";
-            Storage::disk('public')->put($fullPath, $processedImage);
-
-            GenerateThumbnailJob::dispatch($fullPath, 'post');
-
-            return response()->json([
-                'url' => Storage::disk('public')->url($fullPath),
-                'path' => $fullPath,
-                'type' => 'image',
-                'size' => strlen($processedImage),
-                'alt_text' => $validated['alt_text'] ?? null,
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'File upload error',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return new MediaResource($media);
     }
 
     public function uploadVideo(Request $request)
     {
+        $this->authorize('create', Media::class);
+
         $request->validate([
-            'video' => ['required', new FileUpload('video')],
+            'video' => 'required|file|mimes:mp4,mov,avi|max:524288',
             'type' => 'in:post,story',
         ]);
 
-        try {
-            $file = $request->file('video');
-            $type = $request->input('type', 'post');
+        $media = $this->mediaService->uploadVideo(
+            $request->file('video'),
+            $request->user(),
+            $request->input('type', 'post')
+        );
 
-            // Generate unique filename
-            $filename = $this->generateFilename($file->getClientOriginalExtension());
-            $path = "media/{$type}s/videos/" . date('Y/m/d');
-            $fullPath = "{$path}/{$filename}";
-
-            // Store video
-            Storage::disk('public')->putFileAs($path, $file, $filename);
-
-            $url = Storage::disk('public')->url($fullPath);
-            $size = $file->getSize();
-
-            return response()->json([
-                'message' => 'Video uploaded successfully',
-                'data' => [
-                    'url' => $url,
-                    'path' => $fullPath,
-                    'filename' => $filename,
-                    'size' => $size,
-                    'type' => $type,
-                    'duration' => null, // Could be extracted using FFmpeg
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Video upload error',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return new MediaResource($media);
     }
 
     public function uploadDocument(Request $request)
     {
+        $this->authorize('create', Media::class);
+
         $request->validate([
-            'document' => ['required', new FileUpload('media_general')],
+            'document' => 'required|file|mimes:pdf,doc,docx|max:10240',
         ]);
 
-        try {
-            $file = $request->file('document');
+        $media = $this->mediaService->uploadDocument(
+            $request->file('document'),
+            $request->user()
+        );
 
-            // Generate unique filename
-            $filename = $this->generateFilename($file->getClientOriginalExtension());
-            $path = "media/documents/" . date('Y/m/d');
-            $fullPath = "{$path}/{$filename}";
-
-            // Store document
-            Storage::disk('public')->putFileAs($path, $file, $filename);
-
-            $url = Storage::disk('public')->url($fullPath);
-            $size = $file->getSize();
-
-            return response()->json([
-                'message' => 'Document uploaded successfully',
-                'data' => [
-                    'url' => $url,
-                    'path' => $fullPath,
-                    'filename' => $filename,
-                    'size' => $size,
-                    'original_name' => $file->getClientOriginalName(),
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Document upload error',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
+        return new MediaResource($media);
     }
 
-    public function deleteMedia(Request $request)
+    public function destroy(Media $media)
     {
-        $request->validate([
-            'path' => 'required|string',
-        ]);
+        $this->authorize('delete', $media);
 
-        try {
-            $path = $request->input('path');
+        $this->mediaService->deleteMedia($media);
 
-            if (Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-
-                // Also delete thumbnail if exists
-                $thumbnailPath = str_replace('/media/', '/media/thumbnails/', $path);
-                if (Storage::disk('public')->exists($thumbnailPath)) {
-                    Storage::disk('public')->delete($thumbnailPath);
-                }
-
-                return response()->json(['message' => 'File deleted successfully']);
-            }
-
-            return response()->json(['message' => 'File not found'], 404);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'File deletion error',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    private function generateFilename($extension)
-    {
-        return Str::uuid() . '.' . $extension;
-    }
-
-    private function processImage($file, $type, $quality)
-    {
-        $manager = new ImageManager(new Driver());
-        $image = $manager->read($file);
-
-        // Set dimensions based on type
-        switch ($type) {
-            case 'avatar':
-                $image->cover(400, 400);
-
-                break;
-            case 'cover':
-                $image->cover(1200, 400);
-
-                break;
-            case 'story':
-                $image->cover(1080, 1920);
-
-                break;
-            case 'post':
-            default:
-                // Maintain aspect ratio, max width 1200px
-                if ($image->width() > 1200) {
-                    $image->scale(width: 1200);
-                }
-
-                break;
-        }
-
-        // Apply quality and return encoded image
-        return $image->toJpeg($quality)->toString();
-    }
-
-    private function getImageDimensions($imageData)
-    {
-        $manager = new ImageManager(new Driver());
-        $image = $manager->read($imageData);
-
-        return [
-            'width' => $image->width(),
-            'height' => $image->height(),
-        ];
+        return response()->json(['message' => 'Media deleted successfully']);
     }
 }

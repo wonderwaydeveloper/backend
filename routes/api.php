@@ -408,10 +408,12 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Phase 3: Media Upload
     Route::prefix('media')->group(function () {
-        Route::post('/upload/image', [MediaController::class, 'uploadImage']);
-        Route::post('/upload/video', [MediaController::class, 'uploadVideo']);
-        Route::post('/upload/document', [MediaController::class, 'uploadDocument']);
-        Route::delete('/delete', [MediaController::class, 'deleteMedia']);
+        Route::get('/', [MediaController::class, 'index'])->middleware('permission:media.view');
+        Route::get('/{media}', [MediaController::class, 'show'])->middleware('permission:media.view');
+        Route::post('/upload/image', [MediaController::class, 'uploadImage'])->middleware(['permission:media.upload', 'throttle:20,1']);
+        Route::post('/upload/video', [MediaController::class, 'uploadVideo'])->middleware(['permission:media.upload', 'throttle:5,1']);
+        Route::post('/upload/document', [MediaController::class, 'uploadDocument'])->middleware(['permission:media.upload', 'throttle:10,1']);
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->middleware('permission:media.delete');
     });
 
     // Content Moderation & Reporting
