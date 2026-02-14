@@ -51,6 +51,16 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Services\PushNotificationService::class)
             );
         });
+
+        // Register Space Repositories
+        $this->app->bind(
+            \App\Contracts\Repositories\SpaceRepositoryInterface::class,
+            \App\Repositories\Eloquent\EloquentSpaceRepository::class
+        );
+        $this->app->bind(
+            \App\Contracts\Repositories\SpaceParticipantRepositoryInterface::class,
+            \App\Repositories\Eloquent\EloquentSpaceParticipantRepository::class
+        );
     }
 
     /**
@@ -63,6 +73,10 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PostReposted::class, SendRepostNotification::class);
         Event::listen(CommentCreated::class, SendCommentNotification::class);
         Event::listen(MessageSent::class, SendMessageNotification::class);
+
+        // Space Events
+        Event::listen(\App\Events\SpaceParticipantJoined::class, \App\Listeners\SendSpaceNotification::class);
+        Event::listen(\App\Events\SpaceEnded::class, \App\Listeners\SendSpaceNotification::class);
 
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);

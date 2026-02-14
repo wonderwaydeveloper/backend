@@ -86,3 +86,36 @@ class SpaceEnded implements ShouldBroadcast
         return new PresenceChannel('space.' . $this->space->id);
     }
 }
+
+
+class SpaceParticipantRoleChanged implements ShouldBroadcast
+{
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
+
+    public $space;
+    public $participant;
+
+    public function __construct(Space $space, $participant)
+    {
+        $this->space = $space;
+        $this->participant = $participant;
+    }
+
+    public function broadcastOn()
+    {
+        return new PresenceChannel('space.' . $this->space->id);
+    }
+
+    public function broadcastWith()
+    {
+        return [
+            'participant' => [
+                'id' => $this->participant->id,
+                'user' => $this->participant->user->only(['id', 'name', 'username', 'avatar']),
+                'role' => $this->participant->role,
+            ],
+        ];
+    }
+}

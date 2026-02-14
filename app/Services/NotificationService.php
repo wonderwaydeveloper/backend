@@ -148,6 +148,29 @@ class NotificationService implements NotificationServiceInterface
         $this->sendEmailNotification($post->user, 'repost', $user->name);
     }
 
+    public function notifySpaceJoin($host, $user, $space)
+    {
+        $notification = $this->sendToUser($host, 'space_join', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'space_id' => $space->id,
+            'space_title' => $space->title,
+        ]);
+
+        $this->sendPushNotification($host, 'space_join', $user->name);
+    }
+
+    public function notifySpaceEnded($user, $space)
+    {
+        $notification = $this->sendToUser($user, 'space_ended', [
+            'space_id' => $space->id,
+            'space_title' => $space->title,
+            'host_name' => $space->host->name,
+        ]);
+
+        $this->sendPushNotification($user, 'space_ended', $space->host->name);
+    }
+
     private function createNotification($user, $type, $data)
     {
         try {
@@ -285,6 +308,8 @@ class NotificationService implements NotificationServiceInterface
             'follow' => 'New Follower',
             'mention' => 'New Mention',
             'repost' => 'New Repost',
+            'space_join' => 'Space Participant',
+            'space_ended' => 'Space Ended',
         ];
 
         return $titles[$type] ?? 'New Notification';
@@ -298,6 +323,8 @@ class NotificationService implements NotificationServiceInterface
             'follow' => 'followed you',
             'mention' => 'mentioned you',
             'repost' => 'reposted your post',
+            'space_join' => 'joined your space',
+            'space_ended' => 'ended the space',
         ];
 
         return $messages[$type] ?? 'New notification';

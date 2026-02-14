@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2026-02-14  
-**پیشرفت کلی:** 56% (15/27 سیستم)
+**آخرین بهروزرسانی:** 2026-02-15  
+**پیشرفت کلی:** 59% (16/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 15/27 (56%)
+### ✅ سیستمهای تکمیل شده: 16/27 (59%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -29,41 +29,45 @@
 | 14 | Hashtags System | ✅ | 100% (76) | 10/10 | 2026-02-14 |
 | 15 | Moderation & Reporting | ✅ | 100% (89) | 10/10 | 2026-02-14 |
 | 16 | Communities System | ✅ | 100% (72) | 10/10 | 2026-02-15 |
+| 17 | Spaces (Audio Rooms) | ✅ | 100% (155) | 10/10 | 2026-02-15 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,794
-- **موفق**: 1,794 ✓
+- **کل تستها**: 1,949
+- **موفق**: 1,949 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Communities System
+## 🎉 آخرین تکمیل: Spaces (Audio Rooms) System
 
-### Communities System v1.0
-- ✅ 72 تست (100%)
-- ✅ Community Management (CRUD)
-- ✅ Member Management (Join/Leave)
-- ✅ Privacy Controls (Public/Private)
-- ✅ Role System (Owner/Admin/Moderator/Member)
-- ✅ Join Requests (Private Communities)
-- ✅ Community Posts Integration
-- ✅ Community Notes System
-- ✅ Twitter Standards Compliance (100%)
-- ✅ No Parallel Work (Single Implementation)
+### Spaces System v1.0
+- ✅ 155 تست (100%)
+- ✅ Service Layer + Repository Pattern
+- ✅ Audio Rooms Management (CRUD)
+- ✅ Participant Management (Join/Leave/Role)
+- ✅ Privacy Controls (Public/Followers/Invited)
+- ✅ Role System (Host/Co-host/Speaker/Listener)
+- ✅ Scheduled Spaces Support
+- ✅ Real-time Broadcasting (PresenceChannel)
+- ✅ Block/Mute Integration
+- ✅ Notification System Integration
+- ✅ 8 Permissions System
+- ✅ Twitter/X Standards Compliance (100%)
 - ✅ ROADMAP Compliance (100/100)
 
 ### ویژگیهای کلیدی
-- ✅ Community CRUD (Create, Read, Update, Delete)
-- ✅ Privacy Levels (public, private, restricted)
-- ✅ Member Roles (owner, admin, moderator, member)
-- ✅ Join/Leave System
-- ✅ Join Requests for Private Communities
-- ✅ Community Posts (GET /communities/{id}/posts)
-- ✅ Member Management (GET /communities/{id}/members)
-- ✅ Search Communities
-- ✅ Verified Communities Support
-- ✅ Community Notes (Context & Voting)
+- ✅ Space CRUD (Create, Read, Update, Delete, End)
+- ✅ Privacy Levels (public, followers, invited)
+- ✅ Participant Roles (host, co_host, speaker, listener)
+- ✅ Join/Leave System with Counter Management
+- ✅ Role Management (Host can change roles)
+- ✅ Mute Functionality
+- ✅ Scheduled Spaces (scheduled_at support)
+- ✅ Real-time Events (4 events: Join, Leave, End, RoleChanged)
+- ✅ Block/Mute Check in canJoin()
+- ✅ Notification Listeners (Queued)
+- ✅ Complete Architecture (Controller → Service → Repository → Model)
 
 ---
 
@@ -147,10 +151,14 @@
 - **Coverage:** 100% (72 tests)
 - **Integration:** User, Post, Authorization Systems
 
-#### 13. Spaces (Audio Rooms)
+#### ✅ 13. Spaces (Audio Rooms) (تکمیل)
 - **Controller:** SpaceController
-- **Features:** Audio Rooms, Participant Management, Real-time Audio
-- **Priority:** Medium (advanced engagement)
+- **Services:** SpaceService, SpaceParticipantService
+- **Repositories:** SpaceRepository, SpaceParticipantRepository
+- **Features:** Audio Rooms, Participant Management, Real-time Broadcasting, Scheduled Spaces
+- **Coverage:** 100% (155 tests)
+- **Integration:** Block/Mute, Notifications, Broadcasting, Permission System
+- **Architecture:** Complete Service Layer + Repository Pattern
 
 #### 14. Lists
 - **Controller:** ListController
@@ -245,7 +253,7 @@
 - ✅ Moderation & Reporting (تکمیل)
 
 - ✅ Communities (تکمیل)
-- Spaces (Audio Rooms)
+- ✅ Spaces (Audio Rooms) (تکمیل)
 - Lists Management
 - Polls
 - Mentions
@@ -365,12 +373,10 @@
 - ✅ Hashtags System (76 تست)
 - ✅ Moderation & Reporting System (89 تست)
 
-### در حال انجام:
-- ⏳ Communities
-
 ### آماده شروع:
-- 📋 Notifications
-- 📋 Bookmarks & Reposts
+- 📋 Lists Management
+- 📋 Polls
+- 📋 Mentions
 
 ---
 
@@ -390,6 +396,6 @@
 
 ---
 
-**تاریخ بهروزرسانی:** 2026-02-14  
-**نسخه:** 2.7  
+**تاریخ بهروزرسانی:** 2026-02-15  
+**نسخه:** 2.8  
 **وضعیت:** 🟢 Active Development

@@ -321,12 +321,12 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     // Spaces (Audio Rooms) Routes
     Route::prefix('spaces')->group(function () {
         Route::get('/', [SpaceController::class, 'index']);
-        Route::post('/', [SpaceController::class, 'store']);
+        Route::post('/', [SpaceController::class, 'store'])->middleware('permission:space.create');
         Route::get('/{space}', [SpaceController::class, 'show']);
-        Route::post('/{space}/join', [SpaceController::class, 'join']);
-        Route::post('/{space}/leave', [SpaceController::class, 'leave']);
-        Route::put('/{space}/participants/{participant}/role', [SpaceController::class, 'updateRole']);
-        Route::post('/{space}/end', [SpaceController::class, 'end']);
+        Route::post('/{space}/join', [SpaceController::class, 'join'])->middleware('permission:space.join');
+        Route::post('/{space}/leave', [SpaceController::class, 'leave'])->middleware('permission:space.leave');
+        Route::put('/{space}/participants/{participant}/role', [SpaceController::class, 'updateRole'])->middleware('permission:space.manage.roles');
+        Route::post('/{space}/end', [SpaceController::class, 'end'])->middleware('permission:space.end.own');
     });
 
     // Lists Routes

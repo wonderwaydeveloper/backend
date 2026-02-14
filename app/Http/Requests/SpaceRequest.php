@@ -16,7 +16,7 @@ class SpaceRequest extends FormRequest
         return [
             'title' => 'required|string|max:100',
             'description' => 'nullable|string|max:300',
-            'is_public' => 'boolean',
+            'privacy' => 'nullable|in:public,followers,invited',
             'max_participants' => 'nullable|integer|min:2|max:100',
             'scheduled_at' => 'nullable|date|after:now',
             'tags' => 'nullable|array|max:5',
