@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-13  
-**پیشرفت کلی:** 41% (11/27 سیستم)
+**پیشرفت کلی:** 44% (12/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 11/27 (41%)
+### ✅ سیستمهای تکمیل شده: 12/27 (44%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -24,39 +24,41 @@
 | 9 | Follow System | ✅ | 100% (141) | 10/10 | 2026-02-13 |
 | 10 | Search & Discovery | ✅ | 100% (175) | 10/10 | 2026-02-04 |
 | 11 | Messaging System | ✅ | 100% (125) | 10/10 | 2026-02-13 |
+| 12 | Notifications System | ✅ | 100% (161) | 10/10 | 2026-02-13 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,261
-- **موفق**: 1,261 ✓
+- **کل تستها**: 1,422
+- **موفق**: 1,422 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
-- **Twitter Compliance**: 105/105 (100%)
 
 ---
 
-## 🎉 آخرین تکمیل: Messaging System
+## 🎉 آخرین تکمیل: Notifications System
 
-### Messaging System v1.0
-- ✅ 125 تست (100%)
-- ✅ Service Layer (MessageService)
-- ✅ Real-time Broadcasting (MessageSent, UserTyping)
-- ✅ Block/Mute Integration
-- ✅ Event/Listener/Jobs (Async)
-- ✅ Twitter API v2 Compliance (100%)
-- ✅ Rate Limiting (60/min)
-- ✅ Authorization Policy (MessagePolicy)
+### Notifications System v1.0
+- ✅ 161 تست (100%)
+- ✅ Service Layer (NotificationService)
+- ✅ Multi-channel Support (Database, Push, Email)
+- ✅ Real-time Broadcasting (NotificationSent)
+- ✅ Preference Management (Per-channel, Per-type)
+- ✅ 5 Notification Types (Like, Comment, Follow, Mention, Repost)
+- ✅ Integration با 5 سیستم (Posts, Comments, Follow, Messaging, Broadcasting)
+- ✅ Twitter Standards Compliance (100%)
+- ✅ No Parallel Work (Single Implementation)
+- ✅ Authorization Policy (NotificationPolicy)
 
 ### ویژگیهای کلیدی
-- ✅ Direct Messages (text/media/GIF)
-- ✅ Conversations Management
-- ✅ Read Receipts
-- ✅ Typing Indicator
+- ✅ Database Notifications (default)
+- ✅ Push Notifications (FCM/APNS)
+- ✅ Email Notifications (SMTP)
+- ✅ Real-time Broadcasting (PrivateChannel)
+- ✅ Mark as Read/Unread
 - ✅ Unread Count
-- ✅ Private Channels
-- ✅ XSS Protection (strip_tags)
-- ✅ DB Transactions
-- ✅ Media Processing (Queue)
-- ✅ Content Moderation
+- ✅ User Preferences (Per-channel, Per-type)
+- ✅ Polymorphic Relationships (notifiable)
+- ✅ Event-driven Architecture (6 Listeners)
+- ✅ Service Layer Separation
 
 ---
 
@@ -106,10 +108,11 @@
 - **Coverage:** 100% (125 tests)
 - **Integration:** Block/Mute, Real-time Broadcasting, Queue
 
-#### ⏳ 8. Notifications
+#### ✅ 8. Notifications (تکمیل)
 - **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
 - **Features:** Multi-channel Notifications, Preferences, Push Notifications
-- **Priority:** High (user retention)
+- **Coverage:** 100% (161 tests)
+- **Integration:** Real-time Broadcasting, 5 systems, Twitter Standards
 
 #### ⏳ 9. Bookmarks & Reposts
 - **Controllers:** BookmarkController, RepostController
@@ -218,7 +221,7 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 64% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 73% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
@@ -227,7 +230,7 @@
 - ✅ Social Features (تکمیل)
 - ✅ Search & Discovery (تکمیل)
 - ✅ Messaging (تکمیل)
-- ⏳ Notifications
+- ✅ Notifications (تکمیل)
 - ⏳ Bookmarks & Reposts
 - ⏳ Hashtags
 
@@ -349,9 +352,10 @@
 - ✅ Follow System (141 تست)
 - ✅ Search & Discovery System (175 تست)
 - ✅ Messaging System (125 تست)
+- ✅ Notifications System (161 تست)
 
 ### در حال انجام:
-- ⏳ Notifications System
+- ⏳ Bookmarks & Reposts System
 
 ### آماده شروع:
 - 📋 Notifications
@@ -376,5 +380,5 @@
 ---
 
 **تاریخ بهروزرسانی:** 2026-02-13  
-**نسخه:** 2.4  
+**نسخه:** 2.5  
 **وضعیت:** 🟢 Active Development
