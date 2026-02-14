@@ -24,6 +24,7 @@ class Post extends Model
         'gif_url',
         'likes_count',
         'comments_count',
+        'reposts_count',
         'quotes_count',
         'is_draft',
         'is_pinned',
@@ -39,6 +40,7 @@ class Post extends Model
     protected $casts = [
         'likes_count' => 'integer',
         'comments_count' => 'integer',
+        'reposts_count' => 'integer',
         'quotes_count' => 'integer',
         'is_draft' => 'boolean',
         'is_pinned' => 'boolean',
@@ -129,6 +131,11 @@ class Post extends Model
     public function reposts()
     {
         return $this->hasMany(Repost::class);
+    }
+
+    public function bookmarks()
+    {
+        return $this->hasMany(Bookmark::class);
     }
 
     public function scopePublished($query)

@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-13  
-**پیشرفت کلی:** 44% (12/27 سیستم)
+**پیشرفت کلی:** 48% (13/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 12/27 (44%)
+### ✅ سیستمهای تکمیل شده: 13/27 (48%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -25,40 +25,40 @@
 | 10 | Search & Discovery | ✅ | 100% (175) | 10/10 | 2026-02-04 |
 | 11 | Messaging System | ✅ | 100% (125) | 10/10 | 2026-02-13 |
 | 12 | Notifications System | ✅ | 100% (161) | 10/10 | 2026-02-13 |
+| 13 | Bookmarks & Reposts | ✅ | 100% (135) | 10/10 | 2026-02-13 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,422
-- **موفق**: 1,422 ✓
+- **کل تستها**: 1,557
+- **موفق**: 1,557 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Notifications System
+## 🎉 آخرین تکمیل: Bookmarks & Reposts System
 
-### Notifications System v1.0
-- ✅ 161 تست (100%)
-- ✅ Service Layer (NotificationService)
-- ✅ Multi-channel Support (Database, Push, Email)
-- ✅ Real-time Broadcasting (NotificationSent)
-- ✅ Preference Management (Per-channel, Per-type)
-- ✅ 5 Notification Types (Like, Comment, Follow, Mention, Repost)
-- ✅ Integration با 5 سیستم (Posts, Comments, Follow, Messaging, Broadcasting)
+### Bookmarks & Reposts System v1.0
+- ✅ 135 تست (100%)
+- ✅ Bookmark Toggle (add/remove)
+- ✅ Repost/Unrepost
+- ✅ Quote Tweet Support
+- ✅ Counter Management (atomic)
+- ✅ Integration با Notifications
 - ✅ Twitter Standards Compliance (100%)
 - ✅ No Parallel Work (Single Implementation)
-- ✅ Authorization Policy (NotificationPolicy)
+- ✅ Authorization Policy (BookmarkPolicy)
 
 ### ویژگیهای کلیدی
-- ✅ Database Notifications (default)
-- ✅ Push Notifications (FCM/APNS)
-- ✅ Email Notifications (SMTP)
-- ✅ Real-time Broadcasting (PrivateChannel)
-- ✅ Mark as Read/Unread
-- ✅ Unread Count
-- ✅ User Preferences (Per-channel, Per-type)
-- ✅ Polymorphic Relationships (notifiable)
-- ✅ Event-driven Architecture (6 Listeners)
-- ✅ Service Layer Separation
+- ✅ Bookmark Management (toggle, list)
+- ✅ Repost System (repost, unrepost)
+- ✅ Quote Tweet (with text)
+- ✅ Counter Management (reposts_count)
+- ✅ Pagination (20 per page)
+- ✅ Eager Loading (post.user)
+- ✅ Unique Constraints (no duplicates)
+- ✅ DB Transactions (race condition prevention)
+- ✅ Event-driven (PostReposted event)
+- ✅ Notification Integration
 
 ---
 
@@ -114,10 +114,11 @@
 - **Coverage:** 100% (161 tests)
 - **Integration:** Real-time Broadcasting, 5 systems, Twitter Standards
 
-#### ⏳ 9. Bookmarks & Reposts
+#### ✅ 9. Bookmarks & Reposts (تکمیل)
 - **Controllers:** BookmarkController, RepostController
-- **Features:** Bookmark Management, Repost System
-- **Priority:** High (content engagement)
+- **Features:** Bookmark Management, Repost System, Quote Tweet
+- **Coverage:** 100% (135 tests)
+- **Integration:** Notifications, Twitter Standards
 
 #### ⏳ 10. Hashtags
 - **Controller:** HashtagController
@@ -221,7 +222,7 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 73% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 82% تکمیل
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
@@ -231,7 +232,7 @@
 - ✅ Search & Discovery (تکمیل)
 - ✅ Messaging (تکمیل)
 - ✅ Notifications (تکمیل)
-- ⏳ Bookmarks & Reposts
+- ✅ Bookmarks & Reposts (تکمیل)
 - ⏳ Hashtags
 
 ### Q2 2026 (فاز 1 ادامه + فاز 2 شروع)
@@ -353,9 +354,10 @@
 - ✅ Search & Discovery System (175 تست)
 - ✅ Messaging System (125 تست)
 - ✅ Notifications System (161 تست)
+- ✅ Bookmarks & Reposts System (135 تست)
 
 ### در حال انجام:
-- ⏳ Bookmarks & Reposts System
+- ⏳ Hashtags System
 
 ### آماده شروع:
 - 📋 Notifications

@@ -6,8 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Repost extends Model
 {
-    protected $guarded = ['id'];
-
     protected $fillable = ['user_id', 'post_id', 'quote'];
     
     protected $casts = [
