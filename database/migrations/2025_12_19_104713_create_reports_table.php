@@ -22,6 +22,10 @@ return new class () extends Migration {
             $table->string('action_taken')->nullable();
             $table->text('admin_notes')->nullable();
             $table->timestamps();
+            
+            // Indexes for performance
+            $table->index('status');
+            $table->index('created_at');
         });
     }
 

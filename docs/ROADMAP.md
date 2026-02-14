@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-14  
-**پیشرفت کلی:** 52% (14/27 سیستم)
+**پیشرفت کلی:** 56% (15/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 14/27 (52%)
+### ✅ سیستمهای تکمیل شده: 15/27 (56%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -27,39 +27,40 @@
 | 12 | Notifications System | ✅ | 100% (161) | 10/10 | 2026-02-13 |
 | 13 | Bookmarks & Reposts | ✅ | 100% (135) | 10/10 | 2026-02-13 |
 | 14 | Hashtags System | ✅ | 100% (76) | 10/10 | 2026-02-14 |
+| 15 | Moderation & Reporting | ✅ | 100% (89) | 10/10 | 2026-02-14 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 1,633
-- **موفق**: 1,633 ✓
+- **کل تستها**: 1,722
+- **موفق**: 1,722 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Hashtags System
+## 🎉 آخرین تکمیل: Moderation & Reporting System
 
-### Hashtags System v1.0
-- ✅ 76 تست (100%)
-- ✅ Trending Hashtags (TrendingService integration)
-- ✅ Hashtag Search (with caching)
-- ✅ Hashtag Details (posts, velocity, trending info)
-- ✅ Personalized Suggestions
+### Moderation & Reporting System v1.0
+- ✅ 89 تست (100%)
+- ✅ User Reporting (Post, User, Comment)
+- ✅ Admin Panel (9 endpoints)
+- ✅ Auto-moderation (threshold-based)
+- ✅ Action Management (5 actions)
 - ✅ Twitter Standards Compliance (100%)
-- ✅ No Parallel Work (uses TrendingService)
+- ✅ No Parallel Work (Single Implementation)
 - ✅ ROADMAP Compliance (100/100)
-- ✅ Security: 18 layers
+- ✅ Security: 20 layers
 
 ### ویژگیهای کلیدی
-- ✅ Trending Algorithm (top 10, 24h window)
-- ✅ Multi-level Caching (900s - 3600s)
-- ✅ Unicode Hashtag Support
-- ✅ Automatic Extraction from Text
-- ✅ Posts Count Tracking
-- ✅ Pagination (20 per page)
-- ✅ Trend Velocity Tracking
-- ✅ Rate Limiting (75/15, 180/15, 900/15)
-- ✅ Post System Integration
-- ✅ SearchController Integration
+- ✅ Report Types (Post, User, Comment)
+- ✅ Report Reasons (6 types: spam, harassment, hate_speech, violence, nudity, other)
+- ✅ Rate Limiting (5/1min)
+- ✅ Self-report Prevention
+- ✅ Duplicate Prevention
+- ✅ Auto-flag at 5 reports
+- ✅ Auto-hide at 10 reports
+- ✅ Admin Authorization (role:admin)
+- ✅ Status Tracking (pending, reviewed, resolved, rejected)
+- ✅ Action Execution (dismiss, warn, remove, suspend, ban)
 
 ---
 
@@ -127,10 +128,11 @@
 - **Coverage:** 100% (76 tests)
 - **Integration:** TrendingService, Post System, SearchController
 
-#### ⏳ 11. Moderation & Reporting
+#### ✅ 11. Moderation & Reporting (تکمیل)
 - **Controller:** ModerationController
-- **Features:** User/Content Reporting, Admin Panel
-- **Priority:** High (platform safety)
+- **Features:** User/Content Reporting, Admin Panel, Auto-moderation
+- **Coverage:** 100% (89 tests)
+- **Integration:** Post, User, Comment Systems
 
 ---
 
@@ -224,7 +226,7 @@
 
 ## 📅 تایملاین پیشنهادی
 
-### Q1 2026 (فاز 1 - حیاتی) - 91% تکمیل
+### Q1 2026 (فاز 1 - حیاتی) - 100% تکمیل ✅
 - ✅ Authentication & Security (تکمیل)
 - ✅ Posts & Content (تکمیل)
 - ✅ Profile & Account (تکمیل)
@@ -236,9 +238,9 @@
 - ✅ Notifications (تکمیل)
 - ✅ Bookmarks & Reposts (تکمیل)
 - ✅ Hashtags (تکمیل)
+- ✅ Moderation & Reporting (تکمیل)
 
-### Q2 2026 (فاز 1 ادامه + فاز 2 شروع)
-- ⏳ Moderation & Reporting (تکمیل فاز 1)
+### Q2 2026 (فاز 2 شروع)
 - Communities (شروع فاز 2)
 - Spaces (Audio Rooms)
 - Lists Management
@@ -358,9 +360,10 @@
 - ✅ Notifications System (161 تست)
 - ✅ Bookmarks & Reposts System (135 تست)
 - ✅ Hashtags System (76 تست)
+- ✅ Moderation & Reporting System (89 تست)
 
 ### در حال انجام:
-- ⏳ Moderation & Reporting
+- ⏳ Communities
 
 ### آماده شروع:
 - 📋 Notifications
@@ -385,5 +388,5 @@
 ---
 
 **تاریخ بهروزرسانی:** 2026-02-14  
-**نسخه:** 2.6  
+**نسخه:** 2.7  
 **وضعیت:** 🟢 Active Development
