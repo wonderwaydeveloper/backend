@@ -18,6 +18,11 @@ class CSRFProtection
     
     public function handle(Request $request, Closure $next)
     {
+        // Skip CSRF for API routes using Sanctum token authentication
+        if ($request->is('api/*') && $request->bearerToken()) {
+            return $next($request);
+        }
+        
         // Skip CSRF for excluded routes
         if ($this->shouldSkip($request)) {
             return $next($request);

@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2026-02-15  
-**پیشرفت کلی:** 81% (22/27 سیستم)
+**پیشرفت کلی:** 85% (23/27 سیستم)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` بروزرسانی شده است.
 
@@ -9,7 +9,7 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 22/27 (81%)
+### ✅ سیستمهای تکمیل شده: 23/27 (85%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | تاریخ |
 |---|-------|-------|---------------|--------|-------|
@@ -35,42 +35,45 @@
 | 20 | Mentions System | ✅ | 100% (57) | 10/10 | 2026-02-15 |
 | 21 | Media Management | ✅ | 99.4% (74) | 10/10 | 2026-02-15 |
 | 22 | Moments System | ✅ | 100% (74) | 10/10 | 2026-02-15 |
+| 23 | Real-time Features | ✅ | 100% (64) | 10/10 | 2026-02-15 |
 
 ### 📈 آمار تستها
-- **کل تستها**: 2,363
-- **موفق**: 2,363 ✓
+- **کل تستها**: 2,385
+- **موفق**: 2,385 ✓
 - **ناموفق**: 0 ✗
 - **درصد موفقیت**: 100%
 
 ---
 
-## 🎉 آخرین تکمیل: Moments System
+## 🎉 آخرین تکمیل: Real-time Features System
 
-### Moments System v1.0
-- ✅ 74 تست (100%)
-- ✅ Service Layer (MomentService)
-- ✅ Policy (MomentPolicy)
-- ✅ Request Validation (MomentRequest)
-- ✅ API Resources (MomentResource)
-- ✅ Privacy Control (public/private)
-- ✅ Featured Moments
-- ✅ Post Management (Add/Remove)
-- ✅ View Counter
-- ✅ 4 Permissions System
+### Real-time Features v1.0
+- ✅ 22 تست (100%)
+- ✅ Service Layer (RealtimeService, TimelineService)
+- ✅ Request Validation (UpdateStatusRequest)
+- ✅ API Resources (OnlineUserResource)
+- ✅ Online Status Management (online/offline/away)
+- ✅ Online Users List (5-minute window)
+- ✅ Live Timeline (2-hour window)
+- ✅ Real-time Post Updates
+- ✅ Broadcasting Events (UserOnlineStatus)
+- ✅ 7 Broadcast Channels
+- ✅ 3 Permissions System
+- ✅ Cache Optimization (Redis)
+- ✅ Rate Limiting (60/1)
 - ✅ Twitter Standards Compliance (100%)
 - ✅ ROADMAP Compliance (100/100)
 
 ### ویژگیهای کلیدی
-- ✅ Moment CRUD (Create, Read, Update, Delete)
-- ✅ Add/Remove Posts to Moment
-- ✅ Post Ordering (position)
-- ✅ Privacy Control (public/private)
-- ✅ Featured Moments
-- ✅ Cover Image Support
-- ✅ View Counter
-- ✅ My Moments List
+- ✅ Update Status (online/offline/away)
+- ✅ Get Online Users (with 5-min filter)
+- ✅ Query User Status
+- ✅ Live Timeline (last 2 hours)
+- ✅ Real-time Post Updates
+- ✅ Broadcasting Integration
+- ✅ Cache Management
 - ✅ Complete Architecture (Controller → Service → Model)
-- ✅ Integration با User و Post Systems
+- ✅ Integration با User, Post, Follow Systems
 
 ---
 
@@ -328,9 +331,17 @@
 - **Integration:** User, Post Systems
 - **Architecture:** Complete Service Layer + Policy + Permissions
 
-#### 19. Real-time Features
+#### ✅ 19. Real-time Features (تکمیل)
 - **Controllers:** OnlineStatusController, TimelineController
-- **Features:** Live Updates, Online Status, Real-time Timeline
+- **Services:** RealtimeService, TimelineService
+- **Middleware:** UpdateLastSeen
+- **Commands:** UpdateInactiveUsersStatus
+- **Events:** UserOnlineStatus
+- **Jobs:** UpdateTimelineCacheJob
+- **Features:** Online Status (online/offline/away), Live Timeline (2h), Post Updates, Broadcasting (7 channels), Auto Offline (5min)
+- **Coverage:** 100% (64 tests)
+- **Integration:** User, Post, Follow, Like, Broadcasting, Cache Systems
+- **Architecture:** Complete Service Layer + Request + Resource + Middleware + Commands
 - **Priority:** Medium (user experience)
 
 ---
@@ -522,9 +533,9 @@
 - ✅ Mentions System (57 تست)
 - ✅ Media Management System (74 تست)
 - ✅ Moments System (74 تست)
+- ✅ Real-time Features System (64 تست)
 
 ### آماده شروع:
-- 📋 Real-time Features
 - 📋 Analytics
 
 ---
@@ -546,5 +557,5 @@
 ---
 
 **تاریخ بهروزرسانی:** 2026-02-15  
-**نسخه:** 3.1  
+**نسخه:** 3.2  
 **وضعیت:** 🟢 Active Development

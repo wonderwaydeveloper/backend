@@ -98,6 +98,11 @@ class AppServiceProvider extends ServiceProvider
         // Mention Events
         Event::listen(\App\Events\UserMentioned::class, \App\Listeners\SendMentionNotification::class);
 
+        // Real-time Events
+        Event::listen(\App\Events\UserOnlineStatus::class, function($event) {
+            // Event auto-broadcasts via ShouldBroadcast
+        });
+
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
 

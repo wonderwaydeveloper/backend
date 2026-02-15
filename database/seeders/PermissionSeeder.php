@@ -63,6 +63,11 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'moment.delete.own', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'moment.manage.posts', 'guard_name' => 'sanctum']);
 
+        // Realtime Features
+        Permission::create(['name' => 'realtime.status.update', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'realtime.users.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'realtime.timeline.view', 'guard_name' => 'sanctum']);
+
         // Moderation
         Permission::create(['name' => 'user.ban', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'user.suspend', 'guard_name' => 'sanctum']);
@@ -107,6 +112,9 @@ class PermissionSeeder extends Seeder
             'moment.edit.own',
             'moment.delete.own',
             'moment.manage.posts',
+            'realtime.status.update',
+            'realtime.users.view',
+            'realtime.timeline.view',
             'report.create',
         ]);
 
@@ -133,6 +141,9 @@ class PermissionSeeder extends Seeder
             'moment.edit.own',
             'moment.delete.own',
             'moment.manage.posts',
+            'realtime.status.update',
+            'realtime.users.view',
+            'realtime.timeline.view',
             'report.create',
         ]);
 
@@ -165,6 +176,9 @@ class PermissionSeeder extends Seeder
             'moment.edit.own',
             'moment.delete.own',
             'moment.manage.posts',
+            'realtime.status.update',
+            'realtime.users.view',
+            'realtime.timeline.view',
             'report.create',
             'analytics.view',
             'thread.create.long',

@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         then: function () {
-            // Security routes removed - using Filament admin panel instead
+            Route::middleware('api')
+                ->prefix('broadcasting')
+                ->group(base_path('routes/broadcasting.php'));
         },
         health: '/up',
     )
@@ -28,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CSRFProtection::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,
+            \App\Http\Middleware\UpdateLastSeen::class,
         ]);
 
         $middleware->alias([

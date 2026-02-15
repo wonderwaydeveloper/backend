@@ -25,3 +25,8 @@ Schedule::command('audit:cleanup --days=90')
     ->sundays()
     ->at('03:00')
     ->withoutOverlapping();
+
+// Schedule inactive users status update
+Schedule::command('realtime:update-inactive-users')
+    ->everyMinute()
+    ->withoutOverlapping();

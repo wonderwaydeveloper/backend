@@ -2,41 +2,39 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Events\UserOnlineStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdateStatusRequest;
+use App\Http\Resources\OnlineUserResource;
+use App\Services\RealtimeService;
 use Illuminate\Http\Request;
 
 class OnlineStatusController extends Controller
 {
-    public function updateStatus(Request $request)
+    public function __construct(
+        private RealtimeService $realtimeService
+    ) {}
+
+    public function updateStatus(UpdateStatusRequest $request)
     {
-        $request->validate([
-            'status' => 'required|in:online,offline,away',
-        ]);
+        $result = $this->realtimeService->updateUserStatus(
+            $request->user(),
+            $request->status
+        );
 
-        $user = $request->user();
-
-        // Update user's status
-        $isOnline = $request->status === 'online';
-
-        $user->update([
-            'last_seen_at' => now(),
-            'is_online' => $isOnline,
-        ]);
-
-        // Broadcast status change
-        broadcast(new UserOnlineStatus($user->id, $request->status));
-
-        return response()->json(['status' => 'updated']);
+        return response()->json($result);
     }
 
     public function getOnlineUsers()
     {
-        $onlineUsers = \App\Models\User::where('is_online', true)
-            ->where('last_seen_at', '>', now()->subMinutes(5))
-            ->select('id', 'name', 'username', 'avatar')
-            ->get();
+        $users = $this->realtimeService->getOnlineUsers();
 
-        return response()->json($onlineUsers);
+        return response()->json(['data' => $users]);
+    }
+
+    public function getUserStatus(Request $request, int $userId)
+    {
+        $status = $this->realtimeService->getUserStatus($userId);
+
+        return response()->json($status);
     }
 }

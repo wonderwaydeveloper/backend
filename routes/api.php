@@ -453,10 +453,16 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Real-time Features
     Route::prefix('realtime')->group(function () {
-        Route::post('/status', [OnlineStatusController::class, 'updateStatus']);
-        Route::get('/online-users', [OnlineStatusController::class, 'getOnlineUsers']);
-        Route::get('/timeline', [TimelineController::class, 'liveTimeline']);
-        Route::get('/posts/{post}', [TimelineController::class, 'getPostUpdates']);
+        Route::post('/status', [OnlineStatusController::class, 'updateStatus'])
+            ->middleware(['permission:realtime.status.update', 'throttle:60,1']);
+        Route::get('/online-users', [OnlineStatusController::class, 'getOnlineUsers'])
+            ->middleware(['permission:realtime.users.view', 'throttle:60,1']);
+        Route::get('/users/{userId}/status', [OnlineStatusController::class, 'getUserStatus'])
+            ->middleware(['permission:realtime.users.view', 'throttle:60,1']);
+        Route::get('/timeline', [TimelineController::class, 'liveTimeline'])
+            ->middleware(['permission:realtime.timeline.view', 'throttle:60,1']);
+        Route::get('/posts/{post}/updates', [TimelineController::class, 'getPostUpdates'])
+            ->middleware(['permission:realtime.timeline.view', 'throttle:60,1']);
     });
 
     // Moments Routes
