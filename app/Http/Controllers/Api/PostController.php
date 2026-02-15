@@ -48,8 +48,24 @@ class PostController extends Controller
         $this->authorize('view', $post);
         
         try {
-            // Track view count
+            // Track view count and impression (Twitter standard)
             $post->increment('views_count');
+            $post->increment('impression_count');
+            
+            // Calculate engagement rate
+            $totalEngagements = $post->likes_count + $post->comments_count + $post->reposts_count;
+            if ($post->impression_count > 0) {
+                $post->engagement_rate = round(($totalEngagements / $post->impression_count) * 100, 2);
+                $post->save();
+            }
+            
+            // Track analytics event
+            \App\Models\AnalyticsEvent::track(
+                'post_view',
+                'post',
+                $post->id,
+                auth()->id()
+            );
             
             return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
         } catch (\Exception $e) {
@@ -74,6 +90,17 @@ class PostController extends Controller
     public function like(Post $post): JsonResponse
     {
         $result = $this->postService->toggleLike($post, auth()->user());
+        
+        // Track analytics event
+        if ($result['liked'] ?? false) {
+            \App\Models\AnalyticsEvent::track(
+                'post_like',
+                'post',
+                $post->id,
+                auth()->id()
+            );
+        }
+        
         return response()->json($result);
     }
 

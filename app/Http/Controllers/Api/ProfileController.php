@@ -23,6 +23,15 @@ class ProfileController extends Controller
     public function show(User $user): JsonResponse
     {
         $this->authorize('view', $user);
+        
+        // Track profile view
+        \App\Models\AnalyticsEvent::track(
+            'profile_view',
+            'user',
+            $user->id,
+            auth()->id()
+        );
+        
         return response()->json(new UserResource($user->load(['followers', 'following'])));
     }
 

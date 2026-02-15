@@ -25,12 +25,25 @@ class AnalyticsService
     public function getPostAnalytics(int $postId, string $period = '7d'): array
     {
         $startDate = $this->getStartDate($period);
+        $post = \App\Models\Post::find($postId);
 
         return [
+            'impressions' => $post->impression_count ?? 0,
             'views' => $this->getPostViews($postId, $startDate),
             'engagement' => $this->getPostEngagement($postId, $startDate),
             'demographics' => $this->getPostDemographics($postId, $startDate),
             'timeline' => $this->getPostTimeline($postId, $startDate),
+            'twitter_metrics' => [
+                'impression_count' => $post->impression_count ?? 0,
+                'retweet_count' => $post->reposts_count ?? 0,
+                'reply_count' => $post->comments_count ?? 0,
+                'like_count' => $post->likes_count ?? 0,
+                'quote_count' => $post->quotes_count ?? 0,
+                'url_link_clicks' => $post->url_link_clicks ?? 0,
+                'user_profile_clicks' => $post->user_profile_clicks ?? 0,
+                'hashtag_clicks' => $post->hashtag_clicks ?? 0,
+                'engagement_rate' => $post->engagement_rate ?? 0,
+            ],
         ];
     }
 
@@ -148,15 +161,27 @@ class AnalyticsService
 
     private function getPostEngagement(int $postId, Carbon $startDate): array
     {
-        return AnalyticsEvent::where('entity_type', 'post')
+        $engagement = AnalyticsEvent::where('entity_type', 'post')
             ->where('entity_id', $postId)
-            ->whereIn('event_type', ['post_like', 'post_comment', 'post_repost'])
+            ->whereIn('event_type', ['post_like', 'post_comment', 'post_repost', 'post_share', 'link_click'])
             ->where('created_at', '>=', $startDate)
             ->selectRaw('event_type, COUNT(*) as count')
             ->groupBy('event_type')
             ->get()
-            ->keyBy('event_type')
-            ->toArray();
+            ->keyBy('event_type');
+
+        $views = $this->getPostViews($postId, $startDate)['total'];
+        $totalEngagements = $engagement->sum('count');
+        
+        return [
+            'likes' => $engagement->get('post_like')?->count ?? 0,
+            'comments' => $engagement->get('post_comment')?->count ?? 0,
+            'retweets' => $engagement->get('post_repost')?->count ?? 0,
+            'shares' => $engagement->get('post_share')?->count ?? 0,
+            'link_clicks' => $engagement->get('link_click')?->count ?? 0,
+            'total_engagements' => $totalEngagements,
+            'engagement_rate' => $views > 0 ? round(($totalEngagements / $views) * 100, 2) : 0,
+        ];
     }
 
     private function getPostDemographics(int $postId, Carbon $startDate): array

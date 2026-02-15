@@ -26,6 +26,18 @@ return new class () extends Migration {
             $table->unsignedInteger('reposts_count')->default(0);
             $table->unsignedInteger('quotes_count')->default(0);
             $table->unsignedInteger('views_count')->default(0);
+            
+            // Twitter/X Analytics Metrics
+            $table->unsignedBigInteger('impression_count')->default(0);
+            $table->unsignedInteger('url_link_clicks')->default(0);
+            $table->unsignedInteger('user_profile_clicks')->default(0);
+            $table->unsignedInteger('hashtag_clicks')->default(0);
+            $table->unsignedInteger('video_views')->default(0);
+            $table->unsignedInteger('video_25_percent')->default(0);
+            $table->unsignedInteger('video_50_percent')->default(0);
+            $table->unsignedInteger('video_75_percent')->default(0);
+            $table->unsignedInteger('video_100_percent')->default(0);
+            $table->decimal('engagement_rate', 5, 2)->default(0);
             $table->foreignId('quoted_post_id')->nullable()->constrained('posts')->onDelete('cascade');
             $table->foreignId('thread_id')->nullable()->constrained('posts')->onDelete('cascade');
             $table->integer('thread_position')->nullable();
@@ -49,6 +61,9 @@ return new class () extends Migration {
             $table->index(['published_at', 'likes_count'], 'posts_trending_idx');
             $table->index(['created_at', 'user_id'], 'posts_timeline_index');
             $table->index(['user_id', 'created_at'], 'posts_user_timeline_index');
+            // Analytics indexes
+            $table->index(['impression_count', 'created_at']);
+            $table->index(['engagement_rate', 'created_at']);
         });
     }
 
