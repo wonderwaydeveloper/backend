@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PerformanceResource;
 use App\Services\CacheManagementService;
 use App\Services\DatabaseOptimizationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +16,14 @@ class PerformanceController extends Controller
     public function __construct(
         private CacheManagementService $cacheService,
         private DatabaseOptimizationService $dbService
-    ) {}
+    ) {
+        $this->middleware('auth:sanctum');
+    }
 
-    public function dashboard()
+    public function dashboard(): JsonResponse
     {
+        $this->authorize('viewAny', PerformancePolicy::class);
+
         return response()->json([
             'cache' => $this->cacheService->getCacheStats(),
             'database' => $this->getDatabaseStats(),
@@ -26,8 +32,10 @@ class PerformanceController extends Controller
         ]);
     }
 
-    public function optimizeTimeline(Request $request)
+    public function optimizeTimeline(Request $request): JsonResponse
     {
+        $this->authorize('optimize', PerformancePolicy::class);
+
         $user = $request->user();
         $posts = $this->dbService->optimizeTimeline($user->id);
 
@@ -38,8 +46,10 @@ class PerformanceController extends Controller
         ]);
     }
 
-    public function optimize(Request $request)
+    public function optimize(Request $request): JsonResponse
     {
+        $this->authorize('optimize', PerformancePolicy::class);
+
         $type = $request->input('type', 'all');
         $results = [];
 
@@ -58,8 +68,10 @@ class PerformanceController extends Controller
         return response()->json($results);
     }
 
-    public function warmupCache()
+    public function warmupCache(): JsonResponse
     {
+        $this->authorize('manage', PerformancePolicy::class);
+
         $this->cacheService->warmupCache();
 
         return response()->json([
@@ -68,8 +80,10 @@ class PerformanceController extends Controller
         ]);
     }
 
-    public function clearCache(Request $request)
+    public function clearCache(Request $request): JsonResponse
     {
+        $this->authorize('manage', PerformancePolicy::class);
+
         $type = $request->input('type', 'all');
 
         switch ($type) {
@@ -91,13 +105,20 @@ class PerformanceController extends Controller
         ]);
     }
 
-    public function realTimeMetrics()
+    public function realTimeMetrics(): JsonResponse
     {
-        return response()->json([
+        $this->authorize('viewAny', PerformancePolicy::class);
+
+        $data = [
             'response_time' => $this->measureResponseTime(),
             'memory_usage' => $this->getMemoryUsage(),
             'active_connections' => $this->getActiveConnections(),
-            'cache_hit_ratio' => $this->cacheService->getCacheStats()['hit_ratio'] ?? 0
+            'cache_hit_rate' => $this->cacheService->getCacheStats()['hit_ratio'] ?? 0,
+            'timestamp' => now()
+        ];
+
+        return response()->json([
+            'data' => new PerformanceResource($data)
         ]);
     }
 

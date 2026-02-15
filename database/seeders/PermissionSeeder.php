@@ -101,6 +101,17 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'premium.subscribe', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'premium.cancel', 'guard_name' => 'sanctum']);
 
+        // Performance & Monitoring
+        Permission::create(['name' => 'performance.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'performance.optimize', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'performance.manage', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'monitoring.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'monitoring.errors', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'monitoring.manage', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'autoscaling.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'autoscaling.predict', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'autoscaling.manage', 'guard_name' => 'sanctum']);
+
         // Admin
         Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
@@ -211,6 +222,8 @@ class PermissionSeeder extends Seeder
             'premium.view',
             'premium.subscribe',
             'premium.cancel',
+            'performance.view',
+            'monitoring.view',
         ]);
 
         $moderator = Role::findByName('moderator', 'sanctum');
@@ -243,6 +256,6 @@ class PermissionSeeder extends Seeder
         $admin = Role::findByName('admin', 'sanctum');
         $admin->syncPermissions(Permission::where('guard_name', 'sanctum')->pluck('name'));
 
-        echo "\nMonetization permissions created successfully!\n";
+        echo "\nPerformance & Monitoring permissions created successfully!\n";
     }
 }

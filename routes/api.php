@@ -360,29 +360,33 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
 
 
-    // Performance & Monitoring (User-level only)
+    // Performance & Monitoring Routes
     Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [PerformanceDashboardController::class, 'dashboard']);
-        Route::get('/timeline/optimized', [PerformanceController::class, 'optimizeTimeline']);
-        Route::post('/cache/warmup', [PerformanceController::class, 'warmupCache']);
-        Route::delete('/cache/clear', [PerformanceController::class, 'clearCache']);
+        Route::get('/dashboard', [PerformanceController::class, 'dashboard']);
+        Route::post('/optimize', [PerformanceController::class, 'optimize']);
+        Route::get('/realtime', [PerformanceController::class, 'realTimeMetrics']);
+        Route::post('/warmup', [PerformanceController::class, 'warmupCache']);
+        Route::post('/cache/clear', [PerformanceController::class, 'clearCache']);
+        Route::post('/timeline/optimize', [PerformanceController::class, 'optimizeTimeline']);
     });
 
-    // Optimized routes
-    Route::prefix('optimized')->group(function () {
-        Route::get('/timeline', [TimelineController::class, 'index']);
-    });
-
-    // Final Performance routes
-    Route::prefix('final-performance')->group(function () {
-        Route::get('/system-status', [FinalPerformanceController::class, 'systemStatus']);
-    });
-
-    // Monitoring routes
+    // Monitoring Routes
     Route::prefix('monitoring')->group(function () {
         Route::get('/dashboard', [MonitoringController::class, 'dashboard']);
+        Route::get('/metrics', [MonitoringController::class, 'metrics']);
+        Route::get('/errors', [MonitoringController::class, 'errors']);
+        Route::get('/performance', [MonitoringController::class, 'performance']);
         Route::get('/cache', [MonitoringController::class, 'cache']);
         Route::get('/queue', [MonitoringController::class, 'queue']);
+    });
+
+    // Auto-Scaling Routes
+    Route::prefix('autoscaling')->group(function () {
+        Route::get('/status', [AutoScalingController::class, 'status']);
+        Route::get('/metrics', [AutoScalingController::class, 'metrics']);
+        Route::get('/history', [AutoScalingController::class, 'history']);
+        Route::get('/predict', [AutoScalingController::class, 'predict']);
+        Route::post('/force', [AutoScalingController::class, 'forceScale']);
     });
 
     Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware(['throttle:10,1', 'can:block,user']);
@@ -506,7 +510,6 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/force-scale', [AutoScalingController::class, 'forceScale']);
         Route::get('/predict', [AutoScalingController::class, 'predict']);
     });
-    // Monetization Routes
     Route::prefix('monetization')->group(function () {
         // Advertisement Routes
         Route::prefix('ads')->group(function () {
