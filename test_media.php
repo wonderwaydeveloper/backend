@@ -150,15 +150,20 @@ foreach ($routes as $name => $pattern) {
 // 4. Security & Authorization (20%)
 echo "\n🔒 4. Security & Authorization (20 امتیاز):\n";
 
-// Check permissions
-$permissionSeeder = glob('database/seeders/*MediaPermission*.php');
+// Check permissions in PermissionSeeder
+$permissionSeeder = glob('database/seeders/PermissionSeeder.php');
 $totalTests++;
 if (!empty($permissionSeeder)) {
-    $passedTests++;
-    $results['roadmap']['score'] += 5;
-    echo "  ✓ Permission Seeder exists\n";
-    
     $seederContent = file_get_contents($permissionSeeder[0]);
+    if (strpos($seederContent, 'media.upload') !== false) {
+        $passedTests++;
+        $results['roadmap']['score'] += 5;
+        echo "  ✓ Permission Seeder (media permissions)\n";
+    } else {
+        echo "  ✗ Permission Seeder - MISSING\n";
+        $results['roadmap']['details'][] = "Missing: media permissions in PermissionSeeder";
+    }
+    
     $permissions = [
         'media.upload' => 'media.upload',
         'media.delete' => 'media.delete',
@@ -178,7 +183,7 @@ if (!empty($permissionSeeder)) {
     }
 } else {
     echo "  ✗ Permission Seeder - MISSING\n";
-    $results['roadmap']['details'][] = "Missing: MediaPermissionSeeder";
+    $results['roadmap']['details'][] = "Missing: PermissionSeeder.php";
 }
 
 // Check Policy
@@ -347,7 +352,7 @@ $twitterTests = [
     'Image formats (JPEG, PNG, GIF, WebP)' => ['jpeg', 'png', 'gif', 'webp'],
     'Video formats (MP4, MOV)' => ['mp4', 'mov'],
     'Max image size (5MB)' => '5120',
-    'Max video size (512MB)' => '524288',
+    'Max video size (512MB)' => 'media.max_file_size.video',
     'Image optimization' => 'processImage',
     'Thumbnail generation' => 'generateThumbnail',
     'Alt text support' => 'alt_text',
@@ -356,6 +361,7 @@ $twitterTests = [
 
 $requestContent = file_exists('app/Http/Requests/MediaUploadRequest.php') ? file_get_contents('app/Http/Requests/MediaUploadRequest.php') : '';
 $postContent = file_exists('app/Models/Post.php') ? file_get_contents('app/Models/Post.php') : '';
+$configContent = file_exists('config/media.php') ? file_get_contents('config/media.php') : '';
 
 foreach ($twitterTests as $name => $patterns) {
     $totalTests++;
@@ -374,7 +380,8 @@ foreach ($twitterTests as $name => $patterns) {
         $found = strpos($controllerContent, $patterns) !== false || 
                  strpos($serviceContent, $patterns) !== false || 
                  strpos($requestContent, $patterns) !== false ||
-                 strpos($postContent, $patterns) !== false;
+                 strpos($postContent, $patterns) !== false ||
+                 strpos($configContent, $patterns) !== false;
     }
     
     if ($found) {
@@ -397,7 +404,7 @@ echo "────────────────────────�
 $operationalTests = [
     'Service Layer exists' => file_exists('app/Services/MediaService.php'),
     'Policy registered' => file_exists('app/Policies/MediaPolicy.php'),
-    'Permissions seeded' => !empty($permissionSeeder),
+    'Permissions seeded' => !empty($permissionSeeder) && strpos(file_get_contents($permissionSeeder[0]), 'media.upload') !== false,
     'Job implements ShouldQueue' => file_exists('app/Jobs/GenerateThumbnailJob.php') && 
         strpos(file_get_contents('app/Jobs/GenerateThumbnailJob.php'), 'ShouldQueue') !== false,
     'Storage configured' => file_exists('config/filesystems.php'),

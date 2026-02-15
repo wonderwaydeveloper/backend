@@ -17,11 +17,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             PermissionSeeder::class,
-            SpacePermissionSeeder::class,
-            ListPermissionSeeder::class,
-            PollPermissionSeeder::class,
-            MentionPermissionSeeder::class,
-            MediaPermissionSeeder::class,
             AdminSeeder::class,
         ]);
     }

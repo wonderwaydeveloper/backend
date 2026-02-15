@@ -2,35 +2,28 @@
 
 ## ✅ سیستمهای تکمیل شده
 
-### 1. Authentication & Security System
+### 1. Authorization System
+**تعداد فایل تست:** 1 فایل  
+**تعداد تست کل:** 49 تست
+
+| # | فایل | تعداد تست | توضیحات |
+|---|------|-----------|---------| 
+| 1 | `test_authorization_final.php` | 49 | تست کامل (7 بخش) |
+
+**اجرا:**
+```bash
+php test_authorization_final.php
+```
+
+---
+
+### 2. Authentication & Security System
 **تعداد فایل تست:** 1 فایل  
 **تعداد تست کل:** 169 تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
+|---|------|-----------|---------| 
 | 1 | `test_authentication.php` | 169 | تست کامل سیستم (20 بخش) |
-
-**بخشهای تست:**
-- Core Services (12 tests)
-- Controllers & Routes (8 tests)
-- AuthService Methods (9 tests)
-- Request Classes & Validation (8 tests)
-- Middleware & Security (8 tests)
-- Models & Database (8 tests)
-- DTOs & Contracts (6 tests)
-- Configuration & Services (8 tests)
-- Events & Notifications (6 tests)
-- Policies & Authorization (8 tests)
-- Email Templates (6 tests)
-- Security Features (10 tests)
-- User Flows (8 tests)
-- Error Handling (6 tests)
-- Service Registration (6 tests)
-- API Routes (8 tests)
-- **Validation Rules Functional (10 tests)**
-- **Password Security Functional (12 tests)**
-- **Rate Limiting Functional (10 tests)**
-- **2FA Flow Functional (12 tests)**
 
 **اجرا:**
 ```bash
@@ -39,12 +32,12 @@ php test_authentication.php
 
 ---
 
-### 2. Posts & Content System
+### 3. Posts & Content System
 **تعداد فایل تست:** 1 فایل  
 **تعداد تست کل:** ~200 تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
+|---|------|-----------|---------| 
 | 1 | `test_posts_system.php` | ~200 | تست جامع (20 بخش) |
 
 **اجرا:**
@@ -54,12 +47,12 @@ php test_posts_system.php
 
 ---
 
-### 3. Users & Profile System
+### 4. Users & Profile System
 **تعداد فایل تست:** 3 فایل  
 **تعداد تست کل:** 59+ تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
+|---|------|-----------|---------| 
 | 1 | `test_users_profile_01_core.php` | 59 | تست Core Functionality |
 | 2 | `test_users_profile_02_security.php` | ~30 | تست Security Features |
 | 3 | `test_users_profile_03_standards.php` | ~40 | تست Twitter Standards |
@@ -73,47 +66,81 @@ php test_users_profile_03_standards.php
 
 ---
 
-### 4. Report System
+### 5. Device Management System
 **تعداد فایل تست:** 1 فایل  
-**تعداد تست کل:** 23 تست
+**تعداد تست کل:** 114 تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
-| 1 | `test_report.php` | 23 | تست کامل Report System |
+|---|------|-----------|---------| 
+| 1 | `test_device_management.php` | 114 | تست کامل (9 دسته) |
 
 **اجرا:**
 ```bash
-php test_report.php
+php test_device_management.php
 ```
 
 ---
 
-### 5. Integration Tests
+### 6. Analytics System ✅
 **تعداد فایل تست:** 1 فایل  
-**تعداد تست کل:** 30 تست
+**تعداد تست کل:** 75 تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
-| 1 | `test_final_integration.php` | 30 | تست یکپارچگی سیستمها |
+|---|------|-----------|---------| 
+| 1 | `test_analytics_system.php` | 75 | تست کامل (3 بخش) |
+
+**بخشهای تست:**
+- ROADMAP Compliance (58 tests)
+- Integration Tests (6 tests)
+- PHPUnit Feature Tests (11 tests)
 
 **اجرا:**
 ```bash
-php test_final_integration.php
+php test_analytics_system.php
 ```
 
 ---
 
-### 6. Twitter Compliance
+### 7. Media Management System 🟡
 **تعداد فایل تست:** 1 فایل  
-**تعداد تست کل:** ~50 تست
+**تعداد تست کل:** 72 تست
 
 | # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
-| 1 | `test_twitter_compliance.php` | ~50 | تست استانداردهای Twitter |
+|---|------|-----------|---------| 
+| 1 | `test_media.php` | 72 | تست جامع (4 معیار) |
+
+**بخشهای تست:**
+- ROADMAP Compliance (68/72 pass)
+- Twitter Standards (7/8 pass)
+- Operational Readiness (7/8 pass)
+- No Parallel Work (8/8 pass)
+
+**وضعیت:** 94.4% - نیاز به اصلاح جزئی
 
 **اجرا:**
 ```bash
-php test_twitter_compliance.php
+php test_media.php
+```
+
+---
+
+### 8. Monetization System ✅
+**تعداد فایل تست:** 1 فایل  
+**تعداد تست کل:** 35 تست
+
+| # | فایل | تعداد تست | توضیحات |
+|---|------|-----------|---------| 
+| 1 | `test_monetization_system.php` | 35 | تست کامل (4 بخش) |
+
+**بخشهای تست:**
+- ROADMAP Compliance (100/100)
+- Twitter Standards (100/100)
+- Operational Readiness (100/100)
+- No Parallel Work (100/100)
+
+**اجرا:**
+```bash
+php test_monetization_system.php
 ```
 
 ---
@@ -122,101 +149,80 @@ php test_twitter_compliance.php
 
 | سیستم | فایلهای تست | تعداد تست | وضعیت |
 |-------|-------------|-----------|--------|
+| Authorization | 1 | 49 | ✅ |
 | Authentication | 1 | 169 | ✅ |
 | Posts & Content | 1 | ~200 | ✅ |
 | Users & Profile | 3 | 59+ | ✅ |
-| Block/Mute | - | 22 | ✅ |
-| Report | 1 | 23 | ✅ |
-| Integration | 1 | 30 | ✅ |
-| Twitter Compliance | 1 | ~50 | ✅ |
+| Comments | 1 | 150 | ✅ |
+| Follow | 1 | ~40 | ✅ |
+| Search | 1 | ~50 | ✅ |
+| Messaging | 1 | ~40 | ✅ |
+| Notifications | 1 | ~50 | ✅ |
+| Bookmarks | 1 | ~30 | ✅ |
+| Hashtags | 1 | ~35 | ✅ |
+| Moderation | 1 | ~45 | ✅ |
+| Communities | 1 | ~60 | ✅ |
+| Spaces | 1 | ~55 | ✅ |
+| Lists | 1 | ~50 | ✅ |
+| Polls | 1 | ~25 | ✅ |
+| Mentions | 1 | ~20 | ✅ |
+| Moments | 1 | ~30 | ✅ |
+| Realtime | 1 | ~35 | ✅ |
+| A/B Testing | 1 | ~40 | ✅ |
+| Performance | 1 | ~45 | ✅ |
 | Device Management | 1 | 114 | ✅ |
-| **جمع کل** | **9** | **~667** | **✅** |
+| Integration | 1 | 87 | ✅ |
+| Analytics | 1 | 75 | ✅ |
+| Media | 1 | 72 | 🟡 |
+| Monetization | 1 | 35 | ✅ |
+| **جمع کل** | **28** | **~1,665** | **✅** |
 
 ---
 
-## 🚀 اجرای همه تستها
+## 🚀 اجرای همه تستها (28 سیستم)
 
 ```bash
-# Authentication (169 tests)
+# استفاده از run_tests.bat
+cmd /c run_tests.bat
+
+# یا اجرای تک تک:
+php test_authorization_final.php
 php test_authentication.php
-
-# Posts
 php test_posts_system.php
-
-# Users & Profile
 php test_users_profile_01_core.php
 php test_users_profile_02_security.php
 php test_users_profile_03_standards.php
-
-# Report
-php test_report.php
-
-# Integration
-php test_final_integration.php
-
-# Twitter Compliance
-php test_twitter_compliance.php
-
-# Device Management (114 tests)
+php test_comments.php
+php test_follow_system.php
+php test_search_discovery_system.php
+php test_messaging_system.php
+php test_notifications_system.php
+php test_bookmarks_reposts_system.php
+php test_hashtags_system.php
+php test_moderation_reporting_system.php
+php test_communities_system.php
+php test_spaces_system.php
+php test_lists_system.php
+php test_polls.php
+php test_mentions.php
+php test_moments.php
+php test_realtime_system.php
+php test_abtest_system.php
+php test_performance_monitoring_system.php
 php test_device_management.php
-```
-
----
-
-## ⏳ سیستمهای بدون تست
-
-### Comments System
-- **وضعیت:** در حال توسعه
-- **فایل تست:** هنوز ایجاد نشده
-- **تست مورد نیاز:** ~40-50 تست
-
-### Social Features (Follow System)
-- **وضعیت:** بخشی در Users تست شده
-- **فایل تست جداگانه:** نیاز به ایجاد
-- **تست مورد نیاز:** ~30-40 تست
-
-### Search & Discovery
-- **وضعیت:** هنوز شروع نشده
-- **فایل تست:** نیاز به ایجاد
-- **تست مورد نیاز:** ~50-60 تست
-
-### Messaging
-- **وضعیت:** هنوز شروع نشده
-- **فایل تست:** نیاز به ایجاد
-- **تست مورد نیاز:** ~40-50 تست
-
-### Notifications
-- **وضعیت:** هنوز شروع نشده
-- **فایل تست:** نیاز به ایجاد
-- **تست مورد نیاز:** ~50-60 تست
-
-### 28. Device Management System ✅
-**تعداد فایل تست:** 1 فایل  
-**تعداد تست کل:** 114 تست
-
-| # | فایل | تعداد تست | توضیحات |
-|---|------|-----------|---------|
-| 1 | `test_device_management.php` | 114 | تست کامل (9 دسته) |
-
-**بخشهای تست:**
-- ROADMAP Compliance (25 tests)
-- Twitter Standards (25 tests)
-- Operational Features (25 tests)
-- Integration Tests (25 tests)
-- Authentication Integration (2 tests)
-- Permission Integration (4 tests)
-- Route Integration (4 tests)
-- Policy Integration (4 tests)
-
-**اجرا:**
-```bash
-php test_device_management.php
+php test_integration_systems.php
+php test_analytics_system.php
+php test_media.php
+php test_monetization_system.php
 ```
 
 ---
 
 **تاریخ بروزرسانی:** 2026-02-15  
-**نسخه:** 4.0  
+**نسخه:** 5.0  
 **تغییرات:** 
-- افزودن Device Management System (114 تست)
-- بروزرسانی آمار کلی
+- افزودن Analytics System (75 تست)
+- افزودن Media Management System (72 تست)
+- افزودن Monetization System (35 تست)
+- بروزرسانی آمار کلی: 28 سیستم، ~1,665 تست
+- افزودن run_tests.bat برای اجرای خودکار

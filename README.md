@@ -12,6 +12,12 @@ A modern microblogging platform built with Laravel 12, featuring advanced authen
 - **Session Management**: Multi-device session tracking and revocation
 - **Password Security**: Secure reset with OTP, password change
 - **Security Monitoring**: Audit logs, security events, anomaly detection
+- **Authorization System**: Role-based access control (RBAC) with granular permissions
+  - **6 Roles**: user, verified, premium, organization, moderator, admin
+  - **90 Permissions**: Granular permissions across all features
+  - **28 Policies**: Authorization policies for all models
+  - **Twitter API v2 Compliant**: OAuth 2.0 with Sanctum guard
+  - **Middleware**: Role and permission-based route protection
 
 ### Social Features
 - **Posts**: Create, edit, delete posts with 280 character limit
@@ -260,6 +266,10 @@ php artisan project:cleanup-analysis
 
 ### Key Endpoint Groups
 - **Authentication**: `/api/auth/*` (login, register, 2FA, password reset, sessions)
+- **Authorization**: Role and permission-based access control
+  - Admin routes: `/api/performance/*`, `/api/monitoring/*`, `/api/autoscaling/*`, `/api/ab-tests/*`
+  - Organization routes: `/api/monetization/ads/*`
+  - Permission-protected: All CRUD operations with granular permissions
 - **Posts**: `/api/posts/*` (CRUD, like, quote, drafts, scheduled)
 - **Comments**: `/api/posts/{post}/comments`
 - **Users**: `/api/users/*` (profile, followers, following)
@@ -301,6 +311,12 @@ php artisan project:cleanup-analysis
 - Social authentication (Google OAuth)
 
 ### Application Security
+- **Authorization**: Role-based access control (RBAC)
+  - 6 roles with hierarchical permissions
+  - 90 granular permissions
+  - 28 authorization policies
+  - Route-level permission middleware
+  - Policy-based model authorization
 - Input validation and sanitization
 - Rate limiting on sensitive endpoints
 - CSRF protection
@@ -333,21 +349,31 @@ php artisan project:cleanup-analysis
 
 ### Running Tests
 ```bash
-# Run all tests
-php artisan test
+# Run all system tests (25 systems)
+cmd /c run_tests.bat
 
-# Run specific test suite
+# Run specific system tests
+php test_authorization_final.php  # Authorization system
+php test_authentication.php        # Authentication system
+php test_posts_system.php         # Posts system
+php test_search_discovery_system.php  # Search & Discovery
+
+# Run Laravel tests
+php artisan test
 php artisan test --testsuite=Feature
 php artisan test --testsuite=Unit
-
-# Run with coverage
 php artisan test --coverage
-
-# Run Search & Discovery System tests
-php test_search_discovery_system.php
 ```
 
 ### Test Coverage
+- **Authorization System**: 49 comprehensive tests (100% pass rate)
+  - Database Schema & Seeders: 8 tests
+  - Role Permission Distribution: 6 tests
+  - Role Hierarchy: 2 tests
+  - Policies & Controllers: 10 tests
+  - Middleware & Routes: 5 tests
+  - Runtime Permission Tests: 9 tests
+  - Twitter API v2 Standards: 10 tests
 - **Search & Discovery**: 175 comprehensive tests
   - System Review: 68 tests (Architecture, Database, API, Security, Validation, Business Logic, Integration, Testing)
   - Twitter Compliance: 26 tests (Rate limits, Query parameters, Pagination, Features, Filters, Security)
@@ -394,7 +420,7 @@ app/
 ├── Filament/            # Admin panel resources
 ├── Http/
 │   ├── Controllers/Api/ # API controllers
-│   ├── Middleware/      # Custom middleware
+│   ├── Middleware/      # Custom middleware (CheckRole, CheckPermission)
 │   ├── Requests/        # Form requests
 │   └── Resources/       # API resources
 ├── Jobs/                # Queue jobs
@@ -404,12 +430,31 @@ app/
 ├── Monetization/        # Monetization features
 ├── Notifications/       # Notification classes
 ├── Observers/           # Model observers
-├── Policies/            # Authorization policies
+├── Policies/            # Authorization policies (28 policies)
 ├── Providers/           # Service providers
 ├── Repositories/        # Repository pattern
 ├── Rules/               # Validation rules
 ├── Services/            # Business logic services
 └── Traits/              # Reusable traits
+
+database/
+├── migrations/          # Database migrations
+└── seeders/
+    ├── RoleSeeder.php          # 6 roles
+    ├── PermissionSeeder.php    # 90 permissions
+    └── DatabaseSeeder.php      # Main seeder
+
+docs/
+├── AUTHORIZATION.md     # Authorization system documentation
+├── POSTS_SYSTEM.md      # Posts system documentation
+├── SEARCH_DISCOVERY_SYSTEM.md  # Search & Discovery documentation
+└── ... (25+ system docs)
+
+tests/
+├── test_authorization_final.php  # Authorization tests (49 tests)
+├── test_authentication.php       # Authentication tests
+├── test_posts_system.php        # Posts tests
+└── ... (25 test files)
 ```
 
 ## 📄 License

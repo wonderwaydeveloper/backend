@@ -357,33 +357,33 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
 
 
-    // Performance & Monitoring Routes
-    Route::prefix('performance')->group(function () {
-        Route::get('/dashboard', [PerformanceController::class, 'dashboard']);
-        Route::post('/optimize', [PerformanceController::class, 'optimize']);
-        Route::get('/realtime', [PerformanceController::class, 'realTimeMetrics']);
-        Route::post('/warmup', [PerformanceController::class, 'warmupCache']);
-        Route::post('/cache/clear', [PerformanceController::class, 'clearCache']);
-        Route::post('/timeline/optimize', [PerformanceController::class, 'optimizeTimeline']);
+    // Performance & Monitoring Routes (Admin Only)
+    Route::prefix('performance')->middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [PerformanceController::class, 'dashboard'])->middleware('permission:performance.view');
+        Route::post('/optimize', [PerformanceController::class, 'optimize'])->middleware('permission:performance.optimize');
+        Route::get('/realtime', [PerformanceController::class, 'realTimeMetrics'])->middleware('permission:performance.view');
+        Route::post('/warmup', [PerformanceController::class, 'warmupCache'])->middleware('permission:performance.manage');
+        Route::post('/cache/clear', [PerformanceController::class, 'clearCache'])->middleware('permission:performance.manage');
+        Route::post('/timeline/optimize', [PerformanceController::class, 'optimizeTimeline'])->middleware('permission:performance.optimize');
     });
 
-    // Monitoring Routes
-    Route::prefix('monitoring')->group(function () {
-        Route::get('/dashboard', [MonitoringController::class, 'dashboard']);
-        Route::get('/metrics', [MonitoringController::class, 'metrics']);
-        Route::get('/errors', [MonitoringController::class, 'errors']);
-        Route::get('/performance', [MonitoringController::class, 'performance']);
-        Route::get('/cache', [MonitoringController::class, 'cache']);
-        Route::get('/queue', [MonitoringController::class, 'queue']);
+    // Monitoring Routes (Admin Only)
+    Route::prefix('monitoring')->middleware('role:admin')->group(function () {
+        Route::get('/dashboard', [MonitoringController::class, 'dashboard'])->middleware('permission:monitoring.view');
+        Route::get('/metrics', [MonitoringController::class, 'metrics'])->middleware('permission:monitoring.view');
+        Route::get('/errors', [MonitoringController::class, 'errors'])->middleware('permission:monitoring.errors');
+        Route::get('/performance', [MonitoringController::class, 'performance'])->middleware('permission:monitoring.view');
+        Route::get('/cache', [MonitoringController::class, 'cache'])->middleware('permission:monitoring.view');
+        Route::get('/queue', [MonitoringController::class, 'queue'])->middleware('permission:monitoring.manage');
     });
 
-    // Auto-Scaling Routes
-    Route::prefix('autoscaling')->group(function () {
-        Route::get('/status', [AutoScalingController::class, 'status']);
-        Route::get('/metrics', [AutoScalingController::class, 'metrics']);
-        Route::get('/history', [AutoScalingController::class, 'history']);
-        Route::get('/predict', [AutoScalingController::class, 'predict']);
-        Route::post('/force', [AutoScalingController::class, 'forceScale']);
+    // Auto-Scaling Routes (Admin Only)
+    Route::prefix('autoscaling')->middleware('role:admin')->group(function () {
+        Route::get('/status', [AutoScalingController::class, 'status'])->middleware('permission:autoscaling.view');
+        Route::get('/metrics', [AutoScalingController::class, 'metrics'])->middleware('permission:autoscaling.view');
+        Route::get('/history', [AutoScalingController::class, 'history'])->middleware('permission:autoscaling.view');
+        Route::get('/predict', [AutoScalingController::class, 'predict'])->middleware('permission:autoscaling.predict');
+        Route::post('/force', [AutoScalingController::class, 'forceScale'])->middleware('permission:autoscaling.manage');
     });
 
     Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware(['throttle:10,1', 'can:block,user']);
@@ -479,13 +479,13 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::delete('/{moment}/posts/{post}', [MomentController::class, 'removePost'])->middleware('permission:moment.manage.posts');
     });
 
-    // A/B Testing
-    Route::prefix('ab-tests')->group(function () {
-        Route::get('/', [ABTestController::class, 'index']);
-        Route::post('/', [ABTestController::class, 'store']);
-        Route::get('/{id}', [ABTestController::class, 'show']);
-        Route::post('/{id}/start', [ABTestController::class, 'start']);
-        Route::post('/{id}/stop', [ABTestController::class, 'stop']);
+    // A/B Testing (Admin Only)
+    Route::prefix('ab-tests')->middleware('role:admin')->group(function () {
+        Route::get('/', [ABTestController::class, 'index'])->middleware('permission:abtest.view');
+        Route::post('/', [ABTestController::class, 'store'])->middleware('permission:abtest.create');
+        Route::get('/{id}', [ABTestController::class, 'show'])->middleware('permission:abtest.view');
+        Route::post('/{id}/start', [ABTestController::class, 'start'])->middleware('permission:abtest.manage');
+        Route::post('/{id}/stop', [ABTestController::class, 'stop'])->middleware('permission:abtest.manage');
         Route::post('/assign', [ABTestController::class, 'assign']);
         Route::post('/track', [ABTestController::class, 'track']);
     });
@@ -508,30 +508,31 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/predict', [AutoScalingController::class, 'predict']);
     });
     Route::prefix('monetization')->group(function () {
-        // Advertisement Routes
+        // Advertisement Routes (Organization Role)
         Route::prefix('ads')->group(function () {
-            Route::post('/', [AdvertisementController::class, 'create']);
-            Route::get('/targeted', [AdvertisementController::class, 'getTargetedAds']);
+            Route::post('/', [AdvertisementController::class, 'create'])->middleware('permission:advertisement.create');
+            Route::get('/targeted', [AdvertisementController::class, 'getTargetedAds'])->middleware('permission:advertisement.view');
             Route::post('/{adId}/click', [AdvertisementController::class, 'recordClick']);
-            Route::get('/analytics', [AdvertisementController::class, 'getAnalytics']);
-            Route::post('/{adId}/pause', [AdvertisementController::class, 'pause']);
-            Route::post('/{adId}/resume', [AdvertisementController::class, 'resume']);
+            Route::get('/analytics', [AdvertisementController::class, 'getAnalytics'])->middleware('permission:advertisement.view');
+            Route::post('/{adId}/pause', [AdvertisementController::class, 'pause'])->middleware('permission:advertisement.manage');
+            Route::post('/{adId}/resume', [AdvertisementController::class, 'resume'])->middleware('permission:advertisement.manage');
+            Route::delete('/{adId}', [AdvertisementController::class, 'delete'])->middleware('permission:advertisement.delete');
         });
 
-        // Creator Fund Routes
+        // Creator Fund Routes (Verified+ Users)
         Route::prefix('creator-fund')->group(function () {
-            Route::get('/analytics', [CreatorFundController::class, 'getAnalytics']);
-            Route::post('/calculate-earnings', [CreatorFundController::class, 'calculateEarnings']);
-            Route::get('/earnings-history', [CreatorFundController::class, 'getEarningsHistory']);
-            Route::post('/request-payout', [CreatorFundController::class, 'requestPayout']);
+            Route::get('/analytics', [CreatorFundController::class, 'getAnalytics'])->middleware('permission:creatorfund.view');
+            Route::post('/calculate-earnings', [CreatorFundController::class, 'calculateEarnings'])->middleware('permission:creatorfund.view');
+            Route::get('/earnings-history', [CreatorFundController::class, 'getEarningsHistory'])->middleware('permission:creatorfund.view');
+            Route::post('/request-payout', [CreatorFundController::class, 'requestPayout'])->middleware('permission:creatorfund.payout');
         });
 
         // Premium Subscription Routes
         Route::prefix('premium')->group(function () {
             Route::get('/plans', [PremiumController::class, 'getPlans']);
-            Route::post('/subscribe', [PremiumController::class, 'subscribe']);
-            Route::post('/cancel', [PremiumController::class, 'cancel']);
-            Route::get('/status', [PremiumController::class, 'getStatus']);
+            Route::post('/subscribe', [PremiumController::class, 'subscribe'])->middleware('permission:premium.subscribe');
+            Route::post('/cancel', [PremiumController::class, 'cancel'])->middleware('permission:premium.cancel');
+            Route::get('/status', [PremiumController::class, 'getStatus'])->middleware('permission:premium.view');
         });
     });
 

@@ -46,11 +46,21 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'list.create', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'list.edit.own', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'list.delete.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'list.update.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'list.manage.members', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'list.subscribe', 'guard_name' => 'sanctum']);
 
         // Spaces
         Permission::create(['name' => 'space.create', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'space.host', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'space.speak', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.join', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.leave', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.manage.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.delete.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.update.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.manage.roles', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'space.end.own', 'guard_name' => 'sanctum']);
 
         // Communities
         Permission::create(['name' => 'community.create', 'guard_name' => 'sanctum']);
@@ -120,6 +130,20 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'device.manage', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'device.security', 'guard_name' => 'sanctum']);
 
+// Polls
+        Permission::create(['name' => 'poll.create', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'poll.vote', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'poll.delete.own', 'guard_name' => 'sanctum']);
+
+        // Mentions
+        Permission::create(['name' => 'mention.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'mention.create', 'guard_name' => 'sanctum']);
+
+        // Media
+        Permission::create(['name' => 'media.upload', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'media.delete', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'media.view', 'guard_name' => 'sanctum']);
+
         // Admin
         Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
@@ -131,148 +155,99 @@ class PermissionSeeder extends Seeder
         // Assign permissions to roles
         $user = Role::findByName('user', 'sanctum');
         $user->syncPermissions([
-            'post.create',
-            'post.edit.own',
-            'post.delete.own',
-            'comment.create',
-            'comment.delete.own',
-            'message.send',
-            'message.delete.own',
-            'profile.edit.own',
-            'user.follow',
-            'user.unfollow',
-            'post.like',
-            'post.repost',
-            'post.bookmark',
-            'list.create',
-            'list.edit.own',
-            'list.delete.own',
-            'community.post',
-            'moment.create',
-            'moment.edit.own',
-            'moment.delete.own',
-            'moment.manage.posts',
-            'realtime.status.update',
-            'realtime.users.view',
-            'realtime.timeline.view',
+            'post.create', 'post.edit.own', 'post.delete.own',
+            'comment.create', 'comment.delete.own',
+            'message.send', 'message.delete.own',
+            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'post.like', 'post.repost', 'post.bookmark',
+            'poll.create', 'poll.vote', 'poll.delete.own',
+            'mention.view', 'mention.create',
+            'media.upload', 'media.delete', 'media.view',
+            'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
-            'device.view',
-            'device.register',
-            'device.trust',
-            'device.revoke',
+            'device.view', 'device.register',
         ]);
 
         $verified = Role::findByName('verified', 'sanctum');
         $verified->syncPermissions([
-            'post.create',
-            'post.edit.own',
-            'post.delete.own',
-            'comment.create',
-            'comment.delete.own',
-            'message.send',
-            'message.delete.own',
-            'profile.edit.own',
-            'user.follow',
-            'user.unfollow',
-            'post.like',
-            'post.repost',
-            'post.bookmark',
-            'list.create',
-            'list.edit.own',
-            'list.delete.own',
+            'post.create', 'post.edit.own', 'post.delete.own',
+            'comment.create', 'comment.delete.own',
+            'message.send', 'message.delete.own',
+            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'post.like', 'post.repost', 'post.bookmark',
+            'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
+            'space.join', 'space.leave',
+            'poll.create', 'poll.vote', 'poll.delete.own',
+            'mention.view', 'mention.create',
+            'media.upload', 'media.delete', 'media.view',
             'community.post',
-            'moment.create',
-            'moment.edit.own',
-            'moment.delete.own',
-            'moment.manage.posts',
-            'realtime.status.update',
-            'realtime.users.view',
-            'realtime.timeline.view',
+            'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
+            'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
-            'creatorfund.view',
-            'creatorfund.payout',
-            'device.view',
-            'device.register',
-            'device.trust',
-            'device.revoke',
+            'creatorfund.view', 'creatorfund.payout',
+            'device.view', 'device.register', 'device.trust', 'device.revoke',
         ]);
 
         $premium = Role::findByName('premium', 'sanctum');
         $premium->syncPermissions([
-            'post.create',
-            'post.edit.own',
-            'post.delete.own',
-            'post.schedule',
-            'comment.create',
-            'comment.delete.own',
-            'message.send',
-            'message.delete.own',
-            'profile.edit.own',
-            'user.follow',
-            'user.unfollow',
-            'post.like',
-            'post.repost',
-            'post.bookmark',
-            'list.create',
-            'list.edit.own',
-            'list.delete.own',
-            'space.create',
-            'space.host',
-            'space.speak',
-            'community.create',
-            'community.moderate.own',
-            'community.post',
-            'moment.create',
-            'moment.edit.own',
-            'moment.delete.own',
-            'moment.manage.posts',
-            'realtime.status.update',
-            'realtime.users.view',
-            'realtime.timeline.view',
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
+            'comment.create', 'comment.delete.own',
+            'message.send', 'message.delete.own',
+            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'post.like', 'post.repost', 'post.bookmark',
+            'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
+            'space.create', 'space.host', 'space.speak', 'space.join', 'space.leave', 'space.manage.own', 'space.delete.own', 'space.update.own', 'space.manage.roles', 'space.end.own',
+            'poll.create', 'poll.vote', 'poll.delete.own',
+            'mention.view', 'mention.create',
+            'media.upload', 'media.delete', 'media.view', 'media.upload.hd',
+            'community.create', 'community.moderate.own', 'community.post',
+            'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
+            'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
-            'analytics.view',
-            'thread.create.long',
-            'media.upload.hd',
-            'creatorfund.view',
-            'creatorfund.payout',
-            'premium.view',
-            'premium.subscribe',
-            'premium.cancel',
-            'performance.view',
-            'monitoring.view',
-            'device.view',
-            'device.register',
-            'device.trust',
-            'device.revoke',
-            'device.manage',
-            'device.security',
+            'analytics.view', 'thread.create.long',
+            'creatorfund.view', 'creatorfund.payout',
+            'premium.view', 'premium.subscribe', 'premium.cancel',
+            'device.view', 'device.register', 'device.trust', 'device.revoke', 'device.manage', 'device.security',
+        ]);
+
+        $organization = Role::findByName('organization', 'sanctum');
+        $organization->syncPermissions([
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
+            'comment.create', 'comment.delete.own',
+            'message.send', 'message.delete.own',
+            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'post.like', 'post.repost', 'post.bookmark',
+            'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
+            'space.create', 'space.host', 'space.speak', 'space.join', 'space.leave', 'space.manage.own', 'space.delete.own', 'space.update.own', 'space.manage.roles', 'space.end.own',
+            'poll.create', 'poll.vote', 'poll.delete.own',
+            'mention.view', 'mention.create',
+            'media.upload', 'media.delete', 'media.view', 'media.upload.hd',
+            'community.create', 'community.moderate.own', 'community.post',
+            'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
+            'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
+            'report.create',
+            'analytics.view', 'thread.create.long',
+            'advertisement.view', 'advertisement.create', 'advertisement.manage', 'advertisement.delete',
+            'device.view', 'device.register', 'device.trust', 'device.revoke', 'device.manage', 'device.security',
         ]);
 
         $moderator = Role::findByName('moderator', 'sanctum');
         $moderator->syncPermissions([
-            'post.create',
-            'post.edit.own',
-            'post.delete.own',
-            'post.delete.any',
-            'comment.create',
-            'comment.delete.own',
-            'comment.delete.any',
-            'message.send',
-            'message.delete.own',
-            'profile.edit.own',
-            'user.follow',
-            'user.unfollow',
-            'user.suspend',
-            'post.like',
-            'post.repost',
-            'post.bookmark',
-            'list.create',
-            'list.edit.own',
-            'list.delete.own',
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.delete.any',
+            'comment.create', 'comment.delete.own', 'comment.delete.any',
+            'message.send', 'message.delete.own',
+            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'post.like', 'post.repost', 'post.bookmark',
+            'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
+            'space.join', 'space.leave',
+            'poll.create', 'poll.vote', 'poll.delete.own',
+            'mention.view', 'mention.create',
+            'media.upload', 'media.delete', 'media.view',
             'community.post',
-            'content.moderate',
-            'report.review',
-            'report.create',
+            'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
+            'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
+            'user.ban', 'user.suspend', 'content.moderate', 'report.review', 'report.create',
+            'device.view', 'device.register', 'device.trust', 'device.revoke',
         ]);
 
         $admin = Role::findByName('admin', 'sanctum');
