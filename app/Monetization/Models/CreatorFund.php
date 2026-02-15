@@ -3,11 +3,14 @@
 namespace App\Monetization\Models;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CreatorFund extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'creator_id',
         'month',
@@ -28,6 +31,11 @@ class CreatorFund extends Model
         'metrics' => 'array',
     ];
 
+    protected static function newFactory()
+    {
+        return \Database\Factories\Monetization\Models\CreatorFundFactory::new();
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'creator_id');
@@ -39,7 +47,7 @@ class CreatorFund extends Model
             return 0;
         }
 
-        $baseRate = 0.001; // $0.001 per view
+        $baseRate = 0.001;
         $engagementMultiplier = min($this->total_engagement / $this->total_views, 0.1);
         $qualityMultiplier = $this->quality_score / 100;
 

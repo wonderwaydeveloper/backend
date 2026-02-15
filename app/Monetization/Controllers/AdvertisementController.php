@@ -4,6 +4,7 @@ namespace App\Monetization\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AdvertisementRequest;
+use App\Http\Resources\AdvertisementResource;
 use App\Monetization\Models\Advertisement;
 use App\Monetization\Services\AdvertisementService;
 use Illuminate\Http\JsonResponse;
@@ -18,14 +19,17 @@ class AdvertisementController extends Controller
 
     public function create(AdvertisementRequest $request): JsonResponse
     {
-        $validated = $request->validated();
+        $this->authorize('create', Advertisement::class);
 
         $ad = $this->advertisementService->createAdvertisement([
             'advertiser_id' => auth()->id(),
-            ...$validated,
+            ...$request->validated(),
         ]);
 
-        return response()->json(['message' => 'Advertisement created successfully', 'data' => $ad], 201);
+        return response()->json([
+            'message' => 'Advertisement created successfully',
+            'data' => new AdvertisementResource($ad),
+        ], 201);
     }
 
     public function getTargetedAds(Request $request): JsonResponse
@@ -35,32 +39,17 @@ class AdvertisementController extends Controller
             $request->get('limit', 3)
         );
 
-        // Record impressions
         foreach ($ads as $ad) {
             $this->advertisementService->recordImpression($ad);
         }
 
         return response()->json([
-            'data' => $ads->map(function ($ad) {
-                return [
-                    'id' => $ad->id,
-                    'title' => $ad->title,
-                    'content' => $ad->content,
-                    'media_url' => $ad->media_url,
-                    'advertiser' => $ad->advertiser->name,
-                ];
-            }),
+            'data' => AdvertisementResource::collection($ads),
         ]);
     }
 
-    public function recordClick(Request $request, int $adId): JsonResponse
+    public function recordClick(Request $request, Advertisement $ad): JsonResponse
     {
-        $ad = Advertisement::find($adId);
-
-        if (! $ad) {
-            return response()->json(['message' => 'Advertisement not found'], 404);
-        }
-
         $this->advertisementService->recordClick($ad);
 
         return response()->json(['message' => 'Click recorded']);
@@ -68,26 +57,28 @@ class AdvertisementController extends Controller
 
     public function getAnalytics(): JsonResponse
     {
+        $this->authorize('viewAny', Advertisement::class);
+
         $analytics = $this->advertisementService->getAdvertiserAnalytics(auth()->id());
 
         return response()->json(['data' => $analytics]);
     }
 
-    public function pause(int $adId): JsonResponse
+    public function pause(Advertisement $ad): JsonResponse
     {
-        $success = $this->advertisementService->pauseAdvertisement($adId);
+        $this->authorize('manage', $ad);
 
-        return response()->json([
-            'message' => $success ? 'Advertisement paused' : 'Failed to pause advertisement',
-        ]);
+        $this->advertisementService->pauseAdvertisement($ad->id);
+
+        return response()->json(['message' => 'Advertisement paused']);
     }
 
-    public function resume(int $adId): JsonResponse
+    public function resume(Advertisement $ad): JsonResponse
     {
-        $success = $this->advertisementService->resumeAdvertisement($adId);
+        $this->authorize('manage', $ad);
 
-        return response()->json([
-            'message' => $success ? 'Advertisement resumed' : 'Failed to resume advertisement',
-        ]);
+        $this->advertisementService->resumeAdvertisement($ad->id);
+
+        return response()->json(['message' => 'Advertisement resumed']);
     }
 }

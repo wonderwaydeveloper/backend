@@ -11,19 +11,21 @@ class PremiumResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'plan_id' => $this->plan_id,
-            'plan_name' => $this->plan_name,
-            'status' => $this->status,
+            'user_id' => $this->user_id,
+            'plan' => $this->plan,
+            'price' => $this->price,
             'billing_cycle' => $this->billing_cycle,
-            'amount' => $this->amount,
-            'currency' => $this->currency,
-            'auto_renew' => $this->auto_renew,
-            'started_at' => $this->started_at,
-            'expires_at' => $this->expires_at,
-            'cancelled_at' => $this->cancelled_at,
+            'starts_at' => $this->starts_at->toIso8601String(),
+            'ends_at' => $this->ends_at->toIso8601String(),
+            'status' => $this->status,
+            'payment_method' => $this->payment_method,
+            'transaction_id' => $this->transaction_id,
             'features' => $this->features,
-            'is_active' => $this->expires_at > now() && $this->status === 'active',
-            'days_remaining' => $this->expires_at ? $this->expires_at->diffInDays(now()) : null
+            'cancelled_at' => $this->cancelled_at?->toIso8601String(),
+            'is_active' => $this->isActive(),
+            'is_expired' => $this->isExpired(),
+            'created_at' => $this->created_at->toIso8601String(),
+            'updated_at' => $this->updated_at->toIso8601String(),
         ];
     }
 }

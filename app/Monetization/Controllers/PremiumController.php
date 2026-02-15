@@ -5,62 +5,56 @@ namespace App\Monetization\Controllers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PremiumSubscriptionRequest;
 use App\Http\Resources\PremiumResource;
-use Illuminate\Http\Request;
+use App\Models\PremiumSubscription;
+use App\Monetization\Services\PremiumService;
 use Illuminate\Http\JsonResponse;
 
 class PremiumController extends Controller
 {
+    public function __construct(
+        private PremiumService $premiumService
+    ) {
+    }
+
     public function getPlans(): JsonResponse
     {
-        $plans = [
-            [
-                'id' => 'basic',
-                'name' => 'Basic Premium',
-                'price' => 4.99,
-                'features' => ['Ad-free experience', 'HD video quality']
-            ],
-            [
-                'id' => 'pro',
-                'name' => 'Pro Premium',
-                'price' => 9.99,
-                'features' => ['All Basic features', 'Priority support', 'Advanced analytics']
-            ]
-        ];
+        $plans = $this->premiumService->getPlans();
 
         return response()->json(['plans' => $plans]);
     }
 
     public function subscribe(PremiumSubscriptionRequest $request): JsonResponse
     {
-        $validated = $request->validated();
-        
-        // TODO: Implement subscription logic
-        
+        $this->authorize('create', PremiumSubscription::class);
+
+        $subscription = $this->premiumService->subscribe(
+            auth()->user(),
+            $request->validated()
+        );
+
         return response()->json([
             'message' => 'Subscription successful',
-            'subscription_id' => uniqid()
-        ]);
+            'data' => new PremiumResource($subscription),
+        ], 201);
     }
 
-    public function cancel(Request $request): JsonResponse
+    public function cancel(PremiumSubscription $subscription): JsonResponse
     {
-        // TODO: Implement cancellation logic
-        
-        return response()->json([
-            'message' => 'Subscription cancelled successfully'
-        ]);
+        $this->authorize('cancel', $subscription);
+
+        $this->premiumService->cancel($subscription);
+
+        return response()->json(['message' => 'Subscription cancelled successfully']);
     }
 
     public function getStatus(): JsonResponse
     {
-        $user = auth()->user();
-        
-        // TODO: Get actual subscription status
-        
+        $this->authorize('viewAny', PremiumSubscription::class);
+
+        $subscription = $this->premiumService->getStatus(auth()->user());
+
         return response()->json([
-            'is_premium' => false,
-            'plan' => null,
-            'expires_at' => null
+            'data' => $subscription ? new PremiumResource($subscription) : null,
         ]);
     }
 }

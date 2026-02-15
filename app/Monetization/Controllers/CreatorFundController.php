@@ -4,9 +4,10 @@ namespace App\Monetization\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreatorFundRequest;
+use App\Http\Resources\CreatorFundResource;
+use App\Monetization\Models\CreatorFund;
 use App\Monetization\Services\CreatorFundService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class CreatorFundController extends Controller
 {
@@ -17,6 +18,8 @@ class CreatorFundController extends Controller
 
     public function getAnalytics(): JsonResponse
     {
+        $this->authorize('viewAny', CreatorFund::class);
+
         $analytics = $this->creatorFundService->getCreatorAnalytics(auth()->user());
 
         return response()->json(['data' => $analytics]);
@@ -24,6 +27,8 @@ class CreatorFundController extends Controller
 
     public function calculateEarnings(CreatorFundRequest $request): JsonResponse
     {
+        $this->authorize('viewAny', CreatorFund::class);
+
         $validated = $request->validated();
 
         $earnings = $this->creatorFundService->calculateMonthlyEarnings(
@@ -33,39 +38,42 @@ class CreatorFundController extends Controller
         );
 
         return response()->json([
-            'message' => 'Earnings calculated successfully', 
+            'message' => 'Earnings calculated successfully',
             'data' => [
                 'month' => $validated['month'],
                 'year' => $validated['year'],
-                'earnings' => $earnings
-            ]
+                'earnings' => $earnings,
+            ],
         ]);
     }
 
     public function getEarningsHistory(): JsonResponse
     {
+        $this->authorize('viewAny', CreatorFund::class);
+
         $history = auth()->user()->creatorFunds()
             ->orderBy('year', 'desc')
             ->orderBy('month', 'desc')
             ->limit(12)
             ->get();
 
-        return response()->json(['data' => $history]);
+        return response()->json(['data' => CreatorFundResource::collection($history)]);
     }
 
     public function requestPayout(CreatorFundRequest $request): JsonResponse
     {
+        $this->authorize('requestPayout', CreatorFund::class);
+
         $validated = $request->validated();
         $user = auth()->user();
 
-        // Setup payout method
         $user->update([
             'payout_method' => $validated['payout_method'],
             'payout_details' => [
                 'bank_details' => $validated['bank_details'] ?? null,
                 'paypal_email' => $validated['paypal_email'] ?? null,
                 'crypto_wallet' => $validated['crypto_wallet'] ?? null,
-            ]
+            ],
         ]);
 
         return response()->json(['message' => 'Payout request submitted successfully']);

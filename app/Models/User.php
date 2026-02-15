@@ -294,6 +294,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(\App\Monetization\Models\CreatorFund::class, 'creator_id');
     }
 
+    public function advertisements()
+    {
+        return $this->hasMany(\App\Monetization\Models\Advertisement::class, 'advertiser_id');
+    }
+
+    public function premiumSubscriptions()
+    {
+        return $this->hasMany(PremiumSubscription::class);
+    }
+
     public function communities()
     {
         return $this->belongsToMany(Community::class, 'community_members')

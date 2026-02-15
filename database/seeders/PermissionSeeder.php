@@ -86,6 +86,21 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'abtest.manage', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'abtest.delete', 'guard_name' => 'sanctum']);
 
+        // Monetization - Advertisements
+        Permission::create(['name' => 'advertisement.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'advertisement.create', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'advertisement.manage', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'advertisement.delete', 'guard_name' => 'sanctum']);
+
+        // Monetization - Creator Fund
+        Permission::create(['name' => 'creatorfund.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'creatorfund.payout', 'guard_name' => 'sanctum']);
+
+        // Monetization - Premium
+        Permission::create(['name' => 'premium.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'premium.subscribe', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'premium.cancel', 'guard_name' => 'sanctum']);
+
         // Admin
         Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
@@ -151,6 +166,8 @@ class PermissionSeeder extends Seeder
             'realtime.users.view',
             'realtime.timeline.view',
             'report.create',
+            'creatorfund.view',
+            'creatorfund.payout',
         ]);
 
         $premium = Role::findByName('premium', 'sanctum');
@@ -189,6 +206,11 @@ class PermissionSeeder extends Seeder
             'analytics.view',
             'thread.create.long',
             'media.upload.hd',
+            'creatorfund.view',
+            'creatorfund.payout',
+            'premium.view',
+            'premium.subscribe',
+            'premium.cancel',
         ]);
 
         $moderator = Role::findByName('moderator', 'sanctum');
@@ -221,6 +243,6 @@ class PermissionSeeder extends Seeder
         $admin = Role::findByName('admin', 'sanctum');
         $admin->syncPermissions(Permission::where('guard_name', 'sanctum')->pluck('name'));
 
-        echo "\nA/B Testing permissions created successfully!\n";
+        echo "\nMonetization permissions created successfully!\n";
     }
 }
