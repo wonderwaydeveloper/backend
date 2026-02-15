@@ -462,14 +462,14 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     // Moments Routes
     Route::prefix('moments')->group(function () {
         Route::get('/', [MomentController::class, 'index']);
-        Route::post('/', [MomentController::class, 'store']);
+        Route::post('/', [MomentController::class, 'store'])->middleware('permission:moment.create');
         Route::get('/featured', [MomentController::class, 'featured']);
         Route::get('/my-moments', [MomentController::class, 'myMoments']);
         Route::get('/{moment}', [MomentController::class, 'show']);
-        Route::put('/{moment}', [MomentController::class, 'update']);
-        Route::delete('/{moment}', [MomentController::class, 'destroy']);
-        Route::post('/{moment}/posts', [MomentController::class, 'addPost']);
-        Route::delete('/{moment}/posts/{post}', [MomentController::class, 'removePost']);
+        Route::put('/{moment}', [MomentController::class, 'update'])->middleware('permission:moment.edit.own');
+        Route::delete('/{moment}', [MomentController::class, 'destroy'])->middleware('permission:moment.delete.own');
+        Route::post('/{moment}/posts', [MomentController::class, 'addPost'])->middleware('permission:moment.manage.posts');
+        Route::delete('/{moment}/posts/{post}', [MomentController::class, 'removePost'])->middleware('permission:moment.manage.posts');
     });
 
     // A/B Testing

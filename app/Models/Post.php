@@ -313,6 +313,14 @@ class Post extends Model
         return $this->hasMany(CommunityNote::class);
     }
 
+    public function moments()
+    {
+        return $this->belongsToMany(Moment::class, 'moment_posts')
+            ->withPivot('position')
+            ->withTimestamps()
+            ->orderBy('moment_posts.position');
+    }
+
     public function approvedCommunityNotes()
     {
         return $this->hasMany(CommunityNote::class)->approved();

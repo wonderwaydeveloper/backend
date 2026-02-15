@@ -7,81 +7,53 @@ use App\Http\Requests\MomentRequest;
 use App\Http\Resources\MomentResource;
 use App\Models\Moment;
 use App\Models\Post;
+use App\Services\MomentService;
 use Illuminate\Http\Request;
 
 class MomentController extends Controller
 {
+    public function __construct(private MomentService $momentService)
+    {
+    }
     public function index(Request $request)
     {
-        $moments = Moment::public()
-            ->with(['user:id,name,username,avatar'])
-            ->withCount('posts')
-            ->when($request->featured, fn ($q) => $q->featured())
-            ->latest()
-            ->paginate(20);
-
+        $moments = $this->momentService->getPublicMoments($request->boolean('featured'));
         return MomentResource::collection($moments);
     }
 
     public function store(MomentRequest $request)
     {
-        $validated = $request->validated();
-
-        $moment = Moment::create([
-            'user_id' => $request->user()->id,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'privacy' => $validated['privacy'] ?? 'public',
-            'cover_image' => $request->hasFile('cover_image')
-                ? $request->file('cover_image')->store('moments', 'public')
-                : null,
-        ]);
-
-        // Add posts to moment if provided
-        if (isset($validated['post_ids']) && is_array($validated['post_ids'])) {
-            foreach ($validated['post_ids'] as $index => $postId) {
-                $moment->addPost($postId, $index);
-            }
+        $data = $request->validated();
+        
+        if ($request->hasFile('cover_image')) {
+            $data['cover_image'] = $request->file('cover_image')->store('moments', 'public');
         }
 
-        $moment->load('creator', 'posts');
-
+        $moment = $this->momentService->createMoment($request->user(), $data);
         return new MomentResource($moment);
     }
 
     public function show(Moment $moment)
     {
-        if ($moment->privacy === 'private' && $moment->user_id !== auth()->id()) {
+        try {
+            $moment = $this->momentService->getMoment($moment, auth()->user());
+            return new MomentResource($moment);
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Moment not found'], 404);
         }
-
-        $moment->load([
-            'user:id,name,username,avatar',
-            'posts.user:id,name,username,avatar',
-            'posts.hashtags:id,name,slug',
-        ])->loadCount('posts');
-
-        $moment->incrementViews();
-
-        return new MomentResource($moment);
     }
 
     public function update(MomentRequest $request, Moment $moment)
     {
         $this->authorize('update', $moment);
-
-        $validated = $request->validated();
-        $moment->update($validated);
-
+        $moment = $this->momentService->updateMoment($moment, $request->validated());
         return new MomentResource($moment);
     }
 
     public function destroy(Moment $moment)
     {
         $this->authorize('delete', $moment);
-
-        $moment->delete();
-
+        $this->momentService->deleteMoment($moment);
         return response()->json(['message' => 'Moment deleted successfully']);
     }
 
@@ -94,49 +66,35 @@ class MomentController extends Controller
             'position' => 'nullable|integer|min:0',
         ]);
 
-        if ($moment->posts()->where('post_id', $request->post_id)->exists()) {
-            return response()->json(['message' => 'Post already in moment'], 409);
+        try {
+            $this->momentService->addPostToMoment($moment, $request->post_id, $request->position);
+            return response()->json(['message' => 'Post added to moment']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 409);
         }
-
-        $moment->addPost($request->post_id, $request->position);
-
-        return response()->json(['message' => 'Post added to moment']);
     }
 
     public function removePost(Request $request, Moment $moment, Post $post)
     {
         $this->authorize('update', $moment);
 
-        if (! $moment->posts()->where('post_id', $post->id)->exists()) {
-            return response()->json(['message' => 'Post not in moment'], 404);
+        try {
+            $this->momentService->removePostFromMoment($moment, $post->id);
+            return response()->json(['message' => 'Post removed from moment']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 404);
         }
-
-        $moment->removePost($post->id);
-
-        return response()->json(['message' => 'Post removed from moment']);
     }
 
     public function myMoments(Request $request)
     {
-        $moments = $request->user()
-            ->moments()
-            ->withCount('posts')
-            ->latest()
-            ->paginate(20);
-
+        $moments = $this->momentService->getUserMoments($request->user());
         return MomentResource::collection($moments);
     }
 
     public function featured()
     {
-        $moments = Moment::public()
-            ->featured()
-            ->with(['user:id,name,username,avatar'])
-            ->withCount('posts')
-            ->latest()
-            ->limit(10)
-            ->get();
-
+        $moments = $this->momentService->getFeaturedMoments();
         return MomentResource::collection($moments);
     }
 }

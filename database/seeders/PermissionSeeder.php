@@ -57,6 +57,12 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'community.moderate.own', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'community.post', 'guard_name' => 'sanctum']);
 
+        // Moments
+        Permission::create(['name' => 'moment.create', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'moment.edit.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'moment.delete.own', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'moment.manage.posts', 'guard_name' => 'sanctum']);
+
         // Moderation
         Permission::create(['name' => 'user.ban', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'user.suspend', 'guard_name' => 'sanctum']);
@@ -97,6 +103,10 @@ class PermissionSeeder extends Seeder
             'list.edit.own',
             'list.delete.own',
             'community.post',
+            'moment.create',
+            'moment.edit.own',
+            'moment.delete.own',
+            'moment.manage.posts',
             'report.create',
         ]);
 
@@ -119,6 +129,10 @@ class PermissionSeeder extends Seeder
             'list.edit.own',
             'list.delete.own',
             'community.post',
+            'moment.create',
+            'moment.edit.own',
+            'moment.delete.own',
+            'moment.manage.posts',
             'report.create',
         ]);
 
@@ -147,6 +161,10 @@ class PermissionSeeder extends Seeder
             'community.create',
             'community.moderate.own',
             'community.post',
+            'moment.create',
+            'moment.edit.own',
+            'moment.delete.own',
+            'moment.manage.posts',
             'report.create',
             'analytics.view',
             'thread.create.long',
