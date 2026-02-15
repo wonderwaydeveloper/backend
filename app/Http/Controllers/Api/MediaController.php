@@ -50,8 +50,9 @@ class MediaController extends Controller
     {
         $this->authorize('create', Media::class);
 
+        $maxSize = config('media.max_file_size.video') / 1024; // Convert to KB
         $request->validate([
-            'video' => 'required|file|mimes:mp4,mov,avi|max:524288',
+            'video' => "required|file|mimes:mp4,mov,avi|max:{$maxSize}",
             'type' => 'in:post,story',
         ]);
 
@@ -68,8 +69,9 @@ class MediaController extends Controller
     {
         $this->authorize('create', Media::class);
 
+        $maxSize = config('media.max_file_size.document') / 1024; // Convert to KB
         $request->validate([
-            'document' => 'required|file|mimes:pdf,doc,docx|max:10240',
+            'document' => "required|file|mimes:pdf,doc,docx|max:{$maxSize}",
         ]);
 
         $media = $this->mediaService->uploadDocument(

@@ -37,7 +37,7 @@ use App\Http\Controllers\Api\PerformanceDashboardController;
 use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\ConversionController;
 use App\Http\Controllers\Api\SuggestionController;
-use App\Http\Controllers\Api\SubscriptionController;
+
 use App\Http\Controllers\Api\TrendingController;
 use App\Http\Controllers\Api\SpaceController;
 use App\Http\Controllers\Api\PushNotificationController;
@@ -293,11 +293,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/unread-count', [MessageController::class, 'unreadCount']);
     });
 
-    Route::get('/subscription/plans', [SubscriptionController::class, 'plans']);
-    Route::get('/subscription/current', [SubscriptionController::class, 'current']);
-    Route::post('/subscription/subscribe', [SubscriptionController::class, 'subscribe']);
-    Route::post('/subscription/cancel', [SubscriptionController::class, 'cancel']);
-    Route::get('/subscription/history', [SubscriptionController::class, 'history']);
+
 
     // Hashtag Routes - Twitter Standard Rate Limits
     Route::prefix('hashtags')->group(function () {

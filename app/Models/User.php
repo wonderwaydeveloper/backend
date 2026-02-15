@@ -202,21 +202,21 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Notification::class);
     }
 
-    public function subscriptions()
+    public function premiumSubscriptions()
     {
-        return $this->hasMany(Subscription::class);
+        return $this->hasMany(PremiumSubscription::class);
     }
 
-    public function activeSubscription()
+    public function activePremiumSubscription()
     {
-        return $this->hasOne(Subscription::class)
+        return $this->hasOne(PremiumSubscription::class)
             ->where('status', 'active')
             ->where('ends_at', '>', now());
     }
 
     public function isPremium()
     {
-        return $this->is_premium && $this->activeSubscription()->exists();
+        return $this->is_premium && $this->activePremiumSubscription()->exists();
     }
 
     public function bookmarks()
@@ -297,11 +297,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function advertisements()
     {
         return $this->hasMany(\App\Monetization\Models\Advertisement::class, 'advertiser_id');
-    }
-
-    public function premiumSubscriptions()
-    {
-        return $this->hasMany(PremiumSubscription::class);
     }
 
     public function communities()
