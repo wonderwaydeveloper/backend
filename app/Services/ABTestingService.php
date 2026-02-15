@@ -2,23 +2,34 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\{ABTest, ABTestEvent, ABTestParticipant, User};
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class ABTestingService
 {
-    public function assignUserToTest($testName, User $user)
+    public function createTest(array $data): ABTest
+    {
+        return ABTest::create([
+            'name' => $data['name'],
+            'description' => $data['description'] ?? null,
+            'variants' => $data['variants'],
+            'traffic_percentage' => $data['traffic_percentage'] ?? 50,
+            'targeting_rules' => $data['targeting_rules'] ?? null,
+            'starts_at' => $data['starts_at'] ?? null,
+            'ends_at' => $data['ends_at'] ?? null,
+            'status' => 'draft',
+        ]);
+    }
+
+    public function assignUserToTest(string $testName, User $user): ?string
     {
         $test = $this->getActiveTest($testName);
 
-        if (! $test) {
+        if (!$test) {
             return null;
         }
 
-        // Check if user already assigned
-        $existing = DB::table('ab_test_participants')
-            ->where('ab_test_id', $test['id'])
+        $existing = ABTestParticipant::where('ab_test_id', $test->id)
             ->where('user_id', $user->id)
             ->first();
 
@@ -26,16 +37,15 @@ class ABTestingService
             return $existing->variant;
         }
 
-        // Check traffic percentage
-        if (rand(1, 100) > $test['traffic_percentage']) {
-            return null; // User not in test
+        if (rand(1, 100) > $test->traffic_percentage) {
+            return null;
         }
 
-        // Assign variant (50/50 split)
-        $variant = (crc32($user->id . $test['name']) % 2) ? 'A' : 'B';
+        $variants = array_keys($test->variants);
+        $variant = $variants[crc32($user->id . $test->name) % count($variants)];
 
-        DB::table('ab_test_participants')->insert([
-            'ab_test_id' => $test['id'],
+        ABTestParticipant::create([
+            'ab_test_id' => $test->id,
             'user_id' => $user->id,
             'variant' => $variant,
             'assigned_at' => now(),
@@ -44,59 +54,43 @@ class ABTestingService
         return $variant;
     }
 
-    public function trackEvent($testName, User $user, $eventType, $eventData = null)
+    public function trackEvent(string $testName, User $user, string $eventType, ?array $eventData = null): bool
     {
         $test = $this->getActiveTest($testName);
 
-        if (! $test) {
+        if (!$test) {
             return false;
         }
 
-        $participant = DB::table('ab_test_participants')
-            ->where('ab_test_id', $test['id'])
+        $participant = ABTestParticipant::where('ab_test_id', $test->id)
             ->where('user_id', $user->id)
             ->first();
 
-        if (! $participant) {
+        if (!$participant) {
             return false;
         }
 
-        DB::table('ab_test_events')->insert([
-            'ab_test_id' => $test['id'],
+        ABTestEvent::create([
+            'ab_test_id' => $test->id,
             'user_id' => $user->id,
             'variant' => $participant->variant,
             'event_type' => $eventType,
-            'event_data' => $eventData ? json_encode($eventData) : null,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'event_data' => $eventData,
         ]);
 
         return true;
     }
 
-    public function getTestResults($testId)
+    public function getTestResults(ABTest $test): array
     {
-        $test = DB::table('ab_tests')->find($testId);
-
-        if (! $test) {
-            return null;
-        }
-
-        $results = DB::table('ab_test_events')
-            ->select([
-                'variant',
-                'event_type',
-                DB::raw('COUNT(*) as count'),
-                DB::raw('COUNT(DISTINCT user_id) as unique_users'),
-            ])
-            ->where('ab_test_id', $testId)
+        $results = ABTestEvent::where('ab_test_id', $test->id)
+            ->selectRaw('variant, event_type, COUNT(*) as count, COUNT(DISTINCT user_id) as unique_users')
             ->groupBy(['variant', 'event_type'])
             ->get()
             ->groupBy('variant');
 
-        $participants = DB::table('ab_test_participants')
-            ->select(['variant', DB::raw('COUNT(*) as total')])
-            ->where('ab_test_id', $testId)
+        $participants = ABTestParticipant::where('ab_test_id', $test->id)
+            ->selectRaw('variant, COUNT(*) as total')
             ->groupBy('variant')
             ->pluck('total', 'variant');
 
@@ -105,14 +99,34 @@ class ABTestingService
             'participants' => $participants,
             'results' => $results,
             'conversion_rates' => $this->calculateConversionRates($results, $participants),
+            'statistical_significance' => $this->calculateStatisticalSignificance($results, $participants),
         ];
     }
 
-    private function getActiveTest($testName)
+    public function startTest(ABTest $test): void
+    {
+        $test->update([
+            'status' => 'active',
+            'starts_at' => now(),
+        ]);
+
+        Cache::forget("ab_test_{$test->name}");
+    }
+
+    public function stopTest(ABTest $test): void
+    {
+        $test->update([
+            'status' => 'completed',
+            'ends_at' => now(),
+        ]);
+
+        Cache::forget("ab_test_{$test->name}");
+    }
+
+    private function getActiveTest(string $testName): ?ABTest
     {
         return Cache::remember("ab_test_{$testName}", 300, function () use ($testName) {
-            $test = DB::table('ab_tests')
-                ->where('name', $testName)
+            return ABTest::where('name', $testName)
                 ->where('status', 'active')
                 ->where('starts_at', '<=', now())
                 ->where(function ($q) {
@@ -120,64 +134,67 @@ class ABTestingService
                       ->orWhere('ends_at', '>', now());
                 })
                 ->first();
-
-            return $test ? (array) $test : null;
         });
     }
 
-    private function calculateConversionRates($results, $participants)
+    private function calculateConversionRates($results, $participants): array
     {
         $rates = [];
 
-        foreach (['A', 'B'] as $variant) {
-            $totalParticipants = $participants->get($variant, 0);
-            $conversions = $results->get($variant, collect())->where('event_type', 'conversion')->first();
+        foreach ($participants as $variant => $total) {
+            $conversions = $results->get($variant, collect())
+                ->where('event_type', 'conversion')
+                ->first();
+            
             $conversionCount = $conversions ? $conversions->unique_users : 0;
 
-            $rates[$variant] = $totalParticipants > 0
-                ? round(($conversionCount / $totalParticipants) * 100, 2)
+            $rates[$variant] = $total > 0
+                ? round(($conversionCount / $total) * 100, 2)
                 : 0;
         }
 
         return $rates;
     }
 
-    public function createTest($name, $description, $variants, $trafficPercentage = 50)
+    private function calculateStatisticalSignificance($results, $participants): array
     {
-        return DB::table('ab_tests')->insertGetId([
-            'name' => $name,
-            'description' => $description,
-            'variants' => json_encode($variants),
-            'traffic_percentage' => $trafficPercentage,
-            'status' => 'draft',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
+        if ($participants->count() < 2) {
+            return ['significant' => false, 'confidence' => 0];
+        }
 
-    public function startTest($testId)
-    {
-        DB::table('ab_tests')
-            ->where('id', $testId)
-            ->update([
-                'status' => 'active',
-                'starts_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $variants = $participants->keys()->toArray();
+        $variantA = $variants[0];
+        $variantB = $variants[1];
 
-        Cache::forget("ab_test_*");
-    }
+        $conversionsA = $results->get($variantA, collect())
+            ->where('event_type', 'conversion')
+            ->first()?->unique_users ?? 0;
+        $conversionsB = $results->get($variantB, collect())
+            ->where('event_type', 'conversion')
+            ->first()?->unique_users ?? 0;
 
-    public function stopTest($testId)
-    {
-        DB::table('ab_tests')
-            ->where('id', $testId)
-            ->update([
-                'status' => 'completed',
-                'ends_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $totalA = $participants->get($variantA, 0);
+        $totalB = $participants->get($variantB, 0);
 
-        Cache::forget("ab_test_*");
+        if ($totalA < 100 || $totalB < 100) {
+            return ['significant' => false, 'confidence' => 0, 'message' => 'Insufficient sample size'];
+        }
+
+        $pA = $totalA > 0 ? $conversionsA / $totalA : 0;
+        $pB = $totalB > 0 ? $conversionsB / $totalB : 0;
+        $pPool = ($conversionsA + $conversionsB) / ($totalA + $totalB);
+
+        $se = sqrt($pPool * (1 - $pPool) * (1/$totalA + 1/$totalB));
+        $zScore = $se > 0 ? abs($pA - $pB) / $se : 0;
+
+        $significant = $zScore > 1.96;
+        $confidence = min(99.9, (1 - exp(-$zScore * $zScore / 2)) * 100);
+
+        return [
+            'significant' => $significant,
+            'confidence' => round($confidence, 2),
+            'z_score' => round($zScore, 4),
+            'winner' => $pA > $pB ? $variantA : $variantB,
+        ];
     }
 }

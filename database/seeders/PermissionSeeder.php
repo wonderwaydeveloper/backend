@@ -80,6 +80,12 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'thread.create.long', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'media.upload.hd', 'guard_name' => 'sanctum']);
 
+        // A/B Testing
+        Permission::create(['name' => 'abtest.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'abtest.create', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'abtest.manage', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'abtest.delete', 'guard_name' => 'sanctum']);
+
         // Admin
         Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
@@ -214,5 +220,7 @@ class PermissionSeeder extends Seeder
 
         $admin = Role::findByName('admin', 'sanctum');
         $admin->syncPermissions(Permission::where('guard_name', 'sanctum')->pluck('name'));
+
+        echo "\nA/B Testing permissions created successfully!\n";
     }
 }

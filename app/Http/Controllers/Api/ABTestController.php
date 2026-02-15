@@ -3,83 +3,71 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ABTestRequest;
+use App\Http\Resources\ABTestResource;
+use App\Models\ABTest;
 use App\Services\ABTestingService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\{JsonResponse, Request};
 
 class ABTestController extends Controller
 {
-    private $abTestingService;
+    public function __construct(
+        private ABTestingService $abTestingService
+    ) {}
 
-    public function __construct(ABTestingService $abTestingService)
+    public function index(): JsonResponse
     {
-        $this->abTestingService = $abTestingService;
-    }
-
-    public function index()
-    {
-        $tests = DB::table('ab_tests')
-            ->select(['id', 'name', 'description', 'status', 'traffic_percentage', 'starts_at', 'ends_at'])
+        $this->authorize('viewAny', ABTest::class);
+        
+        $tests = ABTest::select(['id', 'name', 'description', 'status', 'traffic_percentage', 'starts_at', 'ends_at'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        return response()->json($tests);
+        return response()->json(ABTestResource::collection($tests));
     }
 
-    public function store(Request $request)
+    public function store(ABTestRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:100|unique:ab_tests,name',
-            'description' => 'nullable|string|max:500',
-            'variants' => 'required|array',
-            'variants.A' => 'required|array',
-            'variants.B' => 'required|array',
-            'traffic_percentage' => 'integer|min:1|max:100',
-        ]);
-
-        $testId = $this->abTestingService->createTest(
-            $request->name,
-            $request->description,
-            $request->variants,
-            $request->input('traffic_percentage', 50)
-        );
+        $this->authorize('create', ABTest::class);
+        
+        $test = $this->abTestingService->createTest($request->validated());
 
         return response()->json([
             'message' => 'A/B test created successfully',
-            'test_id' => $testId,
+            'data' => new ABTestResource($test),
         ], 201);
     }
 
-    public function show($id)
+    public function show(ABTest $test): JsonResponse
     {
-        $results = $this->abTestingService->getTestResults($id);
-
-        if (! $results) {
-            return response()->json(['message' => 'Test not found'], 404);
-        }
+        $this->authorize('view', $test);
+        
+        $results = $this->abTestingService->getTestResults($test);
 
         return response()->json($results);
     }
 
-    public function start(Request $request, $id)
+    public function start(ABTest $test): JsonResponse
     {
-        $this->abTestingService->startTest($id);
+        $this->authorize('manage', $test);
+        
+        $this->abTestingService->startTest($test);
 
         return response()->json(['message' => 'Test started successfully']);
     }
 
-    public function stop(Request $request, $id)
+    public function stop(ABTest $test): JsonResponse
     {
-        $this->abTestingService->stopTest($id);
+        $this->authorize('manage', $test);
+        
+        $this->abTestingService->stopTest($test);
 
         return response()->json(['message' => 'Test stopped successfully']);
     }
 
-    public function assign(Request $request)
+    public function assign(Request $request): JsonResponse
     {
-        $request->validate([
-            'test_name' => 'required|string',
-        ]);
+        $request->validate(['test_name' => 'required|string']);
 
         $variant = $this->abTestingService->assignUserToTest(
             $request->test_name,
@@ -92,11 +80,11 @@ class ABTestController extends Controller
         ]);
     }
 
-    public function track(Request $request)
+    public function track(Request $request): JsonResponse
     {
         $request->validate([
             'test_name' => 'required|string',
-            'event_type' => 'required|string',
+            'event_type' => 'required|string|in:view,click,conversion,signup,purchase',
             'event_data' => 'nullable|array',
         ]);
 

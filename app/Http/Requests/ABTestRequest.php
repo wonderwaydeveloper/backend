@@ -14,15 +14,17 @@ class ABTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:100',
-            'description' => 'nullable|string|max:300',
-            'variants' => 'required|array|min:2|max:5',
-            'variants.*.name' => 'required|string|max:50',
-            'variants.*.weight' => 'required|integer|min:1|max:100',
-            'target_audience' => 'nullable|array',
-            'start_date' => 'nullable|date|after:now',
-            'end_date' => 'nullable|date|after:start_date',
-            'success_metric' => 'required|string|max:50'
+            'name' => 'required|string|max:100|unique:ab_tests,name',
+            'description' => 'nullable|string|max:500',
+            'variants' => 'required|array|min:2|max:4',
+            'variants.A' => 'required|array',
+            'variants.B' => 'required|array',
+            'variants.C' => 'sometimes|array',
+            'variants.D' => 'sometimes|array',
+            'traffic_percentage' => 'integer|min:1|max:100',
+            'targeting_rules' => 'nullable|array',
+            'starts_at' => 'nullable|date|after:now',
+            'ends_at' => 'nullable|date|after:starts_at',
         ];
     }
 }
