@@ -132,6 +132,10 @@ Route::prefix('auth')->group(function () {
         ->middleware('throttle:5,1'); // 5 attempts per minute
     Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode'])
         ->middleware('throttle:3,1'); // 3 attempts per minute
+    Route::post('/register-device', [DeviceController::class, 'register'])
+        ->middleware('throttle:10,1'); // 10 attempts per minute
+    Route::delete('/unregister-device/{token}', [DeviceController::class, 'unregister'])
+        ->middleware('auth:sanctum');
     
     // Age Verification
     Route::post('/complete-age-verification', [UnifiedAuthController::class, 'completeAgeVerification'])->middleware('auth:sanctum');
@@ -268,18 +272,15 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     
     Route::get('/suggestions/users', [SuggestionController::class, 'users'])->middleware('throttle:180,15'); // Twitter: 180/15min
 
-    Route::post('/devices/register', [DeviceController::class, 'register']);
-    Route::delete('/devices/{token}', [DeviceController::class, 'unregister']);
-    
-    // Device management
+    // Device Management Routes
     Route::prefix('devices')->group(function () {
-        Route::post('/advanced/register', [DeviceController::class, 'registerAdvanced']);
-        Route::get('/list', [DeviceController::class, 'list']);
+        Route::post('/register', [DeviceController::class, 'registerAdvanced']);
+        Route::get('/', [DeviceController::class, 'list']);
         Route::get('/{device}/activity', [DeviceController::class, 'getActivity']);
         Route::post('/{device}/trust', [DeviceController::class, 'trust']);
-        Route::delete('/{device}/revoke', [DeviceController::class, 'revoke']);
+        Route::delete('/{device}', [DeviceController::class, 'revoke']);
         Route::post('/revoke-all', [DeviceController::class, 'revokeAll']);
-        Route::get('/security-check', [DeviceController::class, 'checkSuspiciousActivity']);
+        Route::get('/suspicious-activity', [DeviceController::class, 'checkSuspiciousActivity']);
     });
 
 

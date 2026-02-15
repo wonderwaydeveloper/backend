@@ -112,6 +112,14 @@ class PermissionSeeder extends Seeder
         Permission::create(['name' => 'autoscaling.predict', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'autoscaling.manage', 'guard_name' => 'sanctum']);
 
+        // Device Management
+        Permission::create(['name' => 'device.view', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'device.register', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'device.trust', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'device.revoke', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'device.manage', 'guard_name' => 'sanctum']);
+        Permission::create(['name' => 'device.security', 'guard_name' => 'sanctum']);
+
         // Admin
         Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
         Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
@@ -148,6 +156,10 @@ class PermissionSeeder extends Seeder
             'realtime.users.view',
             'realtime.timeline.view',
             'report.create',
+            'device.view',
+            'device.register',
+            'device.trust',
+            'device.revoke',
         ]);
 
         $verified = Role::findByName('verified', 'sanctum');
@@ -179,6 +191,10 @@ class PermissionSeeder extends Seeder
             'report.create',
             'creatorfund.view',
             'creatorfund.payout',
+            'device.view',
+            'device.register',
+            'device.trust',
+            'device.revoke',
         ]);
 
         $premium = Role::findByName('premium', 'sanctum');
@@ -224,6 +240,12 @@ class PermissionSeeder extends Seeder
             'premium.cancel',
             'performance.view',
             'monitoring.view',
+            'device.view',
+            'device.register',
+            'device.trust',
+            'device.revoke',
+            'device.manage',
+            'device.security',
         ]);
 
         $moderator = Role::findByName('moderator', 'sanctum');
@@ -256,6 +278,6 @@ class PermissionSeeder extends Seeder
         $admin = Role::findByName('admin', 'sanctum');
         $admin->syncPermissions(Permission::where('guard_name', 'sanctum')->pluck('name'));
 
-        echo "\nPerformance & Monitoring permissions created successfully!\n";
+        echo "\nDevice Management permissions created successfully!\n";
     }
 }

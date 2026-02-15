@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\{User, DeviceToken};
 use App\Services\{DeviceFingerprintService, EmailService};
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
+use App\Http\Requests\{RegisterDeviceRequest, AdvancedDeviceRequest, TrustDeviceRequest};
+use App\Http\Resources\DeviceResource;
+use Illuminate\Http\{Request, JsonResponse};
+use Illuminate\Support\Facades\{Cache, Hash, DB};
 use Illuminate\Support\Str;
 
 class DeviceController extends Controller
@@ -18,17 +18,15 @@ class DeviceController extends Controller
         private \App\Services\RateLimitingService $rateLimiter,
         private \App\Services\SessionTimeoutService $timeoutService,
         private \App\Services\VerificationCodeService $verificationCodeService
-    ) {}
+    ) {
+        $this->middleware('auth:sanctum');
+    }
     /**
      * Register a new device (simple registration)
      */
-    public function register(Request $request)
+    public function register(RegisterDeviceRequest $request): JsonResponse
     {
-        $request->validate([
-            'token' => 'required|string',
-            'platform' => 'required|in:ios,android,web',
-            'device_name' => 'nullable|string|max:255',
-        ]);
+        $this->authorize('register', DeviceToken::class);
 
         $fingerprint = DeviceFingerprintService::generate($request);
 
@@ -49,7 +47,7 @@ class DeviceController extends Controller
         );
 
         return response()->json([
-            'device_id' => $device->id,
+            'device' => new DeviceResource($device),
             'requires_verification' => !$device->is_trusted,
             'message' => 'Device registered successfully',
         ]);
@@ -58,15 +56,9 @@ class DeviceController extends Controller
     /**
      * Advanced device registration with detailed info
      */
-    public function registerAdvanced(Request $request)
+    public function registerAdvanced(AdvancedDeviceRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'type' => 'required|in:mobile,desktop,tablet',
-            'browser' => 'nullable|string',
-            'os' => 'nullable|string',
-            'push_token' => 'nullable|string'
-        ]);
+        $this->authorize('register', DeviceToken::class);
 
         $fingerprint = DeviceFingerprintService::generate($request);
         
@@ -91,7 +83,7 @@ class DeviceController extends Controller
         );
 
         return response()->json([
-            'device_id' => $device->id,
+            'device' => new DeviceResource($device),
             'requires_verification' => !$device->is_trusted
         ]);
     }
@@ -99,8 +91,9 @@ class DeviceController extends Controller
     /**
      * List user devices with current device detection
      */
-    public function list(Request $request)
+    public function list(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', DeviceToken::class);
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
         $devices = $request->user()->devices()
@@ -113,21 +106,21 @@ class DeviceController extends Controller
                 return $device;
             });
 
-        return response()->json($devices);
+        return response()->json(DeviceResource::collection($devices));
     }
 
     /**
      * Trust a device
      */
-    public function trust(Request $request, $deviceId)
+    public function trust(TrustDeviceRequest $request, $deviceId): JsonResponse
     {
-        $request->validate(['password' => 'required']);
+        $device = $request->user()->devices()->findOrFail($deviceId);
+        $this->authorize('trust', $device);
 
         if (!Hash::check($request->password, $request->user()->password)) {
             return response()->json(['error' => 'Invalid password'], 422);
         }
 
-        $device = $request->user()->devices()->findOrFail($deviceId);
         $device->update(['is_trusted' => true]);
 
         return response()->json(['message' => 'Device trusted successfully']);
@@ -136,8 +129,9 @@ class DeviceController extends Controller
     /**
      * Revoke a single device with security checks
      */
-    public function revoke(Request $request, $deviceId)
+    public function revoke(Request $request, $deviceId): JsonResponse
     {
+        $this->authorize('revoke', DeviceToken::class);
         $device = $request->user()->devices()->findOrFail($deviceId);
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
@@ -171,8 +165,10 @@ class DeviceController extends Controller
     /**
      * Revoke all devices except current
      */
-    public function revokeAll(Request $request)
+    public function revokeAll(Request $request): JsonResponse
     {
+        $this->authorize('revoke', DeviceToken::class);
+        
         $request->validate(['password' => 'required']);
 
         if (!Hash::check($request->password, $request->user()->password)) {
@@ -202,7 +198,7 @@ class DeviceController extends Controller
     /**
      * Verify device for authentication
      */
-    public function verifyDevice(Request $request)
+    public function verifyDevice(Request $request): JsonResponse
     {
         $request->validate([
             'code' => 'required|string|size:6',
@@ -297,7 +293,7 @@ class DeviceController extends Controller
     /**
      * Resend device verification code
      */
-    public function resendDeviceCode(Request $request)
+    public function resendDeviceCode(Request $request): JsonResponse
     {
         $request->validate([
             'fingerprint' => 'required|string',
@@ -377,8 +373,9 @@ class DeviceController extends Controller
     /**
      * Get device activity history
      */
-    public function getActivity(Request $request, $deviceId)
+    public function getActivity(Request $request, $deviceId): JsonResponse
     {
+        $this->authorize('view', DeviceToken::class);
         $device = $request->user()->devices()->findOrFail($deviceId);
         
         // Get security events for this device
@@ -397,8 +394,9 @@ class DeviceController extends Controller
     /**
      * Check for suspicious device activity
      */
-    public function checkSuspiciousActivity(Request $request)
+    public function checkSuspiciousActivity(Request $request): JsonResponse
     {
+        $this->authorize('manage', DeviceToken::class);
         $user = $request->user();
         $securityService = app(\App\Services\SecurityMonitoringService::class);
         
@@ -469,8 +467,9 @@ class DeviceController extends Controller
     /**
      * Unregister device by token (legacy method)
      */
-    public function unregister(Request $request, $token)
+    public function unregister(Request $request, $token): JsonResponse
     {
+        $this->authorize('revoke', DeviceToken::class);
         DeviceToken::where('user_id', $request->user()->id)
             ->where('token', $token)
             ->delete();
