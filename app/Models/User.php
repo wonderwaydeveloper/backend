@@ -210,7 +210,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function activePremiumSubscription()
     {
         return $this->hasOne(PremiumSubscription::class)
-            ->where('status', 'active')
+            ->where('status', config('status.subscription.active'))
             ->where('ends_at', '>', now());
     }
 

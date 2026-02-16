@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Services\SecurityMonitoringService;
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class UnifiedSecurityMiddleware
 {
@@ -36,7 +37,7 @@ class UnifiedSecurityMiddleware
                 'user_agent' => $request->userAgent()
             ], $request);
             
-            return response()->json(['error' => 'Access denied'], 403);
+            return response()->json(['error' => 'Access denied'], Response::HTTP_FORBIDDEN);
         }
         
         // Rate limiting check with centralized service
@@ -53,8 +54,8 @@ class UnifiedSecurityMiddleware
             
             return response()->json([
                 'error' => $rateCheck['error'],
-                'retry_after' => $rateCheck['retry_after'] ?? 60
-            ], 429);
+                'retry_after' => $rateCheck['retry_after'] ?? config('security.rate_limiting.default_retry_after')
+            ], Response::HTTP_TOO_MANY_REQUESTS);
         }
         
         // Threat detection
@@ -69,16 +70,16 @@ class UnifiedSecurityMiddleware
                 'endpoint' => $request->path()
             ], $request);
             
-            $this->security->blockIP($ip, 3600, 'high_threat_score');
+            $this->security->blockIP($ip);
             
             // Log IP blocking
             app(\App\Services\AuditTrailService::class)->logSecurityEvent('ip_blocked', [
                 'ip' => $ip,
-                'duration' => 3600,
+                'duration' => config('security.threat_detection.ip_block_duration'),
                 'reason' => 'high_threat_score'
             ], $request);
             
-            return response()->json(['error' => 'Security threat detected'], 403);
+            return response()->json(['error' => 'Security threat detected'], Response::HTTP_FORBIDDEN);
         }
         
         $response = $next($request);
@@ -86,7 +87,7 @@ class UnifiedSecurityMiddleware
         // Add security headers
         return $response->withHeaders([
             'X-RateLimit-Remaining' => $rateCheck['remaining'] ?? 0,
-            'X-RateLimit-Limit' => $this->rateLimiter->getConfig($type)['max_attempts'] ?? 60,
+            'X-RateLimit-Limit' => $this->rateLimiter->getConfig($type)['max_attempts'] ?? config('security.rate_limiting.default_window'),
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'DENY',
             'X-XSS-Protection' => '1; mode=block'

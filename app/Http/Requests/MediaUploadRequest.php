@@ -14,9 +14,13 @@ class MediaUploadRequest extends FormRequest
 
     public function rules(): array
     {
+        $user = $this->user();
+        $maxFileSize = app(\App\Services\SubscriptionLimitService::class)->getMaxFileSize($user);
+        $maxFileSizeKB = $maxFileSize / 1024;
+        
         return [
-            'image' => ['required', 'file', 'mimes:jpeg,png,gif,webp', 'max:5120'],
-            'alt_text' => 'nullable|string|max:200',
+            'image' => ['required', 'file', 'mimes:jpeg,png,gif,webp', "max:{$maxFileSizeKB}"],
+            'alt_text' => 'nullable|string|max:' . config('validation.max.alt_text'),
             'type' => 'nullable|in:post,story,avatar,cover',
         ];
     }

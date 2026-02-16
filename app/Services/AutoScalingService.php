@@ -157,7 +157,7 @@ class AutoScalingService
 
     private function getCpuUsage()
     {
-        return Cache::remember('cpu_usage', 60, function () {
+        return Cache::remember('cpu_usage', config('cache_ttl.ttl.cpu_usage'), function () {
             if (function_exists('sys_getloadavg')) {
                 $load = sys_getloadavg()[0] ?? 0;
 
@@ -171,7 +171,7 @@ class AutoScalingService
 
     private function getMemoryUsage()
     {
-        return Cache::remember('memory_usage', 60, function () {
+        return Cache::remember('memory_usage', config('cache_ttl.ttl.memory_usage'), function () {
             $used = memory_get_usage(true);
             $limit = ini_get('memory_limit');
             $limit = $this->convertToBytes($limit);
@@ -182,7 +182,7 @@ class AutoScalingService
 
     private function getActiveConnections()
     {
-        return Cache::remember('active_connections', 30, function () {
+        return Cache::remember('active_connections', config('cache_ttl.ttl.active_connections'), function () {
             try {
                 return DB::select("SHOW STATUS LIKE 'Threads_connected'")[0]->Value ?? 0;
             } catch (\Exception $e) {
@@ -193,7 +193,7 @@ class AutoScalingService
 
     private function getQueueSize()
     {
-        return Cache::remember('queue_size', 30, function () {
+        return Cache::remember('queue_size', config('cache_ttl.ttl.queue_size'), function () {
             try {
                 return Queue::size();
             } catch (\Exception $e) {

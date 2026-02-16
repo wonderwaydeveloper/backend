@@ -85,10 +85,13 @@ class ThreadController extends Controller
     {
         $this->authorize('create', Post::class);
         
+        $maxFileSize = app(\App\Services\SubscriptionLimitService::class)->getMaxFileSize($request->user());
+        $maxFileSizeKB = $maxFileSize / 1024;
+        
         $request->validate([
             'content' => ['required', new ContentLength('post')],
             'media' => 'nullable|array|max:4',
-            'media.*' => 'file|mimes:jpeg,jpg,png,gif,webp,mp4,mov|max:10240',
+            'media.*' => "file|mimes:jpeg,jpg,png,gif,webp,mp4,mov|max:{$maxFileSizeKB}",
         ]);
 
         $threadRoot = $post->getThreadRoot();

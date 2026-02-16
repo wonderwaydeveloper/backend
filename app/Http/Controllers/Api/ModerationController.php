@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ModerationController extends Controller
 {
@@ -24,7 +25,7 @@ class ModerationController extends Controller
     public function reportUser(Request $request, User $user)
     {
         if ($user->id === auth()->id()) {
-            return response()->json(['message' => 'Cannot report yourself'], 422);
+            return response()->json(['message' => 'Cannot report yourself'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         $request->validate([
@@ -54,7 +55,7 @@ class ModerationController extends Controller
             ->first();
 
         if ($existingReport) {
-            return response()->json(['message' => 'You have already reported this content'], 400);
+            return response()->json(['message' => 'You have already reported this content'], Response::HTTP_BAD_REQUEST);
         }
 
         // Create report
@@ -80,7 +81,7 @@ class ModerationController extends Controller
         $reports = Report::where('reporter_id', auth()->id())
             ->with('reportable')
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(config('pagination.reports'));
 
         return response()->json($reports);
     }
@@ -104,7 +105,7 @@ class ModerationController extends Controller
             $query->where('reportable_type', $request->type);
         }
 
-        return response()->json($query->paginate($request->per_page ?? 20));
+        return response()->json($query->paginate($request->per_page ?? config('pagination.reports')));
     }
 
     public function showReport(Report $report)
@@ -168,13 +169,20 @@ class ModerationController extends Controller
             ->where('status', 'pending')
             ->count();
 
-        if ($reportCount >= 5) {
+        // Check for high spam score reports
+        $highSpamReports = Report::where('reportable_type', $type)
+            ->where('reportable_id', $id)
+            ->where('auto_detected', true)
+            ->where('spam_score', '>=', 90)
+            ->count();
+
+        if ($reportCount >= 5 || $highSpamReports >= 1) {
             if ($type === 'App\\Models\\Post') {
                 Post::where('id', $id)->update(['is_flagged' => true]);
             }
         }
 
-        if ($reportCount >= 10) {
+        if ($reportCount >= 10 || $highSpamReports >= 2) {
             if ($type === 'App\\Models\\Post') {
                 Post::where('id', $id)->update(['is_hidden' => true]);
             }
@@ -184,6 +192,28 @@ class ModerationController extends Controller
     private function executeAction($report, $action)
     {
         switch ($action) {
+            case 'dismiss':
+                // No action needed - just mark as resolved
+                break;
+            case 'warn':
+                // Send warning notification to user
+                if ($report->reportable_type === 'App\\Models\\User') {
+                    $user = User::find($report->reportable_id);
+                    if ($user) {
+                        $user->notify(new \App\Notifications\ModerationWarning($report));
+                    }
+                } elseif ($report->reportable_type === 'App\\Models\\Post') {
+                    $post = Post::find($report->reportable_id);
+                    if ($post && $post->user) {
+                        $post->user->notify(new \App\Notifications\ModerationWarning($report));
+                    }
+                } elseif ($report->reportable_type === 'App\\Models\\Comment') {
+                    $comment = Comment::find($report->reportable_id);
+                    if ($comment && $comment->user) {
+                        $comment->user->notify(new \App\Notifications\ModerationWarning($report));
+                    }
+                }
+                break;
             case 'remove_content':
                 if ($report->reportable_type === 'App\\Models\\Post') {
                     Post::where('id', $report->reportable_id)->delete();

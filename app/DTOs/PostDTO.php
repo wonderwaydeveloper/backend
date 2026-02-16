@@ -7,8 +7,7 @@ class PostDTO
     public function __construct(
         public readonly string $content,
         public readonly int $userId,
-        public readonly ?string $image = null,
-        public readonly ?string $video = null,
+        public readonly ?array $mediaIds = null,
         public readonly ?string $gifUrl = null,
         public readonly string $replySettings = 'everyone',
         public readonly bool $isDraft = false,
@@ -22,8 +21,7 @@ class PostDTO
         return new self(
             content: $data['content'],
             userId: $userId,
-            image: $data['image'] ?? null,
-            video: $data['video'] ?? null,
+            mediaIds: $data['media_ids'] ?? null,
             gifUrl: $data['gif_url'] ?? null,
             replySettings: $data['reply_settings'] ?? 'everyone',
             isDraft: $data['is_draft'] ?? false,
@@ -38,8 +36,6 @@ class PostDTO
         return [
             'content' => $this->content,
             'user_id' => $this->userId,
-            'image' => $this->image,
-            'video' => $this->video,
             'gif_url' => $this->gifUrl,
             'reply_settings' => $this->replySettings,
             'is_draft' => $this->isDraft,

@@ -18,9 +18,9 @@ class SendBulkNotificationEmailJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 300;
-    public $backoff = [30, 60, 120];
+    public $tries = null;
+    public $timeout = null;
+    public $backoff = null;
 
     protected $userIds;
     protected $notificationType;
@@ -28,6 +28,9 @@ class SendBulkNotificationEmailJob implements ShouldQueue
 
     public function __construct(array $userIds, string $notificationType, array $notificationData)
     {
+        $this->tries = config('queue.defaults.jobs.email.tries');
+        $this->timeout = config('queue.defaults.jobs.email.timeout');
+        $this->backoff = config('queue.defaults.jobs.email.backoff');
         $this->userIds = $userIds;
         $this->notificationType = $notificationType;
         $this->notificationData = $notificationData;

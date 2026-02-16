@@ -14,11 +14,11 @@ class PushNotificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_token' => 'required|string|max:255',
+            'device_token' => 'required|string|max:' . config('validation.max.url'),
             'device_type' => 'required|string|in:ios,android,web',
-            'app_version' => 'nullable|string|max:20',
-            'title' => 'sometimes|required|string|max:100',
-            'body' => 'sometimes|required|string|max:200',
+            'app_version' => 'nullable|string|max:' . config('validation.max.version'),
+            'title' => 'sometimes|required|string|max:' . config('validation.max.title'),
+            'body' => 'sometimes|required|string|max:' . config('validation.max.text_long'),
             'data' => 'sometimes|nullable|array'
         ];
     }

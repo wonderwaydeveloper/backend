@@ -14,13 +14,13 @@ class SpaceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string|max:300',
+            'title' => 'required|string|max:' . config('validation.max.title'),
+            'description' => 'nullable|string|max:' . config('validation.max.content'),
             'privacy' => 'nullable|in:public,followers,invited',
-            'max_participants' => 'nullable|integer|min:2|max:100',
+            'max_participants' => 'nullable|integer|min:' . config('validation.min.participants') . '|max:' . config('validation.max.participants'),
             'scheduled_at' => 'nullable|date|after:now',
-            'tags' => 'nullable|array|max:5',
-            'tags.*' => 'string|max:30'
+            'tags' => 'nullable|array|max:' . config('validation.max.tags'),
+            'tags.*' => 'string|max:' . config('validation.max.text_short')
         ];
     }
 }

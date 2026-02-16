@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class GraphQLController extends Controller
 {
@@ -15,13 +16,13 @@ class GraphQLController extends Controller
         $variables = $request->input('variables', []);
 
         if (empty($query)) {
-            return response()->json(['errors' => ['message' => 'Query is required']], 400);
+            return response()->json(['errors' => ['message' => 'Query is required']], Response::HTTP_BAD_REQUEST);
         }
 
         try {
             // Simple GraphQL parser for testing
             if (str_contains($query, 'posts')) {
-                $posts = Post::with('user')->published()->latest()->take(10)->get();
+                $posts = Post::with('user')->published()->latest()->take(config('pagination.trending'))->get();
                 return response()->json([
                     'data' => [
                         'posts' => $posts->map(function ($post) {
@@ -51,7 +52,7 @@ class GraphQLController extends Controller
             }
 
             if (str_contains($query, 'timeline')) {
-                $posts = Post::with('user')->published()->latest()->take(10)->get();
+                $posts = Post::with('user')->published()->latest()->take(config('pagination.trending'))->get();
                 return response()->json([
                     'data' => [
                         'timeline' => $posts->map(function ($post) {
@@ -65,10 +66,10 @@ class GraphQLController extends Controller
                 ]);
             }
 
-            return response()->json(['errors' => ['message' => 'Invalid query']], 400);
+            return response()->json(['errors' => ['message' => 'Invalid query']], Response::HTTP_BAD_REQUEST);
 
         } catch (\Exception $e) {
-            return response()->json(['errors' => ['message' => $e->getMessage()]], 400);
+            return response()->json(['errors' => ['message' => $e->getMessage()]], Response::HTTP_BAD_REQUEST);
         }
     }
 }

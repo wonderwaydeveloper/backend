@@ -12,6 +12,11 @@ use Intervention\Image\ImageManager;
 
 class MediaService
 {
+    public function findById(int $id): ?Media
+    {
+        return Media::find($id);
+    }
+
     public function uploadImage($file, User $user, ?string $altText = null, ?string $type = 'post')
     {
         $filename = $this->generateFilename($file->getClientOriginalExtension());

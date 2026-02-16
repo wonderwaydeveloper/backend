@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Services\PostService;
 use App\Rules\ContentLength;
 use Illuminate\Http\{JsonResponse, Request};
+use Symfony\Component\HttpFoundation\Response;
 
 class PostController extends Controller
 {
@@ -26,7 +27,7 @@ class PostController extends Controller
                 'meta' => ['current_page' => $posts->currentPage(), 'total' => $posts->total()]
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to fetch posts'], 500);
+            return response()->json(['error' => 'Failed to fetch posts'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -36,11 +37,10 @@ class PostController extends Controller
         
         try {
             $dto = PostDTO::fromRequest($request->validated(), $request->user()->id);
-            $mediaFiles = $request->hasFile('media') ? $request->file('media') : [];
-            $post = $this->postService->createPost($dto, $mediaFiles);
+            $post = $this->postService->createPost($dto, []);
             return response()->json(new PostResource($post), 201);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Failed to create post'], 500);
+            return response()->json(['error' => 'Failed to create post'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -70,7 +70,7 @@ class PostController extends Controller
             
             return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Post not found'], 404);
+            return response()->json(['error' => 'Post not found'], Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -113,7 +113,7 @@ class PostController extends Controller
 
     public function likes(Post $post): JsonResponse
     {
-        $likes = $post->likes()->with('user:id,name,username,avatar')->paginate(20);
+        $likes = $post->likes()->with('user:id,name,username,avatar')->paginate(config('pagination.likes'));
         return response()->json($likes);
     }
 
@@ -182,7 +182,7 @@ class PostController extends Controller
         $this->authorize('update', $post);
         
         if (!$post->is_draft) {
-            return response()->json(['error' => 'Post is already published'], 400);
+            return response()->json(['error' => 'Post is already published'], Response::HTTP_BAD_REQUEST);
         }
         
         $publishedPost = $this->postService->publishPost($post);

@@ -12,10 +12,13 @@ return new class () extends Migration {
     {
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('reporter_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('reporter_id')->nullable()->constrained('users')->cascadeOnDelete();
             $table->morphs('reportable');
             $table->enum('reason', ['spam', 'harassment', 'hate_speech', 'violence', 'nudity', 'other']);
             $table->text('description')->nullable();
+            $table->boolean('auto_detected')->default(false);
+            $table->integer('spam_score')->nullable();
+            $table->json('detection_reasons')->nullable();
             $table->enum('status', ['pending', 'reviewed', 'resolved', 'rejected'])->default('pending');
             $table->unsignedBigInteger('reviewed_by')->nullable();
             $table->timestamp('reviewed_at')->nullable();
@@ -26,6 +29,7 @@ return new class () extends Migration {
             // Indexes for performance
             $table->index('status');
             $table->index('created_at');
+            $table->index(['auto_detected', 'spam_score']);
         });
     }
 

@@ -29,5 +29,11 @@ return [
         'secret_key' => env('RECAPTCHA_SECRET_KEY'),
     ],
 
-
+    'analytics' => [
+        'event_types' => [
+            'engagement' => ['post_like', 'post_comment', 'post_repost'],
+            'post_engagement' => ['post_like', 'post_comment', 'post_repost', 'post_share', 'link_click'],
+            'active_user' => ['login', 'post_create', 'comment', 'like'],
+        ],
+    ],
 ];

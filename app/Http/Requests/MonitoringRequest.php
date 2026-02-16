@@ -14,9 +14,9 @@ class MonitoringRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'metric_name' => 'sometimes|string|max:255',
+            'metric_name' => 'sometimes|string|max:' . config('validation.max.url'),
             'time_range' => 'sometimes|string|in:1h,6h,24h,7d,30d',
-            'limit' => 'sometimes|integer|min:1|max:100',
+            'limit' => 'sometimes|integer|min:' . config('validation.min.limit') . '|max:' . config('validation.max.text_medium'),
         ];
     }
 }

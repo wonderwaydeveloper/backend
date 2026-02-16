@@ -12,6 +12,7 @@ use App\Models\CommunityJoinRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class CommunityController extends Controller
 {
@@ -30,7 +31,7 @@ class CommunityController extends Controller
             })
             ->withCount('members', 'posts')
             ->orderBy('member_count', 'desc')
-            ->paginate(20);
+            ->paginate(config('pagination.communities'));
 
         return CommunityResource::collection($communities);
     }
@@ -60,7 +61,7 @@ class CommunityController extends Controller
     public function show(Community $community)
     {
         $community->load(['creator', 'members' => function($query) {
-            $query->limit(10);
+            $query->limit(config('pagination.suggestions'));
         }])->loadCount('members', 'posts');
 
         return new CommunityResource($community);
@@ -92,7 +93,7 @@ class CommunityController extends Controller
         $user = auth()->user();
 
         if (!$community->canUserJoin($user)) {
-            return response()->json(['message' => 'Already a member'], 400);
+            return response()->json(['message' => 'Already a member'], Response::HTTP_BAD_REQUEST);
         }
 
         if ($community->privacy === 'private') {
@@ -104,7 +105,7 @@ class CommunityController extends Controller
             ])->first();
 
             if ($existingRequest) {
-                return response()->json(['message' => 'Join request already sent'], 400);
+                return response()->json(['message' => 'Join request already sent'], Response::HTTP_BAD_REQUEST);
             }
 
             CommunityJoinRequest::create([
@@ -131,11 +132,11 @@ class CommunityController extends Controller
         $role = $community->getUserRole($user);
 
         if (!$role) {
-            return response()->json(['message' => 'Not a member'], 400);
+            return response()->json(['message' => 'Not a member'], Response::HTTP_BAD_REQUEST);
         }
 
         if ($role === 'owner') {
-            return response()->json(['message' => 'Owner cannot leave community'], 400);
+            return response()->json(['message' => 'Owner cannot leave community'], Response::HTTP_BAD_REQUEST);
         }
 
         $community->members()->detach($user->id);
@@ -153,7 +154,7 @@ class CommunityController extends Controller
                 $query->pinned();
             })
             ->latest()
-            ->paginate(20);
+            ->paginate(config('pagination.posts'));
 
         return PostResource::collection($posts);
     }
@@ -164,7 +165,7 @@ class CommunityController extends Controller
             ->when($request->role, function($query, $role) {
                 $query->wherePivot('role', $role);
             })
-            ->paginate(20);
+            ->paginate(config('pagination.users'));
 
         return response()->json($members);
     }
@@ -177,7 +178,7 @@ class CommunityController extends Controller
             ->with('user')
             ->pending()
             ->latest()
-            ->paginate(20);
+            ->paginate(config('pagination.default'));
 
         return response()->json($requests);
     }
@@ -187,7 +188,7 @@ class CommunityController extends Controller
         $this->authorize('moderate', $community);
 
         if ($request->community_id !== $community->id) {
-            return response()->json(['message' => 'Invalid request'], 400);
+            return response()->json(['message' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
         $request->approve(auth()->user());
@@ -200,7 +201,7 @@ class CommunityController extends Controller
         $this->authorize('moderate', $community);
 
         if ($request->community_id !== $community->id) {
-            return response()->json(['message' => 'Invalid request'], 400);
+            return response()->json(['message' => 'Invalid request'], Response::HTTP_BAD_REQUEST);
         }
 
         $request->reject(auth()->user());

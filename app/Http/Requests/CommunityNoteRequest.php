@@ -14,9 +14,9 @@ class CommunityNoteRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => 'required|string|min:10|max:500',
-            'sources' => 'nullable|array|max:3',
-            'sources.*' => 'url|max:255'
+            'content' => 'required|string|min:' . config('validation.min.community_note') . '|max:' . config('validation.max.description'),
+            'sources' => 'nullable|array|max:' . config('validation.max.sources'),
+            'sources.*' => 'url|max:' . config('validation.max.url')
         ];
     }
 }

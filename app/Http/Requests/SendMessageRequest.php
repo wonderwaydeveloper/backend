@@ -14,10 +14,14 @@ class SendMessageRequest extends FormRequest
 
     public function rules(): array
     {
+        $user = $this->user();
+        $maxFileSize = app(\App\Services\SubscriptionLimitService::class)->getMaxFileSize($user);
+        $maxFileSizeKB = $maxFileSize / 1024;
+        
         return [
             'content' => ['required_without_all:attachments,gif_url', 'nullable', new ContentLength('message')],
-            'attachments' => 'required_without_all:content,gif_url|nullable|array|max:10',
-            'attachments.*' => 'file|max:10240',
+            'attachments' => 'required_without_all:content,gif_url|nullable|array|max:' . config('validation.max.attachments'),
+            'attachments.*' => "file|max:{$maxFileSizeKB}",
             'gif_url' => 'required_without_all:content,attachments|nullable|url',
         ];
     }

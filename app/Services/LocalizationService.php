@@ -114,7 +114,7 @@ class LocalizationService
     {
         $cacheKey = "translated_content:" . md5(json_encode($content)) . ":{$targetLocale}";
 
-        return Cache::remember($cacheKey, 3600, function () use ($content, $targetLocale) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.localization'), function () use ($content, $targetLocale) {
             // In a real implementation, this would call a translation service
             // For now, return the original content
             return $content;

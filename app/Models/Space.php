@@ -42,7 +42,7 @@ class Space extends Model
 
     public function activeParticipants()
     {
-        return $this->participants()->where('status', 'joined');
+        return $this->participants()->where('status', config('status.space_participant.joined'));
     }
 
     public function speakers()
@@ -84,7 +84,7 @@ class Space extends Model
 
         // For invited-only spaces
         if ($this->privacy === 'invited') {
-            return $this->participants()->where('user_id', $userId)->where('status', 'invited')->exists();
+            return $this->participants()->where('user_id', $userId)->where('status', config('status.space_participant.invited'))->exists();
         }
 
         return false;
@@ -92,7 +92,7 @@ class Space extends Model
 
     public function scopeLive($query)
     {
-        return $query->where('status', 'live');
+        return $query->where('status', config('status.space.live'));
     }
 
     public function scopePublic($query)

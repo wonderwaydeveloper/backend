@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Rules\ContentLength;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 class RepostController extends Controller
 {
@@ -57,13 +58,13 @@ class RepostController extends Controller
                 return response()->json(['message' => 'Repost cancelled', 'reposted' => false]);
             }
 
-            return response()->json(['message' => 'Not reposted'], 400);
+            return response()->json(['message' => 'Not reposted'], Response::HTTP_BAD_REQUEST);
         });
     }
 
     public function reposts(Post $post)
     {
-        $reposts = $post->reposts()->with('user:id,name,username,avatar')->paginate(20);
+        $reposts = $post->reposts()->with('user:id,name,username,avatar')->paginate(config('pagination.reposts'));
         return response()->json($reposts);
     }
 
@@ -73,7 +74,7 @@ class RepostController extends Controller
             ->reposts()
             ->with('post.user:id,name,username,avatar')
             ->latest()
-            ->paginate(20);
+            ->paginate(config('pagination.reposts'));
 
         return response()->json($reposts);
     }

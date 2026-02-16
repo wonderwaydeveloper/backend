@@ -51,16 +51,16 @@ class TestEmailTemplates extends Command
     private function testAllEmails($user)
     {
         $this->testVerificationEmail($user);
-        $this->line('⏳ Waiting 5 seconds for Mailtrap rate limit...');
-        sleep(5);
+        $this->line('⏳ Waiting ' . config('performance.email.rate_limit_delay_seconds') . ' seconds for Mailtrap rate limit...');
+        sleep(config('performance.email.rate_limit_delay_seconds'));
         
         $this->testPasswordResetEmail($user);
-        $this->line('⏳ Waiting 5 seconds for Mailtrap rate limit...');
-        sleep(5);
+        $this->line('⏳ Waiting ' . config('performance.email.rate_limit_delay_seconds') . ' seconds for Mailtrap rate limit...');
+        sleep(config('performance.email.rate_limit_delay_seconds'));
         
         $this->testNotificationEmail($user);
-        $this->line('⏳ Waiting 5 seconds for Mailtrap rate limit...');
-        sleep(5);
+        $this->line('⏳ Waiting ' . config('performance.email.rate_limit_delay_seconds') . ' seconds for Mailtrap rate limit...');
+        sleep(config('performance.email.rate_limit_delay_seconds'));
         
         $this->testBulkEmail($user);
     }

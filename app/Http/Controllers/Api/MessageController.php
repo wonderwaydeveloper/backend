@@ -10,6 +10,7 @@ use App\Http\Resources\MessageResource;
 use App\Models\{Conversation, Message, User};
 use App\Services\MessageService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class MessageController extends Controller
 {
@@ -54,7 +55,7 @@ class MessageController extends Controller
 
             return new MessageResource($message);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -85,7 +86,7 @@ class MessageController extends Controller
             $this->messageService->markAsRead($message, $request->user());
             return response()->json(['message' => 'Marked as read']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 

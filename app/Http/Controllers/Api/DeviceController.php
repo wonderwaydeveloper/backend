@@ -10,6 +10,7 @@ use App\Http\Resources\DeviceResource;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Facades\{Cache, Hash, DB};
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response;
 
 class DeviceController extends Controller
 {
@@ -69,7 +70,7 @@ class DeviceController extends Controller
                 'fingerprint' => $fingerprint,
             ],
             [
-                'token' => 'device_' . Str::random(40),
+                'token' => 'device_' . Str::random(config('authentication.device.token_length')),
                 'device_name' => $request->name,
                 'device_type' => $request->type,
                 'browser' => $request->browser,
@@ -118,7 +119,7 @@ class DeviceController extends Controller
         $this->authorize('trust', $device);
 
         if (!Hash::check($request->password, $request->user()->password)) {
-            return response()->json(['error' => 'Invalid password'], 422);
+            return response()->json(['error' => 'Invalid password'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $device->update(['is_trusted' => true]);
@@ -137,7 +138,7 @@ class DeviceController extends Controller
         
         // Prevent revoking current device
         if ($device->fingerprint === $currentFingerprint) {
-            return response()->json(['error' => 'Cannot revoke current device'], 422);
+            return response()->json(['error' => 'Cannot revoke current device'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         $user = $request->user();
@@ -172,7 +173,7 @@ class DeviceController extends Controller
         $request->validate(['password' => 'required']);
 
         if (!Hash::check($request->password, $request->user()->password)) {
-            return response()->json(['error' => 'Invalid password'], 422);
+            return response()->json(['error' => 'Invalid password'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user = $request->user();
@@ -230,7 +231,7 @@ class DeviceController extends Controller
                 return response()->json([
                     'error' => 'Invalid verification code or session expired',
                     'errors' => ['code' => ['Invalid or expired verification code']]
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             if (now()->timestamp > $verificationData['expires_at']) {
@@ -238,12 +239,12 @@ class DeviceController extends Controller
                 return response()->json([
                     'error' => 'Verification code expired',
                     'errors' => ['code' => ['Verification code has expired. Please request a new one.']]
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             $user = User::find($verificationData['user_id']);
             if (!$user) {
-                return response()->json(['error' => 'User not found'], 422);
+                return response()->json(['error' => 'User not found'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             // Create or update device as trusted with atomic operations
@@ -251,14 +252,14 @@ class DeviceController extends Controller
             $deviceLock = Cache::lock($deviceLockKey, 5);
             
             if (!$deviceLock->get()) {
-                return response()->json(['error' => 'Device creation in progress'], 503);
+                return response()->json(['error' => 'Device creation in progress'], Response::HTTP_SERVICE_UNAVAILABLE);
             }
             
             try {
                 $device = $user->devices()->updateOrCreate(
                     ['fingerprint' => $fingerprint],
                     [
-                        'token' => 'device_' . Str::random(40),
+                        'token' => 'device_' . Str::random(config('authentication.device.token_length')),
                         'device_name' => $this->getDeviceNameFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'device_type' => $this->getDeviceTypeFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'browser' => $this->getBrowserFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
@@ -319,7 +320,7 @@ class DeviceController extends Controller
             return response()->json([
                 'error' => 'No verification session found. Please try logging in again.',
                 'errors' => ['session' => ['Verification session expired or not found']]
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         $userId = $sessionData['user_id'];
@@ -330,7 +331,7 @@ class DeviceController extends Controller
             return response()->json([
                 'error' => 'User not found',
                 'errors' => ['user_id' => ['Invalid user ID']]
-            ], 422);
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         // Update existing session data

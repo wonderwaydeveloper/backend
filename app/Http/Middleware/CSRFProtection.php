@@ -54,11 +54,11 @@ class CSRFProtection
         $token = $this->getTokenFromRequest($request);
         
         if (!$token) {
-            abort(419, 'CSRF token missing');
+            abort(config('security.http_status.csrf_token_mismatch'), 'CSRF token missing');
         }
         
         if (!$this->isValidToken($token, $request)) {
-            abort(419, 'CSRF token mismatch');
+            abort(config('security.http_status.csrf_token_mismatch'), 'CSRF token mismatch');
         }
     }
     

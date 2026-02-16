@@ -58,11 +58,11 @@ class CommunityNote extends Model
 
     public function scopeApproved($query)
     {
-        return $query->where('status', 'approved');
+        return $query->where('status', config('status.community_note.approved'));
     }
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', config('status.community_note.pending'));
     }
 }

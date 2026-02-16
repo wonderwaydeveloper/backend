@@ -9,9 +9,9 @@ use Carbon\Carbon;
 
 class PasswordSecurityService
 {
-    private const HISTORY_LIMIT = 5;
-    private const MIN_AGE_HOURS = 1;
-    private const MAX_AGE_DAYS = 90;
+    private const HISTORY_LIMIT = null; // Use config
+    private const MIN_AGE_HOURS = null; // Use config
+    private const MAX_AGE_DAYS = null; // Use config
     
     public function validatePasswordStrength(string $password): array
     {
@@ -63,7 +63,7 @@ class PasswordSecurityService
         }
         
         $lastChangeTime = Carbon::createFromTimestamp($lastChange);
-        $minAge = Carbon::now()->subHours(self::MIN_AGE_HOURS);
+        $minAge = Carbon::now()->subHours(config('security.password_security.min_age_hours'));
         
         return $lastChangeTime->lt($minAge);
     }
@@ -74,7 +74,7 @@ class PasswordSecurityService
             return true; // Force change if never set
         }
         
-        $maxAge = Carbon::now()->subDays(self::MAX_AGE_DAYS);
+        $maxAge = Carbon::now()->subDays(config('security.password_security.max_age_days'));
         return $user->password_changed_at->lt($maxAge);
     }
     
@@ -129,7 +129,7 @@ class PasswordSecurityService
     
     private function getPasswordHistory(int $userId): array
     {
-        $history = Redis::lrange("password_history:{$userId}", 0, self::HISTORY_LIMIT - 1);
+        $history = Redis::lrange("password_history:{$userId}", 0, config('security.password_security.history_limit') - 1);
         
         // Decrypt password hashes
         return array_map(function($encryptedHash) {
@@ -152,7 +152,7 @@ class PasswordSecurityService
         Redis::lpush($key, $encryptedHash);
         
         // Keep only last N passwords
-        Redis::ltrim($key, 0, self::HISTORY_LIMIT - 1);
+        Redis::ltrim($key, 0, config('security.password_security.history_limit') - 1);
         
         // Set expiration
         Redis::expire($key, 86400 * 365); // 1 year
@@ -191,27 +191,28 @@ class PasswordSecurityService
     public function getPasswordStrengthScore(string $password): int
     {
         $score = 0;
+        $config = config('security.password_security.strength_scores');
         
         // Length bonus
-        $score += min(25, strlen($password) * 2);
+        $score += min($config['max_length_bonus'], strlen($password) * $config['length_multiplier']);
         
-        // Character variety - updated to match new rules
-        if (preg_match('/[a-zA-Z]/', $password)) $score += 10; // Any letter
-        if (preg_match('/[0-9]/', $password)) $score += 10; // Numbers
-        if (preg_match('/[^A-Za-z0-9]/', $password)) $score += 10; // Special chars (bonus)
+        // Character variety
+        if (preg_match('/[a-zA-Z]/', $password)) $score += $config['letter_bonus'];
+        if (preg_match('/[0-9]/', $password)) $score += $config['number_bonus'];
+        if (preg_match('/[^A-Za-z0-9]/', $password)) $score += $config['special_char_bonus'];
         
-        // Bonus for having both upper and lower (optional)
+        // Bonus for mixed case
         if (preg_match('/[a-z]/', $password) && preg_match('/[A-Z]/', $password)) {
-            $score += 5;
+            $score += $config['mixed_case_bonus'];
         }
         
         // Patterns penalty
-        if (preg_match('/(.)\1{2,}/', $password)) $score -= 10; // Repeated chars
-        if (preg_match('/123|abc|qwe/i', $password)) $score -= 10; // Sequential
+        if (preg_match('/(.)\1{2,}/', $password)) $score -= $config['repeated_penalty'];
+        if (preg_match('/123|abc|qwe/i', $password)) $score -= $config['sequential_penalty'];
         
         // Common password penalty
-        if ($this->isCommonPassword($password)) $score -= 25;
+        if ($this->isCommonPassword($password)) $score -= $config['common_password_penalty'];
         
-        return max(0, min(100, $score));
+        return max(0, min($config['max_score'], $score));
     }
 }

@@ -112,6 +112,7 @@ return [
         'verification_enabled' => true,
         'max_devices' => 5,
         'max_inactivity_days' => env('DEVICE_MAX_INACTIVITY_DAYS', 30),
+        'token_length' => 40,
         'fingerprint_components' => [
             'user_agent',
             'accept_language',
@@ -120,6 +121,7 @@ return [
     ],
     
     'social' => [
+        'password_length' => 32,
         'google' => [
             'client_id' => env('GOOGLE_CLIENT_ID'),
             'client_secret' => env('GOOGLE_CLIENT_SECRET'),

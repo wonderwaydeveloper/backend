@@ -19,8 +19,8 @@ class CaptchaMiddleware
         $identifier = $this->getIdentifier($request);
         $failedAttempts = Cache::get("failed_login:{$identifier}", 0);
         
-        // Require CAPTCHA after 3 failed attempts (Twitter standard)
-        if ($failedAttempts >= 3) {
+        // Require CAPTCHA after failed attempts threshold
+        if ($failedAttempts >= config('security.captcha.failed_attempts_threshold')) {
             $captchaToken = $request->input('captcha_token');
             
             if (!$captchaToken) {
@@ -28,14 +28,14 @@ class CaptchaMiddleware
                     'error' => 'CAPTCHA verification required',
                     'requires_captcha' => true,
                     'failed_attempts' => $failedAttempts
-                ], 429);
+                ], Response::HTTP_TOO_MANY_REQUESTS);
             }
             
             if (!$this->verifyCaptcha($captchaToken, $request->ip())) {
                 return response()->json([
                     'error' => 'Invalid CAPTCHA',
                     'requires_captcha' => true
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             // CAPTCHA verified - reset counter
@@ -70,7 +70,7 @@ class CaptchaMiddleware
             
             $result = $response->json();
             
-            return ($result['success'] ?? false) && ($result['score'] ?? 0) >= 0.5;
+            return ($result['success'] ?? false) && ($result['score'] ?? 0) >= config('security.captcha.min_score');
         } catch (\Exception $e) {
             \Log::error('CAPTCHA verification failed', ['error' => $e->getMessage()]);
             return false;

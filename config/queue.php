@@ -126,4 +126,51 @@ return [
         'table' => 'failed_jobs',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Job Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Default configuration for job tries, timeout, and backoff strategy.
+    |
+    */
+
+    'defaults' => [
+        'tries' => 3,
+        'timeout' => 120,
+        'backoff' => [30, 60, 120],
+        
+        'jobs' => [
+            'thumbnail' => [
+                'tries' => 3,
+                'timeout' => 120,
+            ],
+            'email' => [
+                'tries' => 3,
+                'timeout' => 300,
+                'backoff' => [30, 60, 120],
+            ],
+            'cleanup' => [
+                'tries' => 3,
+                'timeout' => 300,
+            ],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Names
+    |--------------------------------------------------------------------------
+    |
+    | Named queues for different job priorities and types.
+    |
+    */
+
+    'names' => [
+        'high' => 'high',
+        'default' => 'default',
+        'low' => 'low',
+        'image_processing' => 'image-processing',
+    ],
+
 ];

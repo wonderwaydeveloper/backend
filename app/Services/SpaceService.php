@@ -105,7 +105,7 @@ class SpaceService
         }
 
         if ($space->privacy === 'invited') {
-            return $space->participants()->where('user_id', $user->id)->where('status', 'invited')->exists();
+            return $space->participants()->where('user_id', $user->id)->where('status', config('status.space_participant.invited'))->exists();
         }
 
         return false;

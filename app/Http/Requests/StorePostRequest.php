@@ -16,9 +16,9 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => ['required', new ContentLength('post')],
-            'media' => 'nullable|array|max:4',
-            'media.*' => ['file', 'mimes:jpeg,jpg,png,gif,webp,mp4,mov,avi', 'max:10240'],
-            'gif_url' => 'nullable|url|max:500',
+            'media_ids' => 'nullable|array|max:' . config('validation.max.media'),
+            'media_ids.*' => 'exists:media,id',
+            'gif_url' => 'nullable|url|max:' . config('validation.max.token'),
             'reply_settings' => 'nullable|in:everyone,following,mentioned,none',
             'quoted_post_id' => 'nullable|exists:posts,id',
             'is_draft' => 'nullable|boolean',
@@ -30,11 +30,9 @@ class StorePostRequest extends FormRequest
         return [
             'content.required' => 'Post content is required',
             'content.max' => 'Post content must not exceed 280 characters',
-            'media.array' => 'Media must be an array',
-            'media.max' => 'You can upload maximum 4 media files',
-            'media.*.file' => 'Each media item must be a file',
-            'media.*.mimes' => 'Media format must be jpeg, jpg, png, gif, webp, mp4, mov, or avi',
-            'media.*.max' => 'Each media file must not exceed 10MB',
+            'media_ids.array' => 'Media IDs must be an array',
+            'media_ids.max' => 'You can attach maximum 4 media files',
+            'media_ids.*.exists' => 'Media file not found',
             'gif_url.url' => 'GIF URL is invalid',
             'gif_url.max' => 'GIF URL is too long',
             'reply_settings.in' => 'Reply settings is invalid',
@@ -49,7 +47,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => 'Post content',
-            'media' => 'Media files',
+            'media_ids' => 'Media files',
             'gif_url' => 'GIF URL',
             'reply_settings' => 'Reply settings',
             'quoted_post_id' => 'Quoted post',

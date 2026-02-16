@@ -13,7 +13,7 @@ class FollowController extends Controller
         
         $followers = $user->followers()
             ->select('users.id', 'users.name', 'users.username', 'users.avatar')
-            ->paginate(20);
+            ->paginate(config('pagination.follows'));
 
         return response()->json($followers);
     }
@@ -24,7 +24,7 @@ class FollowController extends Controller
         
         $following = $user->following()
             ->select('users.id', 'users.name', 'users.username', 'users.avatar')
-            ->paginate(20);
+            ->paginate(config('pagination.follows'));
 
         return response()->json($following);
     }

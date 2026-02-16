@@ -21,7 +21,7 @@ class UpdateLastSeen
                     'last_seen_at' => now(),
                 ]);
                 
-                Cache::put($cacheKey, true, 60);
+                Cache::put($cacheKey, true, config('security.cache.last_seen'));
             }
         }
 

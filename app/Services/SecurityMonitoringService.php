@@ -15,13 +15,7 @@ class SecurityMonitoringService
         private RateLimitingService $rateLimiter
     ) {}
 
-    private array $alertThresholds = [
-        'failed_logins' => 10,
-        'blocked_requests' => 50,
-        'suspicious_activities' => 5,
-        'data_breaches' => 1,
-        'privilege_escalations' => 1,
-    ];
+
 
 
 
@@ -39,33 +33,35 @@ class SecurityMonitoringService
         
         // SQL injection detection
         if (preg_match('/(union.*select|drop.*table|\'.*or.*\')/i', $input)) {
-            $score += 50;
+            $score += config('security.threat_detection.scores.sql_injection');
             $reasons[] = 'sql_injection_detected';
         }
         
         // XSS detection
         if (preg_match('/<script|javascript:|on\w+=/i', $input)) {
-            $score += 40;
+            $score += config('security.threat_detection.scores.xss');
             $reasons[] = 'xss_detected';
         }
         
         // Bot detection
         $userAgent = $request->userAgent();
         if (!$userAgent || preg_match('/bot|crawler|spider|sqlmap|nikto/i', $userAgent)) {
-            $score += 30;
+            $score += config('security.threat_detection.scores.bot');
             $reasons[] = 'bot_detected';
         }
         
+        $thresholds = config('security.threat_detection.thresholds');
         return [
             'score' => $score,
             'reasons' => $reasons,
-            'action' => $score >= 80 ? 'block' : ($score >= 60 ? 'challenge' : ($score >= 40 ? 'monitor' : 'allow'))
+            'action' => $score >= $thresholds['block'] ? 'block' : ($score >= $thresholds['challenge'] ? 'challenge' : ($score >= $thresholds['monitor'] ? 'monitor' : 'allow'))
         ];
     }
 
     // IP BLOCKING
-    public function blockIP(string $ip, int $duration = 3600, string $reason = 'security_violation'): void
+    public function blockIP(string $ip, ?int $duration = null, string $reason = 'security_violation'): void
     {
+        $duration = $duration ?? config('security.threat_detection.ip_block_duration');
         Cache::put("blocked_ip:{$ip}", [
             'blocked_at' => time(),
             'reason' => $reason,
@@ -118,11 +114,11 @@ class SecurityMonitoringService
         foreach ($anomalies as $anomaly) {
             switch ($anomaly['type']) {
                 case 'new_ip_addresses':
-                    $riskScore += 20;
+                    $riskScore += config('security.monitoring.risk_scores.new_ip');
                     $reasons[] = 'Login from new IP address';
                     break;
                 case 'high_activity_volume':
-                    $riskScore += 30;
+                    $riskScore += config('security.monitoring.risk_scores.high_activity');
                     $reasons[] = 'Unusual activity volume';
                     break;
             }
@@ -130,18 +126,21 @@ class SecurityMonitoringService
         
         // Additional checks
         $failedLogins = Cache::get("failed_logins:{$userId}", 0);
-        if ($failedLogins > 3) {
-            $riskScore += 30;
+        $threshold = config('security.monitoring.failed_login_threshold');
+        if ($failedLogins > $threshold) {
+            $riskScore += config('security.monitoring.risk_scores.failed_logins');
             $reasons[] = 'Multiple failed login attempts';
         }
         
         $currentHour = now()->hour;
-        if ($currentHour < 6 || $currentHour > 23) {
-            $riskScore += 15;
+        $unusualHours = config('security.monitoring.unusual_hours');
+        if ($currentHour < $unusualHours['end'] || $currentHour > $unusualHours['start']) {
+            $riskScore += config('security.monitoring.risk_scores.unusual_hours');
             $reasons[] = 'Login at unusual hours';
         }
         
-        $riskLevel = $riskScore >= 50 ? 'high' : ($riskScore >= 30 ? 'medium' : 'low');
+        $levels = config('security.monitoring.risk_levels');
+        $riskLevel = $riskScore >= $levels['high'] ? 'high' : ($riskScore >= $levels['medium'] ? 'medium' : 'low');
         
         $recommendations = [];
         if ($riskScore >= 30) {

@@ -14,7 +14,7 @@ class EnsureEmailIsVerified
             return response()->json([
                 'message' => 'Your email is not verified',
                 'error' => 'EMAIL_NOT_VERIFIED',
-            ], 403);
+            ], Response::HTTP_FORBIDDEN);
         }
 
         return $next($request);

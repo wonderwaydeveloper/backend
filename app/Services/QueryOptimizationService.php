@@ -37,7 +37,7 @@ class QueryOptimizationService
 
     public function optimizeTimelineQuery(int $userId, int $limit = 20): array
     {
-        return Cache::remember("optimized_timeline:{$userId}:{$limit}", 300, function () use ($userId, $limit) {
+        return Cache::remember("optimized_timeline:{$userId}:{$limit}", config('cache_ttl.ttl.timeline'), function () use ($userId, $limit) {
             // Single optimized query
             return DB::select("
                 SELECT p.id, p.user_id, p.content, p.image, p.created_at,
@@ -72,7 +72,7 @@ class QueryOptimizationService
 
     public function getPopularContent(int $hours = 24): array
     {
-        return Cache::remember("popular_content:{$hours}h", 1800, function () use ($hours) {
+        return Cache::remember("popular_content:{$hours}h", config('cache_ttl.ttl.popular_content'), function () use ($hours) {
             return DB::select("
                 SELECT p.id, p.content, p.created_at,
                        u.name, u.username,
@@ -94,7 +94,7 @@ class QueryOptimizationService
     {
         $sanitized = addslashes($query);
         
-        return Cache::remember("search:{$sanitized}:{$limit}", 600, function () use ($sanitized, $limit) {
+        return Cache::remember("search:{$sanitized}:{$limit}", config('cache_ttl.ttl.search'), function () use ($sanitized, $limit) {
             return DB::select("
                 SELECT p.id, p.content, p.created_at,
                        u.name, u.username, u.avatar,

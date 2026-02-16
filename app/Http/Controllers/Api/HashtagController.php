@@ -59,7 +59,7 @@ class HashtagController extends Controller
                 ])
                 ->withCount('likes', 'comments', 'quotes')
                 ->latest('published_at')
-                ->paginate(20);
+                ->paginate(config('pagination.hashtags'));
         });
 
         // Get hashtag velocity
@@ -99,7 +99,7 @@ class HashtagController extends Controller
             return Hashtag::where('name', 'like', "%{$query}%")
                 ->orWhere('slug', 'like', "%{$query}%")
                 ->orderBy('posts_count', 'desc')
-                ->limit(20)
+                ->limit(config('pagination.search'))
                 ->get(['id', 'name', 'slug', 'posts_count']);
         });
 
@@ -133,7 +133,7 @@ class HashtagController extends Controller
             return Hashtag::whereNotIn('id', $userHashtags)
                 ->where('posts_count', '>', 10)
                 ->orderBy('posts_count', 'desc')
-                ->limit(10)
+                ->limit(config('pagination.suggestions'))
                 ->get(['id', 'name', 'slug', 'posts_count']);
         });
 

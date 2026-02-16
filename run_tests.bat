@@ -114,7 +114,7 @@ php test_analytics_system.php >nul 2>&1
 if !errorlevel! equ 0 (echo OK & set /a PASSED+=1) else (echo FAIL & set /a FAILED+=1)
 
 echo [27/28] Media...
-php test_media.php >nul 2>&1
+php test_media_system.php >nul 2>&1
 if !errorlevel! equ 0 (echo OK & set /a PASSED+=1) else (echo FAIL & set /a FAILED+=1)
 
 echo [28/28] Monetization...

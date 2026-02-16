@@ -15,9 +15,9 @@ class ThreadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'posts' => 'required|array|min:2|max:25',
+            'posts' => 'required|array|min:' . config('validation.min.thread_posts') . '|max:' . config('validation.max.array_large'),
             'posts.*.content' => ['required', new ContentLength('post')],
-            'media' => 'nullable|array|max:4',
+            'media' => 'nullable|array|max:' . config('validation.max.media'),
             'media.*' => ['file', new FileUpload('media_general')]
         ];
     }

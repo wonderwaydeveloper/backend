@@ -32,7 +32,7 @@ class FileSecurityService
         }
         
         // Size check
-        $maxSize = config('authentication.file_upload.max_size', 10485760);
+        $maxSize = config('security.file_security.max_size');
         if ($file->getSize() > $maxSize) {
             $errors[] = 'File too large';
         }
@@ -112,7 +112,8 @@ class FileSecurityService
         
         // Check dimensions
         [$width, $height] = $imageInfo;
-        if ($width > 4096 || $height > 4096) {
+        $maxDimension = config('security.file_security.max_image_dimension');
+        if ($width > $maxDimension || $height > $maxDimension) {
             $errors[] = 'Image dimensions too large';
         }
         

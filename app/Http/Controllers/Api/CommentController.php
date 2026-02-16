@@ -23,7 +23,7 @@ class CommentController extends Controller
             ->with('user:id,name,username,avatar')
             ->withCount('likes')
             ->latest()
-            ->paginate(20);
+            ->paginate(config('pagination.comments'));
 
         return response()->json($comments);
     }

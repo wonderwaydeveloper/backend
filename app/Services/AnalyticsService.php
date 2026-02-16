@@ -104,7 +104,7 @@ class AnalyticsService
 
         $engagement = AnalyticsEvent::whereIn('entity_id', $postIds)
             ->where('entity_type', 'post')
-            ->whereIn('event_type', ['post_like', 'post_comment', 'post_repost'])
+            ->whereIn('event_type', config('services.analytics.event_types.engagement'))
             ->where('created_at', '>=', $startDate)
             ->selectRaw('event_type, COUNT(*) as count')
             ->groupBy('event_type')
@@ -163,7 +163,7 @@ class AnalyticsService
     {
         $engagement = AnalyticsEvent::where('entity_type', 'post')
             ->where('entity_id', $postId)
-            ->whereIn('event_type', ['post_like', 'post_comment', 'post_repost', 'post_share', 'link_click'])
+            ->whereIn('event_type', config('services.analytics.event_types.post_engagement'))
             ->where('created_at', '>=', $startDate)
             ->selectRaw('event_type, COUNT(*) as count')
             ->groupBy('event_type')

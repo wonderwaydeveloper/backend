@@ -8,6 +8,7 @@ use App\Http\Resources\PollResource;
 use App\Models\Poll;
 use App\Models\PollOption;
 use App\Services\PollService;
+use Symfony\Component\HttpFoundation\Response;
 
 class PollController extends Controller
 {
@@ -32,7 +33,7 @@ class PollController extends Controller
             $result = $this->pollService->vote($poll, $option, auth()->user());
             return response()->json($result);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 400);
+            return response()->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 

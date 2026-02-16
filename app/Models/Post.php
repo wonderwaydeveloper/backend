@@ -281,9 +281,9 @@ class Post extends Model
             );
         }
         
-        if (strlen($newContent) > 280) {
+        if (strlen($newContent) > config('validation.content.post.max_length')) {
             throw new \App\Exceptions\BusinessLogicException(
-                'Content exceeds 280 characters',
+                'Content exceeds ' . config('validation.content.post.max_length') . ' characters',
                 'CONTENT_TOO_LONG'
             );
         }

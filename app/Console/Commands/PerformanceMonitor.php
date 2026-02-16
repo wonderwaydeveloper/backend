@@ -92,7 +92,7 @@ class PerformanceMonitor extends Command
         
         $start = microtime(true);
         // Simulate API call
-        sleep(0.05); // 50ms simulation
+        sleep(config('performance.monitoring.simulation_delay_seconds')); // 50ms simulation
         $responseTime = (microtime(true) - $start) * 1000;
         
         $this->line("  - Simulated response: {$responseTime}ms");

@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Services\AnalyticsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class AnalyticsController extends Controller
 {
@@ -44,7 +45,7 @@ class AnalyticsController extends Controller
     {
         // Only allow post owner to view analytics
         if ($post->user_id !== $request->user()->id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+            return response()->json(['message' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
 
         $request->validate([

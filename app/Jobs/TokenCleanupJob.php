@@ -14,8 +14,14 @@ class TokenCleanupJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 300; // 5 minutes
-    public $tries = 3;
+    public $timeout = null;
+    public $tries = null;
+
+    public function __construct()
+    {
+        $this->timeout = config('queue.defaults.jobs.cleanup.timeout');
+        $this->tries = config('queue.defaults.jobs.cleanup.tries');
+    }
 
     public function handle(TokenManagementService $tokenService): void
     {

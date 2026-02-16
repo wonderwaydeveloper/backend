@@ -14,6 +14,9 @@ class Report extends Model
         'reportable_id',
         'reason',
         'description',
+        'auto_detected',
+        'spam_score',
+        'detection_reasons',
     ];
 
     protected $attributes = [
@@ -21,7 +24,9 @@ class Report extends Model
     ];
 
     protected $casts = [
-        'reviewed_at' => 'datetime'
+        'reviewed_at' => 'datetime',
+        'auto_detected' => 'boolean',
+        'detection_reasons' => 'array',
     ];
 
     public function reporter(): BelongsTo
@@ -41,11 +46,26 @@ class Report extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', config('status.report.pending'));
     }
 
     public function scopeResolved($query)
     {
-        return $query->where('status', 'resolved');
+        return $query->where('status', config('status.report.resolved'));
+    }
+
+    public function scopeAutoDetected($query)
+    {
+        return $query->where('auto_detected', true);
+    }
+
+    public function scopeManual($query)
+    {
+        return $query->where('auto_detected', false);
+    }
+
+    public function scopeHighSpamScore($query, int $threshold = 70)
+    {
+        return $query->where('spam_score', '>=', $threshold);
     }
 }

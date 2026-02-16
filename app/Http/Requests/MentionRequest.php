@@ -14,7 +14,7 @@ class MentionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => 'required|string|min:2|max:50',
+            'q' => 'required|string|min:' . config('validation.min.mention') . '|max:' . config('validation.max.text_short'),
         ];
     }
 

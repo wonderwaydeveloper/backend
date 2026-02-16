@@ -21,8 +21,8 @@ class GenerateThumbnailJob implements ShouldQueue
     use Queueable;
     use SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 120;
+    public $tries = null;
+    public $timeout = null;
 
     protected $imagePath;
     protected $type;
@@ -30,10 +30,12 @@ class GenerateThumbnailJob implements ShouldQueue
 
     public function __construct($imagePath = null, string $type = 'post', Post $post = null)
     {
+        $this->tries = config('queue.defaults.jobs.thumbnail.tries');
+        $this->timeout = config('queue.defaults.jobs.thumbnail.timeout');
         $this->imagePath = $imagePath;
         $this->type = $type;
         $this->post = $post;
-        $this->onQueue('image-processing');
+        $this->onQueue(config('queue.names.image_processing'));
     }
 
     public function handle(CDNService $cdnService = null): void

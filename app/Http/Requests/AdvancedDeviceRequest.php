@@ -14,11 +14,11 @@ class AdvancedDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:' . config('validation.max.url'),
             'type' => 'required|in:mobile,desktop,tablet',
-            'browser' => 'nullable|string|max:100',
-            'os' => 'nullable|string|max:100',
-            'push_token' => 'nullable|string|max:500',
+            'browser' => 'nullable|string|max:' . config('validation.max.text_medium'),
+            'os' => 'nullable|string|max:' . config('validation.max.text_medium'),
+            'push_token' => 'nullable|string|max:' . config('validation.max.token'),
         ];
     }
 }

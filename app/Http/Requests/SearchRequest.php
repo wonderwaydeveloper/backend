@@ -14,7 +14,7 @@ class SearchRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'q' => 'required|string|min:1|max:100',
+            'q' => 'required|string|min:' . config('validation.min.search') . '|max:' . config('validation.max.text_medium'),
             'filter' => 'nullable|in:latest,popular,media',
         ];
     }

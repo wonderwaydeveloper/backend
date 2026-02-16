@@ -40,7 +40,7 @@ class CommunityJoinRequest extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', config('status.community_join_request.pending'));
     }
 
     public function approve(User $reviewer): void

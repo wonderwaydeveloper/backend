@@ -120,7 +120,7 @@ class AuditController extends Controller
             ->selectRaw('action, COUNT(*) as count')
             ->groupBy('action')
             ->orderBy('count', 'desc')
-            ->limit(10)
+            ->limit(config('pagination.trending'))
             ->get();
 
         return response()->json([

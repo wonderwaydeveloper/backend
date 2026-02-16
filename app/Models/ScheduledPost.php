@@ -31,7 +31,7 @@ class ScheduledPost extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', config('status.scheduled_post.pending'));
     }
 
     public function scopeReady($query)
@@ -41,11 +41,11 @@ class ScheduledPost extends Model
     
     public function scopeFailed($query)
     {
-        return $query->where('status', 'failed');
+        return $query->where('status', config('status.scheduled_post.failed'));
     }
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'published');
+        return $query->where('status', config('status.scheduled_post.published'));
     }
 }

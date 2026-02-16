@@ -14,7 +14,7 @@ class BotDetectionService
     ];
 
     private array $suspiciousPatterns = [
-        'rapid_requests' => 10, // requests per second
+        'rapid_requests' => 'config', // from config
         'no_javascript' => true,
         'no_cookies' => true,
         'suspicious_headers' => true,
@@ -29,42 +29,42 @@ class BotDetectionService
         // User Agent Analysis
         $userAgent = $request->userAgent();
         if ($this->isBotUserAgent($userAgent)) {
-            $score += 50;
+            $score += config('security.bot_detection.scores.bot_user_agent');
             $indicators[] = 'bot_user_agent';
         }
 
         // Request Pattern Analysis
         if ($this->hasRapidRequests($request->ip())) {
-            $score += 30;
+            $score += config('security.bot_detection.scores.rapid_requests');
             $indicators[] = 'rapid_requests';
         }
 
         // Header Analysis
         if ($this->hasSuspiciousHeaders($request)) {
-            $score += 20;
+            $score += config('security.bot_detection.scores.suspicious_headers');
             $indicators[] = 'suspicious_headers';
         }
 
         // Behavioral Analysis
         if ($this->hasSuspiciousBehavior($request)) {
-            $score += 25;
+            $score += config('security.bot_detection.scores.suspicious_behavior');
             $indicators[] = 'suspicious_behavior';
         }
 
         // JavaScript Challenge Result
         if (! $this->passedJavaScriptChallenge($request)) {
-            $score += 15;
+            $score += config('security.bot_detection.scores.no_javascript');
             $indicators[] = 'no_javascript';
         }
 
         // Fingerprint Analysis
         if ($this->hasKnownBotFingerprint($request)) {
-            $score += 40;
+            $score += config('security.bot_detection.scores.known_bot_fingerprint');
             $indicators[] = 'known_bot_fingerprint';
         }
 
         return [
-            'is_bot' => $score >= 70,
+            'is_bot' => $score >= config('security.bot_detection.thresholds.challenge'),
             'confidence' => min($score, 100),
             'indicators' => $indicators,
             'action' => $this->determineAction($score),
@@ -122,15 +122,15 @@ class BotDetectionService
         $requests = Cache::get($key, []);
         $now = time();
 
-        // Remove old requests (older than 10 seconds)
-        $requests = array_filter($requests, fn ($time) => $now - $time < 10);
+        // Remove old requests
+        $requests = array_filter($requests, fn ($time) => $now - $time < config('security.bot_detection.rapid_requests.window_seconds'));
 
         // Add current request
         $requests[] = $now;
-        Cache::put($key, $requests, now()->addMinutes(10));
+        Cache::put($key, $requests, now()->addMinutes(config('security.cache.bot_requests') / 60));
 
-        // Check if more than 10 requests in 10 seconds
-        return count($requests) > 10;
+        // Check if more than threshold
+        return count($requests) > config('security.bot_detection.rapid_requests.max_requests');
     }
 
     private function hasSuspiciousHeaders(Request $request): bool
@@ -176,14 +176,16 @@ class BotDetectionService
         $behavior['pages_visited'][] = $request->path();
         $behavior['time_spent'][] = time();
 
-        Cache::put($key, $behavior, now()->addHour());
+        Cache::put($key, $behavior, now()->addSeconds(config('security.cache.bot_behavior')));
 
         // Analyze patterns
         $uniquePages = count(array_unique($behavior['pages_visited']));
         $totalRequests = count($behavior['pages_visited']);
 
         // Too many requests to same page
-        if ($totalRequests > 20 && $uniquePages < 3) {
+        $maxRequests = config('security.bot_detection.behavior.max_same_page_requests');
+        $minPages = config('security.bot_detection.behavior.min_unique_pages');
+        if ($totalRequests > $maxRequests && $uniquePages < $minPages) {
             return true;
         }
 
@@ -195,7 +197,7 @@ class BotDetectionService
                     : 0;
             }, range(0, count($behavior['time_spent']) - 2))) / (count($behavior['time_spent']) - 1);
 
-            if ($avgTime < 2) { // Less than 2 seconds per page
+            if ($avgTime < config('security.bot_detection.behavior.min_time_per_page')) {
                 return true;
             }
         }
@@ -229,13 +231,14 @@ class BotDetectionService
 
     private function determineAction(int $score): string
     {
-        if ($score >= 90) {
+        $thresholds = config('security.bot_detection.thresholds');
+        if ($score >= $thresholds['block']) {
             return 'block';
         }
-        if ($score >= 70) {
+        if ($score >= $thresholds['challenge']) {
             return 'challenge';
         }
-        if ($score >= 50) {
+        if ($score >= $thresholds['monitor']) {
             return 'monitor';
         }
 
@@ -294,7 +297,7 @@ class BotDetectionService
         return [
             'type' => 'rate_limit',
             'message' => 'Please wait before making another request',
-            'retry_after' => 30,
+            'retry_after' => config('security.bot_detection.challenge_retry_after'),
         ];
     }
 
@@ -310,7 +313,7 @@ class BotDetectionService
     public function markAsBot(Request $request): void
     {
         $fingerprint = $this->generateFingerprint($request);
-        Cache::put("known_bot:{$fingerprint}", true, now()->addDays(7));
+        Cache::put("known_bot:{$fingerprint}", true, now()->addDays(config('security.bot_detection.known_bot_cache_days')));
 
         Log::channel('security')->info('Bot detected and marked', [
             'ip' => $request->ip(),

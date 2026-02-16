@@ -13,6 +13,7 @@ use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Cache, Hash};
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class UnifiedAuthController extends Controller
 {
@@ -54,7 +55,7 @@ class UnifiedAuthController extends Controller
                     'requires_password_change' => true,
                     'message' => 'Your password has expired. Please change it.',
                     'user_id' => $user->id
-                ], 403);
+                ], Response::HTTP_FORBIDDEN);
             }
             
             $fingerprint = DeviceFingerprintService::generate($request);
@@ -105,7 +106,7 @@ class UnifiedAuthController extends Controller
                     $lock->release();
                 }
             } else {
-                return response()->json(['error' => 'System busy, please try again'], 503);
+                return response()->json(['error' => 'System busy, please try again'], Response::HTTP_SERVICE_UNAVAILABLE);
             }
             
             $auditService = app(\App\Services\AuditTrailService::class);
@@ -124,20 +125,20 @@ class UnifiedAuthController extends Controller
         $result = $this->authService->login($loginDTO, false);
         
         if (!isset($result['user'])) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Invalid credentials'], Response::HTTP_UNAUTHORIZED);
         }
         
         $user = $result['user'];
         
         if (!$user->two_factor_enabled) {
-            return response()->json(['error' => '2FA not enabled'], 400);
+            return response()->json(['error' => '2FA not enabled'], Response::HTTP_BAD_REQUEST);
         }
         
         $secret = decrypt($user->two_factor_secret);
         $valid = $this->twoFactorService->verifyCode($secret, $twoFactorCode);
         
         if (!$valid) {
-            return response()->json(['error' => 'Invalid 2FA code'], 422);
+            return response()->json(['error' => 'Invalid 2FA code'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         $token = app(\App\Services\SessionTimeoutService::class)->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
@@ -179,7 +180,7 @@ class UnifiedAuthController extends Controller
         $success = $this->authService->revokeSession($request->user(), $request->token_id);
         
         if (!$success) {
-            return response()->json(['error' => 'Session not found'], 404);
+            return response()->json(['error' => 'Session not found'], Response::HTTP_NOT_FOUND);
         }
         
         return response()->json(['message' => 'Session revoked successfully']);
@@ -205,7 +206,7 @@ class UnifiedAuthController extends Controller
         $code = $this->verificationCodeService->generateCode();
 
         if (User::where($request->contact_type, $request->contact)->exists()) {
-            return response()->json(['error' => 'Unable to complete registration'], 422);
+            return response()->json(['error' => 'Unable to complete registration'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         Cache::put("registration:{$sessionId}", [
@@ -244,15 +245,15 @@ class UnifiedAuthController extends Controller
 
         $session = Cache::get("registration:{$request->session_id}");
         if (!$session || $session['step'] !== 1) {
-            return response()->json(['error' => 'Invalid session'], 422);
+            return response()->json(['error' => 'Invalid session'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if (now()->timestamp > $session['code_expires_at']) {
-            return response()->json(['error' => 'Verification code has expired'], 422);
+            return response()->json(['error' => 'Verification code has expired'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($session['code'] !== $request->code) {
-            return response()->json(['error' => 'Invalid verification code'], 422);
+            return response()->json(['error' => 'Invalid verification code'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // Generate username suggestion
@@ -280,30 +281,30 @@ class UnifiedAuthController extends Controller
 
         $session = Cache::get("registration:{$request->session_id}");
         if (!$session || $session['step'] !== 2 || !$session['verified']) {
-            return response()->json(['error' => 'Invalid session'], 422);
+            return response()->json(['error' => 'Invalid session'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         // Use provided username or suggested username
         $username = $request->username ?? $session['suggested_username'];
         
         if (!$username) {
-            return response()->json(['error' => 'Username is required'], 422);
+            return response()->json(['error' => 'Username is required'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $lockKey = "user_creation:{$session['contact']}";
         $lock = Cache::lock($lockKey, 10);
         
         if (!$lock->get()) {
-            return response()->json(['error' => 'Registration in progress, please wait'], 503);
+            return response()->json(['error' => 'Registration in progress, please wait'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
         
         try {
             if (User::where($session['contact_type'], $session['contact'])->exists()) {
-                return response()->json(['error' => 'Unable to complete registration'], 422);
+                return response()->json(['error' => 'Unable to complete registration'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             if (User::where('username', $username)->exists()) {
-                return response()->json(['error' => 'Username already taken'], 422);
+                return response()->json(['error' => 'Username already taken'], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             // Create user with basic data first
@@ -329,7 +330,7 @@ class UnifiedAuthController extends Controller
             } catch (\InvalidArgumentException $e) {
                 // If password validation fails, delete the user and throw exception
                 $user->delete();
-                return response()->json(['error' => $e->getMessage()], 422);
+                return response()->json(['error' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
             
             if ($user->date_of_birth && $user->date_of_birth->age < 18) {
@@ -363,7 +364,7 @@ class UnifiedAuthController extends Controller
 
         $session = Cache::get("registration:{$request->session_id}");
         if (!$session || $session['step'] !== 1) {
-            return response()->json(['error' => 'Invalid session'], 422);
+            return response()->json(['error' => 'Invalid session'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $rateLimitResult = $this->rateLimiter->checkLimit('auth.resend', $session['contact']);
@@ -411,13 +412,19 @@ class UnifiedAuthController extends Controller
                    ->first();
         
         if (!$user || !Hash::check($request->code, $user->email_verification_token)) {
-            return response()->json(['error' => 'Invalid or expired code'], 422);
+            return response()->json(['error' => 'Invalid or expired code'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user->update([
             'email_verified_at' => now(),
             'email_verification_token' => null
         ]);
+        
+        // Upgrade role from 'user' to 'verified'
+        if ($user->hasRole('user') && !$user->hasRole('verified')) {
+            $user->removeRole('user');
+            $user->assignRole('verified');
+        }
 
         return response()->json(['message' => 'Email verified successfully']);
     }
@@ -431,7 +438,7 @@ class UnifiedAuthController extends Controller
                    ->first();
 
         if (!$user) {
-            return response()->json(['error' => 'User not found or already verified'], 422);
+            return response()->json(['error' => 'User not found or already verified'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $rateLimitResult = $this->rateLimiter->checkLimit('email.resend', $request->email);
@@ -505,7 +512,7 @@ class UnifiedAuthController extends Controller
         }
 
         if ($user->two_factor_enabled) {
-            return response()->json(['message' => '2FA is already enabled'], 400);
+            return response()->json(['message' => '2FA is already enabled'], Response::HTTP_BAD_REQUEST);
         }
 
         $secret = $this->twoFactorService->generateSecret();
@@ -532,7 +539,7 @@ class UnifiedAuthController extends Controller
         $user = $request->user();
 
         if (!$user->two_factor_secret) {
-            return response()->json(['message' => '2FA not initialized'], 400);
+            return response()->json(['message' => '2FA not initialized'], Response::HTTP_BAD_REQUEST);
         }
 
         $secret = $this->twoFactorService->decryptSecret($user->two_factor_secret);
@@ -593,7 +600,7 @@ class UnifiedAuthController extends Controller
 
         $user = User::where('phone', $request->phone)->first();
         if (!$user) {
-            return response()->json(['error' => 'Phone number not registered'], 422);
+            return response()->json(['error' => 'Phone number not registered'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $rateLimitResult = $this->rateLimiter->checkLimit('auth.phone_login', $request->phone);
@@ -635,20 +642,20 @@ class UnifiedAuthController extends Controller
 
         $session = Cache::get("phone_login:{$request->session_id}");
         if (!$session) {
-            return response()->json(['error' => 'Invalid or expired session'], 422);
+            return response()->json(['error' => 'Invalid or expired session'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if (now()->timestamp > $session['code_expires_at']) {
-            return response()->json(['error' => 'Code has expired'], 422);
+            return response()->json(['error' => 'Code has expired'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($session['code'] !== $request->code) {
-            return response()->json(['error' => 'Invalid code'], 422);
+            return response()->json(['error' => 'Invalid code'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user = User::find($session['user_id']);
         if (!$user) {
-            return response()->json(['error' => 'User not found'], 422);
+            return response()->json(['error' => 'User not found'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($user->two_factor_enabled) {
@@ -677,7 +684,7 @@ class UnifiedAuthController extends Controller
 
         $session = Cache::get("phone_login:{$request->session_id}");
         if (!$session) {
-            return response()->json(['error' => 'Invalid session'], 422);
+            return response()->json(['error' => 'Invalid session'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $rateLimitResult = $this->rateLimiter->checkLimit('auth.phone_resend', $session['phone']);
@@ -715,7 +722,7 @@ class UnifiedAuthController extends Controller
         $user = $request->user();
         
         if ($user->date_of_birth) {
-            return response()->json(['message' => 'Age already verified'], 400);
+            return response()->json(['message' => 'Age already verified'], Response::HTTP_BAD_REQUEST);
         }
 
         $user->update(['date_of_birth' => $request->date_of_birth]);

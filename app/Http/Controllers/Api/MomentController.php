@@ -9,6 +9,7 @@ use App\Models\Moment;
 use App\Models\Post;
 use App\Services\{MomentService, MediaService};
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class MomentController extends Controller
 {
@@ -45,7 +46,7 @@ class MomentController extends Controller
             $moment = $this->momentService->getMoment($moment, auth()->user());
             return new MomentResource($moment);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Moment not found'], 404);
+            return response()->json(['message' => 'Moment not found'], Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -76,7 +77,7 @@ class MomentController extends Controller
             $this->momentService->addPostToMoment($moment, $request->post_id, $request->position);
             return response()->json(['message' => 'Post added to moment']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 409);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_CONFLICT);
         }
     }
 
@@ -88,7 +89,7 @@ class MomentController extends Controller
             $this->momentService->removePostFromMoment($moment, $post->id);
             return response()->json(['message' => 'Post removed from moment']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 404);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 

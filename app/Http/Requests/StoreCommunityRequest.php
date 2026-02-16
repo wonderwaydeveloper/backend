@@ -20,8 +20,8 @@ class StoreCommunityRequest extends FormRequest
             'privacy' => 'required|in:public,private,restricted',
             'avatar' => ['nullable', new FileUpload('avatar')],
             'banner' => ['nullable', new FileUpload('image')],
-            'rules' => 'nullable|array|max:10',
-            'rules.*' => 'string|max:200',
+            'rules' => 'nullable|array|max:' . config('validation.max.rules'),
+            'rules.*' => 'string|max:' . config('validation.max.text_long'),
             'settings' => 'nullable|array',
         ];
     }

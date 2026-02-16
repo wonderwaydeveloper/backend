@@ -15,8 +15,8 @@ class AutoScalingRequest extends FormRequest
     {
         return [
             'action' => 'required|string|in:scale_up,scale_down',
-            'instances' => 'nullable|integer|min:1|max:10',
-            'reason' => 'nullable|string|max:200'
+            'instances' => 'nullable|integer|min:' . config('validation.min.instances') . '|max:' . config('validation.max.instances'),
+            'reason' => 'nullable|string|max:' . config('validation.max.reason')
         ];
     }
 }

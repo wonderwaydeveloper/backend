@@ -12,10 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class TrendingService
 {
-    public const TRENDING_CACHE_TTL = 900; // 15 minutes - from config('authentication.cache.trending_ttl', 900)
-    public const HASHTAG_TREND_THRESHOLD = 5; // Minimum posts in last 24h
-    public const POST_TREND_THRESHOLD = 10; // Minimum engagement score
-    public const USER_TREND_THRESHOLD = 100; // Minimum followers for trending users
+    // Thresholds moved to config/trending.php
 
     /**
      * Calculate trending hashtags with time decay
@@ -24,7 +21,7 @@ class TrendingService
     {
         $cacheKey = "trending_hashtags_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, self::TRENDING_CACHE_TTL, function () use ($limit, $timeframe) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
             $cutoffTime = Carbon::now()->subHours($timeframe);
 
             return DB::table('hashtags')
@@ -39,7 +36,7 @@ class TrendingService
                 ->where('posts.published_at', '>=', $cutoffTime)
                 ->where('posts.is_draft', false)
                 ->groupBy('hashtags.id')
-                ->having('recent_posts_count', '>=', self::HASHTAG_TREND_THRESHOLD)
+                ->having('recent_posts_count', '>=', config('limits.trending.thresholds.hashtag_min_posts'))
                 ->orderBy('trend_score', 'desc')
                 ->limit($limit)
                 ->get();
@@ -53,7 +50,7 @@ class TrendingService
     {
         $cacheKey = "trending_posts_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, self::TRENDING_CACHE_TTL, function () use ($limit, $timeframe) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
             $cutoffTime = Carbon::now()->subHours($timeframe);
 
             return Post::select([
@@ -70,7 +67,7 @@ class TrendingService
             ->whereNull('thread_id') // Only main posts
             ->with(['user:id,name,username,avatar', 'hashtags:id,name,slug'])
             ->withCount(['likes', 'comments', 'quotes'])
-            ->having('engagement_score', '>=', self::POST_TREND_THRESHOLD)
+            ->having('engagement_score', '>=', config('limits.trending.thresholds.post_min_engagement'))
             ->orderBy('engagement_score', 'desc')
             ->limit($limit)
             ->get();
@@ -84,7 +81,7 @@ class TrendingService
     {
         $cacheKey = "trending_users_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, self::TRENDING_CACHE_TTL, function () use ($limit, $timeframe) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
             $cutoffTime = Carbon::now()->subHours($timeframe);
 
             return User::select([
@@ -122,7 +119,7 @@ class TrendingService
     {
         $cacheKey = "personalized_trending_{$userId}_{$limit}";
 
-        return Cache::remember($cacheKey, self::TRENDING_CACHE_TTL, function () use ($userId, $limit) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($userId, $limit) {
             // Get user's followed hashtags and users
             $userHashtags = DB::table('hashtag_post')
                 ->join('posts', 'hashtag_post.post_id', '=', 'posts.id')
@@ -185,7 +182,7 @@ class TrendingService
     {
         $cacheKey = "trend_velocity_{$type}_{$id}_{$hours}";
 
-        return Cache::remember($cacheKey, 300, function () use ($type, $id, $hours) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.engagement'), function () use ($type, $id, $hours) {
             $intervals = [];
 
             for ($i = 0; $i < $hours; $i++) {

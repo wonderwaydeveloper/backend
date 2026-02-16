@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,
             \App\Http\Middleware\UpdateLastSeen::class,
+            \App\Http\Middleware\CheckUserModeration::class,
         ]);
 
         $middleware->alias([
@@ -41,6 +42,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'captcha' => \App\Http\Middleware\CaptchaMiddleware::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'role' => \App\Http\Middleware\CheckRole::class,
+            'check.moderation' => \App\Http\Middleware\CheckUserModeration::class,
+            'check.subscription' => \App\Http\Middleware\CheckSubscription::class,
+            'check.feature' => \App\Http\Middleware\CheckFeatureAccess::class,
+            'role.ratelimit' => \App\Http\Middleware\RoleBasedRateLimit::class,
         ]);
 
         $middleware->throttleApi('60,1');

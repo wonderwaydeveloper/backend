@@ -13,6 +13,7 @@ use App\Models\Mute;
 use App\Services\UserService;
 use App\Rules\{FileUpload};
 use Illuminate\Http\{JsonResponse, Request};
+use Symfony\Component\HttpFoundation\Response;
 
 class ProfileController extends Controller
 {
@@ -49,7 +50,7 @@ class ProfileController extends Controller
             ->whereHas('media')
             ->with(['media', 'user:id,name,username,avatar'])
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(config('pagination.posts'));
             
         return response()->json($mediaPosts);
     }
@@ -112,7 +113,7 @@ class ProfileController extends Controller
     {
         // Only admins can verify users
         if (!$request->user()->hasRole('admin')) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return response()->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
         }
         
         $request->validate(['verified' => 'required|boolean']);
@@ -188,7 +189,7 @@ class ProfileController extends Controller
             ->delete();
         
         if (!$deleted) {
-            return response()->json(['error' => 'User is not blocked'], 404);
+            return response()->json(['error' => 'User is not blocked'], Response::HTTP_NOT_FOUND);
         }
         
         return response()->json(['message' => 'User unblocked successfully']);
@@ -220,7 +221,7 @@ class ProfileController extends Controller
             ->delete();
         
         if (!$deleted) {
-            return response()->json(['error' => 'User is not muted'], 404);
+            return response()->json(['error' => 'User is not muted'], Response::HTTP_NOT_FOUND);
         }
         
         return response()->json(['message' => 'User unmuted successfully']);
@@ -232,7 +233,7 @@ class ProfileController extends Controller
             ->blockedUsers()
             ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
             ->withPivot('reason', 'created_at')
-            ->paginate(50);
+            ->paginate(config('pagination.activities'));
         
         return response()->json($blockedUsers);
     }
@@ -243,7 +244,7 @@ class ProfileController extends Controller
             ->mutedUsers()
             ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
             ->withPivot('expires_at', 'created_at')
-            ->paginate(50);
+            ->paginate(config('pagination.activities'));
         
         return response()->json($mutedUsers);
     }
@@ -287,7 +288,7 @@ class ProfileController extends Controller
         ]);
         
         if (!\Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Invalid password'], 422);
+            return response()->json(['error' => 'Invalid password'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
         // Secure data deletion

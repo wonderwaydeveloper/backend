@@ -103,7 +103,7 @@ class CDNService
 
     public function preloadCriticalAssets(): array
     {
-        return Cache::remember('critical_assets', 3600, function () {
+        return Cache::remember('critical_assets', config('cache_ttl.ttl.critical_assets'), function () {
             return [
                 'css' => ['/css/app.css'],
                 'js' => ['/js/app.js'],

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class ConversionTrackingService
 {
-    public function track($eventType, $userId = null, $eventData = [], $conversionValue = 0)
+    public function track($eventType, $userId = null, $eventData = [], $conversionValue = 0, $currency = 'USD', $source = null, $campaign = null)
     {
         $conversionType = $this->determineConversionType($eventType);
 
@@ -19,7 +19,8 @@ class ConversionTrackingService
             'event_data' => $eventData,
             'conversion_type' => $conversionType,
             'conversion_value' => $conversionValue,
-            'source' => request()->header('referer') ? 'referral' : 'direct',
+            'source' => $source ?? (request()->header('referer') ? 'referral' : 'direct'),
+            'campaign' => $campaign,
             'session_id' => session()->getId(),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
@@ -33,7 +34,7 @@ class ConversionTrackingService
     {
         $startDate = Carbon::now()->subDays($dateRange);
 
-        return Cache::remember("conversion_funnel_{$dateRange}", 3600, function () use ($startDate) {
+        return Cache::remember("conversion_funnel_{$dateRange}", config('cache_ttl.ttl.conversion_funnel'), function () use ($startDate) {
             return [
                 'visitors' => $this->getUniqueVisitors($startDate),
                 'signups' => $this->getConversions('registration', $startDate),
@@ -74,7 +75,7 @@ class ConversionTrackingService
     {
         $cacheKey = "cohort_analysis_{$period}";
 
-        return Cache::remember($cacheKey, 7200, function () use ($period) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.conversion_rate'), function () use ($period) {
             // Simplified cohort analysis
             $cohorts = [];
             $startDate = Carbon::now()->subMonths(6);
@@ -137,7 +138,7 @@ class ConversionTrackingService
 
     private function getActiveUsers($startDate)
     {
-        return ConversionMetric::whereIn('event_type', ['login', 'post_create', 'comment', 'like'])
+        return ConversionMetric::whereIn('event_type', config('services.analytics.event_types.active_user'))
             ->where('created_at', '>=', $startDate)
             ->distinct('user_id')
             ->count();

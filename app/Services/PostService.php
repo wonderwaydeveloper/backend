@@ -52,7 +52,7 @@ class PostService implements PostServiceInterface
 
     public function findById(int $id): ?Post
     {
-        return Cache::remember("post:{$id}", 300, function () use ($id) {
+        return Cache::remember("post:{$id}", config('cache_ttl.ttl.post'), function () use ($id) {
             return Post::with([
                 'user:id,name,username,avatar',
                 'hashtags:id,name,slug',
@@ -106,7 +106,7 @@ class PostService implements PostServiceInterface
     {
         $cacheKey = "timeline:{$userId}:{$limit}";
 
-        return Cache::remember($cacheKey, 300, function () use ($userId, $limit) {
+        return Cache::remember($cacheKey, config('cache_ttl.ttl.user_posts'), function () use ($userId, $limit) {
             $followingIds = $this->getFollowingIds($userId);
             $user = User::find($userId);
             $blockedIds = $user->blockedUsers()->pluck('users.id')->toArray();
@@ -190,17 +190,19 @@ class PostService implements PostServiceInterface
      */
     public function createPost(PostDTO $postDTO, array $mediaFiles = []): Post
     {
-        return DB::transaction(function () use ($postDTO, $mediaFiles) {
+        return DB::transaction(function () use ($postDTO) {
             $postData = $postDTO->toArray();
             $postData['content'] = $this->sanitizeContent($postData['content']);
 
             $post = $this->create($postData);
 
-            // Handle media uploads
-            if (!empty($mediaFiles)) {
-                foreach ($mediaFiles as $file) {
-                    $media = $this->mediaService->uploadImage($file, $post->user);
-                    $this->mediaService->attachToModel($media, $post);
+            // Attach media if media_ids provided
+            if (!empty($postDTO->mediaIds)) {
+                foreach ($postDTO->mediaIds as $mediaId) {
+                    $media = $this->mediaService->findById($mediaId);
+                    if ($media && $media->user_id === $post->user_id) {
+                        $this->mediaService->attachToModel($media, $post);
+                    }
                 }
             }
 
@@ -389,7 +391,7 @@ class PostService implements PostServiceInterface
     private function processPostAsync(Post $post, bool $isDraft): void
     {
         if (! $isDraft && ! app()->environment('testing')) {
-            dispatch(new ProcessPostJob($post))->onQueue('high');
+            dispatch(new ProcessPostJob($post))->onQueue(config('queue.names.high'));
         }
     }
 
@@ -422,7 +424,7 @@ class PostService implements PostServiceInterface
 
     private function getFollowingIds(int $userId): array
     {
-        return Cache::remember("following:{$userId}", 600, function () use ($userId) {
+        return Cache::remember("following:{$userId}", config('cache_ttl.ttl.following'), function () use ($userId) {
             return DB::table('follows')
                 ->where('follower_id', $userId)
                 ->pluck('following_id')

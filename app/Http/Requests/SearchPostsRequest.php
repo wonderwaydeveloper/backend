@@ -22,7 +22,7 @@ class SearchPostsRequest extends FormRequest
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'min_likes' => 'nullable|integer|min:0',
             'hashtags' => 'nullable|array',
-            'hashtags.*' => 'string|max:50',
+            'hashtags.*' => 'string|max:' . config('validation.max.text_short'),
             'sort' => 'nullable|in:relevance,latest,oldest,popular',
         ];
     }

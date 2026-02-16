@@ -15,15 +15,15 @@ class MomentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:100',
-            'description' => 'nullable|string|max:500',
+            'title' => 'required|string|max:' . config('validation.max.title'),
+            'description' => 'nullable|string|max:' . config('validation.max.description'),
             'privacy' => 'nullable|string|in:public,private',
-            'post_ids' => 'nullable|array|min:2|max:10',
+            'post_ids' => 'nullable|array|min:' . config('validation.min.moment_posts') . '|max:' . config('validation.max.array_medium'),
             'post_ids.*' => 'exists:posts,id',
             'cover_image' => ['nullable', new FileUpload('avatar')],
             'is_featured' => 'boolean',
-            'tags' => 'nullable|array|max:5',
-            'tags.*' => 'string|max:50'
+            'tags' => 'nullable|array|max:' . config('validation.max.tags'),
+            'tags.*' => 'string|max:' . config('validation.max.text_short')
         ];
     }
 

@@ -7,6 +7,7 @@ use App\Http\Requests\TrendingRequest;
 use App\Http\Resources\TrendingResource;
 use App\Services\TrendingService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class TrendingController extends Controller
 {
@@ -31,14 +32,14 @@ class TrendingController extends Controller
     public function hashtags(TrendingRequest $request)
     {
         $hashtags = $this->trendingService->getTrendingHashtags(
-            $request->input('limit', 10),
+            $request->input('limit', config('pagination.trending')),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($hashtags),
             'meta' => [
-                'limit' => $request->input('limit', 10),
+                'limit' => $request->input('limit', config('pagination.trending')),
                 'timeframe_hours' => $request->input('timeframe', 24),
                 'generated_at' => now(),
             ],
@@ -59,14 +60,14 @@ class TrendingController extends Controller
     public function posts(TrendingRequest $request)
     {
         $posts = $this->trendingService->getTrendingPosts(
-            $request->input('limit', 20),
+            $request->input('limit', config('pagination.default')),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($posts),
             'meta' => [
-                'limit' => $request->input('limit', 20),
+                'limit' => $request->input('limit', config('pagination.default')),
                 'timeframe_hours' => $request->input('timeframe', 24),
                 'generated_at' => now(),
             ],
@@ -87,14 +88,14 @@ class TrendingController extends Controller
     public function users(TrendingRequest $request)
     {
         $users = $this->trendingService->getTrendingUsers(
-            $request->input('limit', 10),
+            $request->input('limit', config('pagination.trending')),
             $request->input('timeframe', 168)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($users),
             'meta' => [
-                'limit' => $request->input('limit', 10),
+                'limit' => $request->input('limit', config('pagination.trending')),
                 'timeframe_hours' => $request->input('timeframe', 168),
                 'generated_at' => now(),
             ],
@@ -119,13 +120,13 @@ class TrendingController extends Controller
 
         $content = $this->trendingService->getPersonalizedTrending(
             $request->user()->id,
-            $request->input('limit', 10)
+            $request->input('limit', config('pagination.trending'))
         );
 
         return response()->json([
             'data' => $content,
             'meta' => [
-                'limit' => $request->input('limit', 10),
+                'limit' => $request->input('limit', config('pagination.trending')),
                 'user_id' => $request->user()->id,
                 'generated_at' => now(),
             ],
@@ -151,7 +152,7 @@ class TrendingController extends Controller
         ]);
 
         if (! in_array($type, ['hashtag', 'post'])) {
-            return response()->json(['error' => 'Invalid type'], 400);
+            return response()->json(['error' => 'Invalid type'], Response::HTTP_BAD_REQUEST);
         }
 
         $velocity = $this->trendingService->getTrendVelocity(

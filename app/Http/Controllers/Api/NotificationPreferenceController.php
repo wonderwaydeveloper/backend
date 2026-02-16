@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\NotificationPreferenceRequest;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class NotificationPreferenceController extends Controller
 {
@@ -58,7 +59,7 @@ class NotificationPreferenceController extends Controller
         ]);
 
         if (! in_array($type, ['email', 'push', 'in_app'])) {
-            return response()->json(['message' => 'Invalid notification type'], 400);
+            return response()->json(['message' => 'Invalid notification type'], Response::HTTP_BAD_REQUEST);
         }
 
         $user = $request->user();
@@ -88,7 +89,7 @@ class NotificationPreferenceController extends Controller
         $validCategories = ['likes', 'comments', 'follows', 'mentions', 'reposts', 'messages'];
 
         if (! in_array($type, $validTypes) || ! in_array($category, $validCategories)) {
-            return response()->json(['message' => 'Invalid notification type or category'], 400);
+            return response()->json(['message' => 'Invalid notification type or category'], Response::HTTP_BAD_REQUEST);
         }
 
         $user = $request->user();

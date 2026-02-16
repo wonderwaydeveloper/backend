@@ -111,8 +111,8 @@ if (!empty($msgMigration)) {
     test('Database', 'messages has sender_id', strpos($msgContent, 'sender_id') !== false);
     test('Database', 'messages has content', strpos($msgContent, 'content') !== false);
     test('Database', 'messages has read_at', strpos($msgContent, 'read_at') !== false);
-    test('Database', 'messages has media_path', strpos($msgContent, 'media_path') !== false);
-    test('Database', 'messages has media_type', strpos($msgContent, 'media_type') !== false);
+    // Media is handled by Media System (polymorphic relation)
+    test('Database', 'Message uses Media System', strpos($messageModel, 'morphMany(Media::class') !== false);
     test('Database', 'messages has gif_url', strpos($msgContent, 'gif_url') !== false);
     test('Database', 'messages has index', strpos($msgContent, "index(['conversation_id'") !== false || strpos($msgContent, "index('conversation_id')") !== false);
     test('Database', 'messages has foreign keys', strpos($msgContent, 'constrained') !== false);
@@ -189,7 +189,7 @@ test('Twitter', 'Messages send: 60/minute', strpos($routes, 'throttle:60,1') !==
 
 echo "\nMessage Limits:\n";
 test('Twitter', 'Content max 10,000 chars', strpos($request, 'ContentLength') !== false);
-test('Twitter', 'Media upload supported', strpos($request, 'media') !== false);
+test('Twitter', 'Media upload via Media System', strpos($service, 'MediaService') !== false);
 test('Twitter', 'GIF support', strpos($request, 'gif_url') !== false);
 
 // ============================================

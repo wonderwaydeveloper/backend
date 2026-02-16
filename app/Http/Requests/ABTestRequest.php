@@ -14,14 +14,14 @@ class ABTestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:100|unique:ab_tests,name',
-            'description' => 'nullable|string|max:500',
-            'variants' => 'required|array|min:2|max:4',
+            'name' => 'required|string|max:' . config('validation.max.name') . '|unique:ab_tests,name',
+            'description' => 'nullable|string|max:' . config('validation.max.description'),
+            'variants' => 'required|array|min:' . config('validation.min.poll_options') . '|max:' . config('validation.max.array_small'),
             'variants.A' => 'required|array',
             'variants.B' => 'required|array',
             'variants.C' => 'sometimes|array',
             'variants.D' => 'sometimes|array',
-            'traffic_percentage' => 'integer|min:1|max:100',
+            'traffic_percentage' => 'integer|min:' . config('validation.min.instances') . '|max:' . config('validation.max.percentage'),
             'targeting_rules' => 'nullable|array',
             'starts_at' => 'nullable|date|after:now',
             'ends_at' => 'nullable|date|after:starts_at',

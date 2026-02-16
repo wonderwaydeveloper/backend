@@ -10,6 +10,7 @@ use App\Models\SpaceParticipant;
 use App\Services\{SpaceService, SpaceParticipantService};
 use App\Contracts\Repositories\SpaceRepositoryInterface;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class SpaceController extends Controller
 {
@@ -25,7 +26,7 @@ class SpaceController extends Controller
             $spaces = $this->spaceRepository->getLiveSpaces(20);
             return SpaceResource::collection($spaces);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to fetch spaces'], 500);
+            return response()->json(['message' => 'Failed to fetch spaces'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -35,7 +36,7 @@ class SpaceController extends Controller
             $space = $this->spaceService->createSpace($request->user(), $request->validated());
             return new SpaceResource($space);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -45,7 +46,7 @@ class SpaceController extends Controller
             $space = $this->spaceRepository->findById($space->id);
             return new SpaceResource($space);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Space not found'], 404);
+            return response()->json(['message' => 'Space not found'], Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -55,7 +56,7 @@ class SpaceController extends Controller
             $this->spaceService->joinSpace($space, $request->user());
             return response()->json(['message' => 'Joined space successfully']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 403);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
         }
     }
 
@@ -65,7 +66,7 @@ class SpaceController extends Controller
             $this->spaceService->leaveSpace($space, $request->user());
             return response()->json(['message' => 'Left space successfully']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -79,13 +80,13 @@ class SpaceController extends Controller
 
         try {
             if ($participant->space_id !== $space->id) {
-                return response()->json(['message' => 'Participant not in this space'], 400);
+                return response()->json(['message' => 'Participant not in this space'], Response::HTTP_BAD_REQUEST);
             }
 
             $this->participantService->updateRole($participant, $request->role);
             return response()->json(['message' => 'Role updated successfully']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -97,7 +98,7 @@ class SpaceController extends Controller
             $this->spaceService->endSpace($space);
             return response()->json(['message' => 'Space ended successfully']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 400);
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
         }
     }
 }

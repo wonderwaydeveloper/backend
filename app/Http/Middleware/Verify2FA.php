@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class Verify2FA
 {
@@ -19,7 +20,7 @@ class Verify2FA
                 return response()->json([
                     'message' => '2FA verification required',
                     'requires_2fa' => true,
-                ], 403);
+                ], Response::HTTP_FORBIDDEN);
             }
         }
 

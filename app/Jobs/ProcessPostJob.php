@@ -30,14 +30,14 @@ class ProcessPostJob implements ShouldQueue
 
         // Generate thumbnail if image exists
         if ($this->post->image) {
-            dispatch(new GenerateThumbnailJob($this->post))->onQueue('low');
+            dispatch(new GenerateThumbnailJob($this->post))->onQueue(config('queue.names.low'));
         }
 
         // Notify followers
-        dispatch(new NotifyFollowersJob($this->post))->onQueue('high');
+        dispatch(new NotifyFollowersJob($this->post))->onQueue(config('queue.names.high'));
 
         // Update timeline cache
-        dispatch(new UpdateTimelineCacheJob($this->post))->onQueue('default');
+        dispatch(new UpdateTimelineCacheJob($this->post))->onQueue(config('queue.names.default'));
 
         // Increment processed count
         app(QueueManager::class)->incrementProcessedCount();

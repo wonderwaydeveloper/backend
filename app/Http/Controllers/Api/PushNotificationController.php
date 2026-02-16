@@ -8,6 +8,7 @@ use App\Http\Resources\DeviceResource;
 use App\Models\DeviceToken;
 use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PushNotificationController extends Controller
 {
@@ -37,7 +38,7 @@ class PushNotificationController extends Controller
             return response()->json(['message' => 'Device registered successfully', 'device_id' => $device->id]);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Device registration error'], 500);
+            return response()->json(['message' => 'Device registration error'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -66,7 +67,7 @@ class PushNotificationController extends Controller
             $devices = auth()->user()->devices()->where('active', true)->get();
 
             if ($devices->isEmpty()) {
-                return response()->json(['message' => 'No active devices found'], 404);
+                return response()->json(['message' => 'No active devices found'], Response::HTTP_NOT_FOUND);
             }
 
             $successCount = 0;
@@ -89,7 +90,7 @@ class PushNotificationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Test notification error'], 500);
+            return response()->json(['message' => 'Test notification error'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -31,21 +31,21 @@ class EloquentListRepository implements ListRepositoryInterface
             ->find($id);
     }
 
-    public function getUserLists(int $userId, int $perPage = 20): LengthAwarePaginator
+    public function getUserLists(int $userId, int $perPage = null): LengthAwarePaginator
     {
         return UserList::where('user_id', $userId)
             ->withCount(['members', 'subscribers'])
             ->latest()
-            ->paginate($perPage);
+            ->paginate($perPage ?? config('pagination.lists'));
     }
 
-    public function getPublicLists(int $perPage = 20): LengthAwarePaginator
+    public function getPublicLists(int $perPage = null): LengthAwarePaginator
     {
         return UserList::where('privacy', 'public')
             ->with(['owner:id,name,username,avatar'])
             ->withCount(['members', 'subscribers'])
             ->orderBy('subscribers_count', 'desc')
-            ->paginate($perPage);
+            ->paginate($perPage ?? config('pagination.lists'));
     }
 
     public function subscribe(UserList $list, int $userId): array

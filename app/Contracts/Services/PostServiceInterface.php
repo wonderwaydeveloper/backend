@@ -12,7 +12,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 interface PostServiceInterface
 {
     public function getPublicPosts(int $page = 1): LengthAwarePaginator;
-    public function createPost(PostDTO $postDTO, ?UploadedFile $image = null, ?UploadedFile $video = null): Post;
+    public function createPost(PostDTO $postDTO, array $mediaFiles = []): Post;
     public function getPostWithRelations(Post $post): array;
     public function deletePost(Post $post): void;
     public function toggleLike(Post $post, User $user): array;

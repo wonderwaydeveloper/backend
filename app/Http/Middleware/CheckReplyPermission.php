@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckReplyPermission
 {
@@ -22,13 +23,13 @@ class CheckReplyPermission
             case 'none':
                 return response()->json([
                     'message' => 'Replies are disabled for this post',
-                ], 403);
+                ], Response::HTTP_FORBIDDEN);
 
             case 'following':
                 if (! $post->user->followers()->where('follower_id', $user->id)->exists()) {
                     return response()->json([
                         'message' => 'Only followers can reply to this post',
-                    ], 403);
+                    ], Response::HTTP_FORBIDDEN);
                 }
 
                 break;
@@ -39,7 +40,7 @@ class CheckReplyPermission
                 if (! str_contains($content, '@' . $username)) {
                     return response()->json([
                         'message' => 'Only mentioned users can reply to this post',
-                    ], 403);
+                    ], Response::HTTP_FORBIDDEN);
                 }
 
                 break;

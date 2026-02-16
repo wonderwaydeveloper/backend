@@ -41,7 +41,7 @@ class SpamDetectionService
         $score += $frequencyScore['score'];
         $reasons = array_merge($reasons, $frequencyScore['reasons']);
 
-        $isSpam = $score >= 70;
+        $isSpam = $score >= config('moderation.spam.thresholds.post');
 
         if ($isSpam) {
             $this->handleSpamDetection($post, $score, $reasons);
@@ -69,7 +69,7 @@ class SpamDetectionService
         $score += $userScore['score'];
         $reasons = array_merge($reasons, $userScore['reasons']);
 
-        $isSpam = $score >= 60; // Lower threshold for comments
+        $isSpam = $score >= config('moderation.spam.thresholds.comment');
 
         if ($isSpam) {
             $this->handleSpamComment($comment, $score, $reasons);
@@ -90,42 +90,42 @@ class SpamDetectionService
         // Check for spam keywords
         foreach ($this->spamKeywords as $keyword) {
             if (stripos($content, $keyword) !== false) {
-                $score += 20;
+                $score += config('moderation.spam.penalties.spam_keyword');
                 $reasons[] = "Contains spam keyword: {$keyword}";
             }
         }
 
         // Check for multiple URLs (more strict)
         $urlCount = preg_match_all('/https?:\/\/[^\s]+/', $content);
-        if ($urlCount >= 3) {
-            $score += 50; // High penalty for multiple links
+        if ($urlCount >= config('moderation.spam.limits.url_count_high')) {
+            $score += config('moderation.spam.penalties.multiple_links_high');
             $reasons[] = "Too many links detected ({$urlCount} links)";
-        } elseif ($urlCount >= 2) {
-            $score += 25;
+        } elseif ($urlCount >= config('moderation.spam.limits.url_count_medium')) {
+            $score += config('moderation.spam.penalties.multiple_links_medium');
             $reasons[] = "Multiple links detected";
         } elseif ($urlCount >= 1) {
-            $score += 10;
+            $score += config('moderation.spam.penalties.single_link');
             $reasons[] = "Contains URL";
         }
 
         // Check other suspicious patterns
         foreach ($this->suspiciousPatterns as $pattern) {
             if ($pattern !== '/https?:\/\/[^\s]+/' && preg_match($pattern, $content)) {
-                $score += 15;
+                $score += config('moderation.spam.penalties.suspicious_pattern');
                 $reasons[] = "Matches suspicious pattern";
             }
         }
 
         // Check content length
-        if (strlen($content) < 10) {
-            $score += 10;
+        if (strlen($content) < config('moderation.spam.limits.min_content_length')) {
+            $score += config('moderation.spam.penalties.short_content');
             $reasons[] = "Content too short";
         }
 
         // Check for excessive emojis
         $emojiCount = preg_match_all('/[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]/u', $content);
-        if ($emojiCount > 10) {
-            $score += 15;
+        if ($emojiCount > config('moderation.spam.limits.max_emoji_count')) {
+            $score += config('moderation.spam.penalties.excessive_emoji');
             $reasons[] = "Excessive emoji usage";
         }
 
@@ -138,22 +138,22 @@ class SpamDetectionService
         $reasons = [];
 
         // New user check - handle null created_at
-        if ($user->created_at && $user->created_at->diffInDays(now()) < 1) {
-            $score += 20;
+        if ($user->created_at && $user->created_at->diffInDays(now()) < config('moderation.spam.limits.new_user_days')) {
+            $score += config('moderation.spam.penalties.new_account');
             $reasons[] = "Very new user account";
         }
 
         // Check user reputation
         $reportCount = \DB::table('reports')->where('reportable_type', 'user')
             ->where('reportable_id', $user->id)->count();
-        if ($reportCount > 5) {
-            $score += 25;
+        if ($reportCount > config('moderation.spam.limits.report_threshold')) {
+            $score += config('moderation.spam.penalties.multiple_reports');
             $reasons[] = "User has multiple reports";
         }
 
         // Check if user is already flagged
         if (isset($user->is_flagged) && $user->is_flagged) {
-            $score += 30;
+            $score += config('moderation.spam.penalties.flagged_user');
             $reasons[] = "User is flagged";
         }
 
@@ -161,8 +161,8 @@ class SpamDetectionService
         $followers = $user->followers()->count();
         $following = $user->following()->count();
 
-        if ($following > 100 && $followers < 10) {
-            $score += 15;
+        if ($following > config('moderation.spam.limits.following_threshold') && $followers < config('moderation.spam.limits.follower_threshold')) {
+            $score += config('moderation.spam.penalties.suspicious_follower_ratio');
             $reasons[] = "Suspicious follower ratio";
         }
 
@@ -179,11 +179,11 @@ class SpamDetectionService
             ->where('created_at', '>=', now()->subHour())
             ->count();
 
-        if ($recentPosts > 10) {
-            $score += 30;
+        if ($recentPosts > config('moderation.spam.limits.posts_per_hour_high')) {
+            $score += config('moderation.spam.penalties.high_frequency');
             $reasons[] = "Too many posts in short time";
-        } elseif ($recentPosts > 5) {
-            $score += 15;
+        } elseif ($recentPosts > config('moderation.spam.limits.posts_per_hour_medium')) {
+            $score += config('moderation.spam.penalties.medium_frequency');
             $reasons[] = "High posting frequency";
         }
 
@@ -196,7 +196,7 @@ class SpamDetectionService
                 ->count();
 
             if ($similarPosts > 0) {
-                $score += 25;
+                $score += config('moderation.spam.penalties.duplicate_content');
                 $reasons[] = "Duplicate or similar content detected";
             }
         }
@@ -207,41 +207,27 @@ class SpamDetectionService
     private function handleSpamDetection(Post $post, int $score, array $reasons): void
     {
         try {
-            // Auto-flag high-score spam
-            if ($score >= 90) {
-                $post->update([
-                    'is_flagged' => true,
-                    'is_hidden' => true,
-                    'flagged_at' => now(),
-                ]);
-
-                Log::warning('Post auto-flagged as spam', [
-                    'post_id' => $post->id,
-                    'user_id' => $post->user_id,
-                    'score' => $score,
-                    'reasons' => $reasons,
-                ]);
-            } else {
-                // Just flag for review
-                $post->update([
-                    'is_flagged' => true,
-                    'flagged_at' => now(),
-                ]);
-            }
-
-            // Create spam report
-            \DB::table('spam_reports')->insert([
-                'reportable_type' => 'post',
+            // Create auto-report via Moderation System
+            \App\Models\Report::create([
+                'reporter_id' => null, // System-generated
+                'reportable_type' => 'App\\Models\\Post',
                 'reportable_id' => $post->id,
-                'user_id' => $post->user_id,
-                'spam_score' => $score,
-                'detection_reasons' => json_encode($reasons),
+                'reason' => 'spam',
+                'description' => 'Auto-detected spam content',
+                'status' => 'pending',
                 'auto_detected' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'spam_score' => $score,
+                'detection_reasons' => $reasons,
             ]);
 
-            // Update user spam score
+            Log::info('Spam detected and reported', [
+                'post_id' => $post->id,
+                'user_id' => $post->user_id,
+                'score' => $score,
+                'reasons' => $reasons,
+            ]);
+
+            // Update user spam score for tracking
             $this->updateUserSpamScore($post->user, $score);
 
         } catch (\Exception $e) {
@@ -255,26 +241,23 @@ class SpamDetectionService
     private function handleSpamComment(Comment $comment, int $score, array $reasons): void
     {
         try {
-            if ($score >= 80) {
-                $comment->delete();
-
-                Log::warning('Comment auto-deleted as spam', [
-                    'comment_id' => $comment->id,
-                    'user_id' => $comment->user_id,
-                    'score' => $score,
-                ]);
-            }
-
-            // Create spam report
-            \DB::table('spam_reports')->insert([
-                'reportable_type' => 'comment',
+            // Create auto-report via Moderation System
+            \App\Models\Report::create([
+                'reporter_id' => null, // System-generated
+                'reportable_type' => 'App\\Models\\Comment',
                 'reportable_id' => $comment->id,
-                'user_id' => $comment->user_id,
-                'spam_score' => $score,
-                'detection_reasons' => json_encode($reasons),
+                'reason' => 'spam',
+                'description' => 'Auto-detected spam content',
+                'status' => 'pending',
                 'auto_detected' => true,
-                'created_at' => now(),
-                'updated_at' => now(),
+                'spam_score' => $score,
+                'detection_reasons' => $reasons,
+            ]);
+
+            Log::info('Spam comment detected and reported', [
+                'comment_id' => $comment->id,
+                'user_id' => $comment->user_id,
+                'score' => $score,
             ]);
 
         } catch (\Exception $e) {
@@ -293,14 +276,21 @@ class SpamDetectionService
 
         Cache::put($cacheKey, $newScore, now()->addDays(7));
 
-        // Auto-suspend user if spam score is too high
-        if ($newScore >= 50) {
-            $user->update([
-                'is_suspended' => true,
-                'suspended_until' => now()->addDays(3),
+        // Create user report if spam score is too high (let Moderation handle suspension)
+        if ($newScore >= config('moderation.spam.thresholds.user')) {
+            \App\Models\Report::create([
+                'reporter_id' => null, // System-generated
+                'reportable_type' => 'App\\Models\\User',
+                'reportable_id' => $user->id,
+                'reason' => 'spam',
+                'description' => "User has high spam score: {$newScore}",
+                'status' => 'pending',
+                'auto_detected' => true,
+                'spam_score' => (int)$newScore,
+                'detection_reasons' => ['High cumulative spam score'],
             ]);
 
-            Log::warning('User auto-suspended for spam', [
+            Log::warning('User reported for high spam score', [
                 'user_id' => $user->id,
                 'spam_score' => $newScore,
             ]);

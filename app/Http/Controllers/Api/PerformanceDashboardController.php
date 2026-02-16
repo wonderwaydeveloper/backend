@@ -43,7 +43,7 @@ class PerformanceDashboardController extends Controller
             // Warm cache for top 100 active users
             $userIds = DB::table('users')
                 ->orderBy('last_activity_at', 'desc')
-                ->limit(100)
+                ->limit(config('pagination.cache_warmup'))
                 ->pluck('id')
                 ->toArray();
         }

@@ -7,12 +7,9 @@ use Illuminate\Support\Facades\Redis;
 
 class QueueManager
 {
-    public const HIGH_PRIORITY = 'high';
-    public const DEFAULT_PRIORITY = 'default';
-    public const LOW_PRIORITY = 'low';
-
-    public function dispatch($job, string $priority = self::DEFAULT_PRIORITY, int $delay = 0)
+    public function dispatch($job, string $priority = null, int $delay = 0)
     {
+        $priority = $priority ?? config('queue.names.default');
         $queue = $this->getQueueName($priority);
 
         if ($delay > 0) {
@@ -82,11 +79,7 @@ class QueueManager
 
     private function getQueueName(string $priority): string
     {
-        return match($priority) {
-            self::HIGH_PRIORITY => 'high',
-            self::LOW_PRIORITY => 'low',
-            default => 'default',
-        };
+        return config("queue.names.{$priority}", config('queue.names.default'));
     }
 
     public function retryFailedJobs(int $limit = 10): int
@@ -100,7 +93,7 @@ class QueueManager
         foreach ($failedJobs as $job) {
             try {
                 $payload = json_decode($job->payload, true);
-                Queue::push($payload['data']['command'], '', $this->getQueueName(self::DEFAULT_PRIORITY));
+                Queue::push($payload['data']['command'], '', $this->getQueueName(config('queue.names.default')));
 
                 \DB::table('failed_jobs')->where('id', $job->id)->delete();
                 $retried++;
