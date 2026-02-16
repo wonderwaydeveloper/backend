@@ -1,27 +1,21 @@
-name: Microblogging Backend CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
-
-env:
-  PHP_VERSION: 8.2
-  NODE_VERSION: 18
+    branches: [ main, develop ]
 
 jobs:
-  # Code Quality & Security Checks
-  code-quality:
+  test:
     runs-on: ubuntu-latest
-    name: Code Quality & Security
     
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: microblogging_test
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: testing
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
@@ -31,110 +25,54 @@ jobs:
         ports:
           - 6379:6379
         options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: ${{ env.PHP_VERSION }}
-        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, redis, bcmath, gd, zip, opcache, sockets
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, json, bcmath, pdo_mysql, redis
         coverage: xdebug
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-    
-    - name: Cache Composer dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.composer/cache
-        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-        restore-keys: ${{ runner.os }}-composer-
-    
-    - name: Install Composer dependencies
-      run: composer install --no-progress --prefer-dist --optimize-autoloader
-    
-    - name: Check required files
-      run: |
-        test -f vite.config.js || exit 1
-        test -f .php-cs-fixer.php || exit 1
-        test -f phpunit.xml || exit 1
-    
-    - name: Install NPM dependencies
-      run: npm install
-    
-    - name: Set permissions
-      run: |
-        chmod -R 775 storage
-        chmod -R 775 bootstrap/cache
-    
-    - name: Build assets
-      run: npm run build
-    
-    - name: Setup environment
-      run: |
-        cp .env.example .env
-        php artisan key:generate
-        php artisan config:clear
-      env:
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_DATABASE: microblogging_test
-        DB_USERNAME: root
-        DB_PASSWORD: password
-        REDIS_HOST: 127.0.0.1
-        REDIS_PORT: 6379
-    
-    - name: Run migrations
-      run: php artisan migrate --force
-      env:
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_DATABASE: microblogging_test
-        DB_USERNAME: root
-        DB_PASSWORD: password
-    
-    - name: Run PHP CS Fixer (dry-run)
-      run: composer cs-check
-    
-    - name: Run Laravel Pint (dry-run)
-      run: ./vendor/bin/pint --test
-    
-    - name: Run tests
-      run: composer test
-      env:
-        DB_CONNECTION: mysql
-        DB_HOST: 127.0.0.1
-        DB_PORT: 3306
-        DB_DATABASE: microblogging_test
-        DB_USERNAME: root
-        DB_PASSWORD: password
-        REDIS_HOST: 127.0.0.1
-        REDIS_PORT: 6379
 
-  # Build Docker Image
-  build:
+    - name: Copy .env
+      run: cp .env.example .env
+
+    - name: Install Dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Generate key
+      run: php artisan key:generate
+
+    - name: Run Tests
+      env:
+        DB_CONNECTION: mysql
+        DB_HOST: 127.0.0.1
+        DB_PORT: 3306
+        DB_DATABASE: testing
+        DB_USERNAME: root
+        DB_PASSWORD: root
+        REDIS_HOST: 127.0.0.1
+      run: php artisan test --coverage
+
+    - name: Code Style Check
+      run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+  deploy:
+    needs: test
     runs-on: ubuntu-latest
-    name: Build Docker Image
-    needs: [code-quality]
+    if: github.ref == 'refs/heads/main'
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Build Docker image
-      uses: docker/build-push-action@v5
+
+    - name: Deploy to Production
+      uses: appleboy/ssh-action@master
       with:
-        context: .
-        push: false
-        tags: microblogging/backend:latest
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        host: ${{ secrets.DEPLOY_HOST }}
+        username: ${{ secrets.DEPLOY_USER }}
+        key: ${{ secrets.DEPLOY_KEY }}
+        script: |
+          cd /var/www/wonderway
+          bash deploy.sh

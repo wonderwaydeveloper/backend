@@ -31,7 +31,7 @@ class AdminSeeder extends Seeder
         }
         
         $this->command->info('Admin user created successfully!');
-        $this->command->info('Email: wonderwaydeveloper@gmail.com');
+        $this->command->info('Email: clevlancedeveloper@gmail.com');
         $this->command->info('Password: password123');
     }
 }

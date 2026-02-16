@@ -5,7 +5,7 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 echo "\n╔═══════════════════════════════════════════════════════════════╗\n";
-echo "║     WONDERWAY - ROLE & MODERATION SYSTEM                       ║\n";
+echo "║     CLEVLANCE - ROLE & MODERATION SYSTEM                       ║\n";
 echo "╚═══════════════════════════════════════════════════════════════╝\n\n";
 
 $issues = [];

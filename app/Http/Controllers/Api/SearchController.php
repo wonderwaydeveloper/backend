@@ -19,23 +19,6 @@ class SearchController extends Controller
         $this->searchService = $searchService;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/posts",
-     *     summary="Advanced post search",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="user_id", in="query", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="has_media", in="query", @OA\Schema(type="boolean")),
-     *     @OA\Parameter(name="date_from", in="query", @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="date_to", in="query", @OA\Schema(type="string", format="date")),
-     *     @OA\Parameter(name="min_likes", in="query", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="hashtags", in="query", @OA\Schema(type="array", @OA\Items(type="string"))),
-     *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"relevance", "latest", "oldest", "popular"})),
-     *     @OA\Response(response=200, description="Search results")
-     * )
-     */
     public function posts(SearchPostsRequest $request)
     {
         $this->authorize('search', auth()->user());
@@ -55,20 +38,6 @@ class SearchController extends Controller
         return response()->json($results);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/users",
-     *     summary="Advanced user search",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="verified", in="query", @OA\Schema(type="boolean")),
-     *     @OA\Parameter(name="min_followers", in="query", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="location", in="query", @OA\Schema(type="string")),
-     *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"relevance", "followers", "newest"})),
-     *     @OA\Response(response=200, description="User search results")
-     * )
-     */
     public function users(SearchUsersRequest $request)
     {
         $filters = $request->only([
@@ -85,18 +54,6 @@ class SearchController extends Controller
         return response()->json($results);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/hashtags",
-     *     summary="Advanced hashtag search",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="min_posts", in="query", @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="sort", in="query", @OA\Schema(type="string", enum={"relevance", "popular", "recent"})),
-     *     @OA\Response(response=200, description="Hashtag search results")
-     * )
-     */
     public function hashtags(SearchHashtagsRequest $request)
     {
         $filters = $request->only(['min_posts', 'sort']);
@@ -111,16 +68,6 @@ class SearchController extends Controller
         return response()->json($results);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/all",
-     *     summary="Search across all content types",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Combined search results")
-     * )
-     */
     public function all(Request $request)
     {
         $request->validate([
@@ -132,17 +79,6 @@ class SearchController extends Controller
         return response()->json($results);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/advanced",
-     *     summary="Advanced search with all filters",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="type", in="query", @OA\Schema(type="string", enum={"posts", "users", "hashtags"})),
-     *     @OA\Response(response=200, description="Advanced search results")
-     * )
-     */
     public function advanced(Request $request)
     {
         $this->authorize('advanced', auth()->user());
@@ -172,17 +108,6 @@ class SearchController extends Controller
         return response()->json($results);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/search/suggestions",
-     *     summary="Get search suggestions",
-     *     tags={"Search"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Parameter(name="type", in="query", @OA\Schema(type="string", enum={"all", "users", "hashtags"})),
-     *     @OA\Response(response=200, description="Search suggestions")
-     * )
-     */
     public function suggestions(Request $request)
     {
         $request->validate([

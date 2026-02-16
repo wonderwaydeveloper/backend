@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\{Cache, DB};
  * likes, timeline management, and spam detection.
  *
  * @package App\Services
- * @author Microblogging Team
+ * @author Clevlance Team
  * @version 1.0.0
  */
 class PostService implements PostServiceInterface

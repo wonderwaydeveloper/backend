@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware('api')
                 ->prefix('broadcasting')
                 ->group(base_path('routes/broadcasting.php'));
+            
+            Route::middleware('api')
+                ->group(base_path('routes/health.php'));
         },
         health: '/up',
     )
@@ -81,7 +84,5 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Please login',
                 ], 401);
             }
-            
-            return redirect()->guest(route('filament.admin.auth.login'));
         });
     })->create();

@@ -31,7 +31,7 @@ class CommunityController extends Controller
             })
             ->withCount('members', 'posts')
             ->orderBy('member_count', 'desc')
-            ->paginate(config('pagination.communities'));
+            ->paginate(20);
 
         return CommunityResource::collection($communities);
     }

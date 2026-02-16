@@ -14,7 +14,7 @@ class BookmarkController extends Controller
             ->bookmarks()
             ->with('post.user:id,name,username,avatar')
             ->latest()
-            ->paginate(config('pagination.bookmarks'));
+            ->paginate(20);
 
         return response()->json($bookmarks);
     }

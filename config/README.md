@@ -1,6 +1,6 @@
 # Configuration Files Documentation
 
-This directory contains all configuration files for the Wonderway application. All hardcoded values have been moved to these config files for better maintainability.
+This directory contains all configuration files for the Clevlance application. All hardcoded values have been moved to these config files for better maintainability.
 
 ## 📁 Configuration Files
 

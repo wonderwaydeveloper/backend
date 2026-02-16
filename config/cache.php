@@ -42,7 +42,7 @@ return [
         ],
     ],
 
-    'prefix' => env('CACHE_PREFIX', 'microblogging_cache_'),
+    'prefix' => env('CACHE_PREFIX', 'clevlance_cache_'),
 
     'ttl' => [
         'user_profile' => 3600,

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\{Hash, Gate, Route, Config};
 
 echo "\n";
 echo "═══════════════════════════════════════════════════════════════\n";
-echo "   🔐 تست کامل سیستم Authorization - Wonderway Backend\n";
+echo "   🔐 تست کامل سیستم Authorization - Clevlance Backend\n";
 echo "═══════════════════════════════════════════════════════════════\n\n";
 
 $stats = ['passed' => 0, 'failed' => 0, 'warnings' => 0];
@@ -136,25 +136,25 @@ foreach ($criticalRoutes as $check) {
 echo "\n📋 بخش 6: تست Runtime\n";
 echo str_repeat("─", 63) . "\n";
 
-User::where('email', 'LIKE', 'test_%@wonderway.test')->delete();
+User::where('email', 'LIKE', 'test_%@clevlance.test')->delete();
 
 $testUser = User::create([
     'name' => 'Test User', 'username' => 'testuser_' . time(),
-    'email' => 'test_user@wonderway.test', 'password' => Hash::make('password'),
+    'email' => 'test_user@clevlance.test', 'password' => Hash::make('password'),
     'email_verified_at' => now(),
 ]);
 $testUser->assignRole('user');
 
 $testOrg = User::create([
     'name' => 'Test Org', 'username' => 'testorg_' . time(),
-    'email' => 'test_org@wonderway.test', 'password' => Hash::make('password'),
+    'email' => 'test_org@clevlance.test', 'password' => Hash::make('password'),
     'email_verified_at' => now(),
 ]);
 $testOrg->assignRole('organization');
 
 $testAdmin = User::create([
     'name' => 'Test Admin', 'username' => 'testadmin_' . time(),
-    'email' => 'test_admin@wonderway.test', 'password' => Hash::make('password'),
+    'email' => 'test_admin@clevlance.test', 'password' => Hash::make('password'),
     'email_verified_at' => now(),
 ]);
 $testAdmin->assignRole('admin');
@@ -176,7 +176,7 @@ test(Gate::forUser($testUser)->allows('update', $testPost), 'User میتواند
 
 // Cleanup
 Post::where('user_id', $testUser->id)->delete();
-User::where('email', 'LIKE', 'test_%@wonderway.test')->delete();
+User::where('email', 'LIKE', 'test_%@clevlance.test')->delete();
 
 // ═══════════════════════════════════════════════════════════════
 // بخش 7: Twitter API v2 Standards (10 تست)

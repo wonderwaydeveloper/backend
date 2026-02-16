@@ -17,15 +17,6 @@ class HashtagController extends Controller
         $this->trendingService = $trendingService;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/hashtags/trending",
-     *     summary="Get trending hashtags (legacy endpoint)",
-     *     tags={"Hashtags"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Trending hashtags")
-     * )
-     */
     public function trending()
     {
         // Use new trending service for better algorithm
@@ -34,16 +25,6 @@ class HashtagController extends Controller
         return response()->json($hashtags);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/hashtags/{hashtag:slug}",
-     *     summary="Get hashtag details and posts",
-     *     tags={"Hashtags"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="hashtag", in="path", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Hashtag details")
-     * )
-     */
     public function show(Hashtag $hashtag)
     {
         $cacheKey = "hashtag:{$hashtag->id}:posts:page:" . request('page', 1);
@@ -59,7 +40,7 @@ class HashtagController extends Controller
                 ])
                 ->withCount('likes', 'comments', 'quotes')
                 ->latest('published_at')
-                ->paginate(config('pagination.hashtags'));
+                ->paginate(20);
         });
 
         // Get hashtag velocity
@@ -76,16 +57,6 @@ class HashtagController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/hashtags/search",
-     *     summary="Search hashtags",
-     *     tags={"Hashtags"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="q", in="query", required=true, @OA\Schema(type="string")),
-     *     @OA\Response(response=200, description="Hashtag search results")
-     * )
-     */
     public function search(Request $request)
     {
         $request->validate([
@@ -106,15 +77,6 @@ class HashtagController extends Controller
         return response()->json($hashtags);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/hashtags/suggestions",
-     *     summary="Get hashtag suggestions for user",
-     *     tags={"Hashtags"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Hashtag suggestions")
-     * )
-     */
     public function suggestions(Request $request)
     {
         $userId = $request->user()->id;

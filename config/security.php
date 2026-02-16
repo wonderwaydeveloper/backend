@@ -93,8 +93,9 @@ return [
         'auth' => [
             'login' => ['max_attempts' => 5, 'window_minutes' => 1],
             'register' => ['max_attempts' => 3, 'window_minutes' => 1],
-            'password_reset' => ['max_attempts' => 10, 'window_minutes' => 1],
+            'password_reset' => ['max_attempts' => 3, 'window_minutes' => 1],
             'email_verify' => ['max_attempts' => 10, 'window_minutes' => 1],
+            'device_verification' => ['max_attempts' => 5, 'window_minutes' => 1],
         ],
         
         // Social Actions

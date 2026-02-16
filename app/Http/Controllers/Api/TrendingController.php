@@ -18,17 +18,6 @@ class TrendingController extends Controller
         $this->trendingService = $trendingService;
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/hashtags",
-     *     summary="Get trending hashtags",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", default=10)),
-     *     @OA\Parameter(name="timeframe", in="query", @OA\Schema(type="integer", default=24)),
-     *     @OA\Response(response=200, description="Trending hashtags")
-     * )
-     */
     public function hashtags(TrendingRequest $request)
     {
         $hashtags = $this->trendingService->getTrendingHashtags(
@@ -46,17 +35,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/posts",
-     *     summary="Get trending posts",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", default=20)),
-     *     @OA\Parameter(name="timeframe", in="query", @OA\Schema(type="integer", default=24)),
-     *     @OA\Response(response=200, description="Trending posts")
-     * )
-     */
     public function posts(TrendingRequest $request)
     {
         $posts = $this->trendingService->getTrendingPosts(
@@ -74,17 +52,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/users",
-     *     summary="Get trending users",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", default=10)),
-     *     @OA\Parameter(name="timeframe", in="query", @OA\Schema(type="integer", default=168)),
-     *     @OA\Response(response=200, description="Trending users")
-     * )
-     */
     public function users(TrendingRequest $request)
     {
         $users = $this->trendingService->getTrendingUsers(
@@ -102,16 +69,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/personalized",
-     *     summary="Get personalized trending content",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="limit", in="query", @OA\Schema(type="integer", default=10)),
-     *     @OA\Response(response=200, description="Personalized trending content")
-     * )
-     */
     public function personalized(Request $request)
     {
         $request->validate([
@@ -133,18 +90,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/velocity/{type}/{id}",
-     *     summary="Get trend velocity for specific item",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(name="type", in="path", required=true, @OA\Schema(type="string", enum={"hashtag", "post"})),
-     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *     @OA\Parameter(name="hours", in="query", @OA\Schema(type="integer", default=6)),
-     *     @OA\Response(response=200, description="Trend velocity data")
-     * )
-     */
     public function velocity(Request $request, $type, $id)
     {
         $request->validate([
@@ -171,15 +116,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/all",
-     *     summary="Get all trending content types",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="All trending content")
-     * )
-     */
     public function all(Request $request)
     {
         $hashtags = $this->trendingService->getTrendingHashtags(5);
@@ -194,15 +130,6 @@ class TrendingController extends Controller
         ]);
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/trending/stats",
-     *     summary="Get trending statistics",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Trending statistics")
-     * )
-     */
     public function stats()
     {
         $stats = $this->trendingService->getTrendingStats();
@@ -210,15 +137,6 @@ class TrendingController extends Controller
         return response()->json($stats);
     }
 
-    /**
-     * @OA\Post(
-     *     path="/api/trending/refresh",
-     *     summary="Refresh trending calculations",
-     *     tags={"Trending"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Response(response=200, description="Trending data refreshed")
-     * )
-     */
     public function refresh()
     {
         $result = $this->trendingService->updateTrendingScores();

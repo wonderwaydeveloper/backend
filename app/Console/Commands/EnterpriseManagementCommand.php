@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 
 class EnterpriseManagementCommand extends Command
 {
-    protected $signature = 'microblogging:enterprise {action} {--month=} {--year=}';
+    protected $signature = 'clevlance:enterprise {action} {--month=} {--year=}';
     protected $description = 'Manage Enterprise Excellence features';
 
     public function handle()
@@ -89,7 +89,7 @@ class EnterpriseManagementCommand extends Command
 
     private function showStatus()
     {
-        $this->info('Microblogging Enterprise Status:');
+        $this->info('Clevlance Enterprise Status:');
 
         $features = [
             'Domain-Driven Design' => '✅ Active',

@@ -61,6 +61,7 @@ class RateLimitingService
             'auth.register' => $rateLimits['auth']['register'] ?? null,
             'auth.password_reset' => $rateLimits['auth']['password_reset'] ?? null,
             'auth.email_verify' => $rateLimits['auth']['email_verify'] ?? null,
+            'device.verify' => $rateLimits['auth']['device_verification'] ?? null,
             'social.follow' => $rateLimits['social']['follow'] ?? null,
             'social.block' => $rateLimits['social']['block'] ?? null,
             'social.mute' => $rateLimits['social']['mute'] ?? null,

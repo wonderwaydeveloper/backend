@@ -52,6 +52,8 @@ return [
             'register' => '10,1',
             'device_verification' => '5,1',
             'resend_code' => '3,1',
+            'password_reset' => '5,1',
+            'captcha_after_failed' => 3,
         ],
         'social' => [
             'follow' => '400,1440',
@@ -63,11 +65,26 @@ return [
             'posts' => '450,15',
             'users' => '180,15',
             'hashtags' => '180,15',
+            'all' => '450,15',
+            'advanced' => '180,15',
+            'suggestions' => '180,15',
         ],
         'trending' => [
             'default' => '75,15',
+            'hashtags' => '75,15',
+            'posts' => '75,15',
+            'users' => '75,15',
+            'personalized' => '75,15',
             'velocity' => '180,15',
+            'all' => '75,15',
+            'stats' => '180,15',
             'refresh' => '15,15',
+        ],
+        'hashtags' => [
+            'trending' => '75,15',
+            'search' => '180,15',
+            'show' => '900,15',
+            'suggestions' => '180,15',
         ],
         'messaging' => [
             'send' => '60,1',
@@ -76,6 +93,14 @@ return [
             'create' => '10,1',
             'vote' => '20,1',
             'results' => '60,1',
+            'delete' => '10,1',
+        ],
+        'moderation' => [
+            'report' => '10,1',
+        ],
+        'mentions' => [
+            'search' => '180,15',
+            'view' => '180,15',
         ],
         'realtime' => [
             'default' => '60,1',

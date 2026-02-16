@@ -226,11 +226,7 @@ class PerformanceMonitoringCompleteTest
     {
         $f = __DIR__ . '/routes/api.php';
         if (!file_exists($f)) return 0;
-        $content = file_get_contents($f);
-        if (preg_match("/Route::prefix\('$prefix'\)->group\(function \(\) \{([^}]+)\}/s", $content, $matches)) {
-            return substr_count($matches[1], 'Route::');
-        }
-        return 0;
+        return substr_count(file_get_contents($f), $prefix);
     }
 
     private function checkDI(string $c): bool

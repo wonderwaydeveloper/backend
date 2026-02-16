@@ -213,11 +213,8 @@ test("Password hashing works", function() {
 });
 
 test("CAPTCHA after failed attempts", function() {
-    if (file_exists(__DIR__ . '/app/Http/Middleware/CaptchaMiddleware.php')) {
-        $content = file_get_contents(__DIR__ . '/app/Http/Middleware/CaptchaMiddleware.php');
-        return strpos($content, 'failedAttempts >= 3') !== false;
-    }
-    return null;
+    $threshold = config('security.captcha.failed_attempts_threshold');
+    return $threshold === 3;
 });
 
 test("2FA Google Authenticator support", function() {

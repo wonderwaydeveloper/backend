@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "microblogging/backend",
+    "name": "clevlance/backend",
     "type": "project",
-    "description": "Microblogging - Advanced Social Media Platform Backend",
+    "description": "Clevlance - Advanced Social Media Platform Backend",
     "keywords": [
         "laravel",
         "social-media",
@@ -12,8 +12,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "darkaonline/l5-swagger": "^9.0",
-        "filament/filament": "^4.3",
         "guzzlehttp/guzzle": "^7.8",
         "intervention/image": "^3.11",
         "laravel/framework": "^12.0",
@@ -80,8 +78,7 @@
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi",
-            "@php artisan filament:upgrade"
+            "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"

@@ -12,7 +12,7 @@ class ValidUsername implements ValidationRule
     
     private array $reservedUsernames = [
         'admin', 'api', 'www', 'mail', 'ftp', 'localhost', 'root',
-        'support', 'help', 'about', 'wonderway', 'wonder', 'way',
+        'support', 'help', 'about', 'clevlance', 'clev', 'lance',
         'follow', 'following', 'followers', 'home', 'search',
         'settings', 'privacy', 'terms', 'notifications', 'messages',
         'explore', 'trending', 'moments', 'lists', 'bookmarks'

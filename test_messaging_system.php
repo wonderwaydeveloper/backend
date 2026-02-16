@@ -160,7 +160,7 @@ test('Security', 'SendMessageRequest validates content', strpos($request, "'cont
 test('Security', 'SendMessageRequest has rules', strpos($request, 'function rules') !== false);
 
 echo "\nRate Limiting:\n";
-test('Security', 'Messages have rate limiting (60/min)', strpos($routes, 'throttle:60,1') !== false);
+test('Security', 'Messages have rate limiting (60/min)', config('limits.rate_limits.messaging.send') === '60,1');
 
 echo "\nData Protection:\n";
 test('Security', 'Message model has mass assignment protection', strpos($messageModel, '$guarded') !== false || strpos($messageModel, '$fillable') !== false);
@@ -185,7 +185,7 @@ test('Security', 'Laravel CSRF (default)', true);
 section("PART 5: TWITTER API V2 COMPLIANCE");
 
 echo "\nRate Limits:\n";
-test('Twitter', 'Messages send: 60/minute', strpos($routes, 'throttle:60,1') !== false);
+test('Twitter', 'Messages send: 60/minute', config('limits.rate_limits.messaging.send') === '60,1');
 
 echo "\nMessage Limits:\n";
 test('Twitter', 'Content max 10,000 chars', strpos($request, 'ContentLength') !== false);

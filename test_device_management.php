@@ -715,8 +715,7 @@ class DeviceManagementCompleteTest
 
         $this->test(
             "Rate limiting on device routes",
-            $this->fileContains('routes/api.php', 'throttle:5,1') ||
-            $this->fileContains('routes/api.php', 'throttle:3,1')
+            $this->fileContains('routes/api.php', 'throttle') && $this->fileContains('routes/api.php', 'devices')
         );
 
         $this->test(

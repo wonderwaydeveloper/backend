@@ -128,11 +128,11 @@ Route::prefix('auth')->group(function () {
     
     // Device Verification (without auth middleware since user is logging in)
     Route::post('/verify-device', [DeviceController::class, 'verifyDevice'])
-        ->middleware('throttle:' . config('throttle.auth.login'));
+        ->middleware('throttle:' . config('limits.rate_limits.auth.login'));
     Route::post('/resend-device-code', [DeviceController::class, 'resendDeviceCode'])
-        ->middleware('throttle:' . config('throttle.auth.register'));
+        ->middleware('throttle:' . config('limits.rate_limits.auth.register'));
     Route::post('/register-device', [DeviceController::class, 'register'])
-        ->middleware('throttle:' . config('throttle.auth.password_reset'));
+        ->middleware('throttle:' . config('limits.rate_limits.auth.password_reset'));
     Route::delete('/unregister-device/{token}', [DeviceController::class, 'unregister'])
         ->middleware('auth:sanctum');
     
@@ -156,7 +156,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('auth/social')->group(function () {
     Route::get('/{provider}', [SocialAuthController::class, 'redirect'])
         ->where('provider', 'google')
-        ->middleware('throttle:' . config('throttle.auth.password_reset'));
+        ->middleware('throttle:' . config('limits.rate_limits.auth.password_reset'));
     Route::get('/{provider}/callback', [SocialAuthController::class, 'callback'])
         ->where('provider', 'google'); // No rate limit - it's a redirect from Google
 });
@@ -228,8 +228,8 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
 
     // Follow/Unfollow Actions (ProfileController) - Twitter Standard: 400 follows per day
-    Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:' . config('throttle.social.follow'), 'can:follow,user']);
-    Route::post('/users/{user}/unfollow', [ProfileController::class, 'unfollow'])->middleware(['throttle:' . config('throttle.social.follow'), 'can:follow,user']);
+    Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:' . config('limits.rate_limits.social.follow'), 'can:follow,user']);
+    Route::post('/users/{user}/unfollow', [ProfileController::class, 'unfollow'])->middleware(['throttle:' . config('limits.rate_limits.social.follow'), 'can:follow,user']);
     
     // Follow Requests
     Route::post('/users/{user}/follow-request', [FollowRequestController::class, 'send']);
@@ -261,15 +261,15 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     
     // Search Routes - Twitter Standard Rate Limits
     Route::prefix('search')->group(function () {
-        Route::get('/posts', [SearchController::class, 'posts'])->middleware('throttle:' . config('throttle.search.posts'));
-        Route::get('/users', [SearchController::class, 'users'])->middleware('throttle:' . config('throttle.search.users'));
-        Route::get('/hashtags', [SearchController::class, 'hashtags'])->middleware('throttle:' . config('throttle.search.hashtags'));
-        Route::get('/all', [SearchController::class, 'all'])->middleware('throttle:' . config('throttle.search.all'));
-        Route::get('/advanced', [SearchController::class, 'advanced'])->middleware('throttle:' . config('throttle.search.advanced'));
-        Route::get('/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:' . config('throttle.search.suggestions'));
+        Route::get('/posts', [SearchController::class, 'posts'])->middleware('throttle:' . config('limits.rate_limits.search.posts'));
+        Route::get('/users', [SearchController::class, 'users'])->middleware('throttle:' . config('limits.rate_limits.search.users'));
+        Route::get('/hashtags', [SearchController::class, 'hashtags'])->middleware('throttle:' . config('limits.rate_limits.search.hashtags'));
+        Route::get('/all', [SearchController::class, 'all'])->middleware('throttle:' . config('limits.rate_limits.search.all'));
+        Route::get('/advanced', [SearchController::class, 'advanced'])->middleware('throttle:' . config('limits.rate_limits.search.advanced'));
+        Route::get('/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:' . config('limits.rate_limits.search.suggestions'));
     });
     
-    Route::get('/suggestions/users', [SuggestionController::class, 'users'])->middleware('throttle:' . config('throttle.search.suggestions'));
+    Route::get('/suggestions/users', [SuggestionController::class, 'users'])->middleware('throttle:' . config('limits.rate_limits.search.suggestions'));
 
     // Device Management Routes
     Route::prefix('devices')->group(function () {
@@ -286,7 +286,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::prefix('messages')->group(function () {
         Route::get('/conversations', [MessageController::class, 'conversations']);
         Route::get('/users/{user}', [MessageController::class, 'messages']);
-        Route::post('/users/{user}', [MessageController::class, 'send'])->middleware('throttle:' . config('throttle.messaging.send'));
+        Route::post('/users/{user}', [MessageController::class, 'send'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
         Route::post('/users/{user}/typing', [MessageController::class, 'typing']);
         Route::post('/{message}/read', [MessageController::class, 'markAsRead']);
         Route::get('/unread-count', [MessageController::class, 'unreadCount']);
@@ -296,22 +296,22 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Hashtag Routes - Twitter Standard Rate Limits
     Route::prefix('hashtags')->group(function () {
-        Route::get('/trending', [HashtagController::class, 'trending'])->middleware('throttle:' . config('throttle.hashtags.trending'));
-        Route::get('/search', [HashtagController::class, 'search'])->middleware('throttle:' . config('throttle.hashtags.search'));
-        Route::get('/suggestions', [HashtagController::class, 'suggestions'])->middleware('throttle:' . config('throttle.hashtags.suggestions'));
-        Route::get('/{hashtag:slug}', [HashtagController::class, 'show'])->middleware('throttle:' . config('throttle.hashtags.show'));
+        Route::get('/trending', [HashtagController::class, 'trending'])->middleware('throttle:' . config('limits.rate_limits.hashtags.trending'));
+        Route::get('/search', [HashtagController::class, 'search'])->middleware('throttle:' . config('limits.rate_limits.hashtags.search'));
+        Route::get('/suggestions', [HashtagController::class, 'suggestions'])->middleware('throttle:' . config('limits.rate_limits.hashtags.suggestions'));
+        Route::get('/{hashtag:slug}', [HashtagController::class, 'show'])->middleware('throttle:' . config('limits.rate_limits.hashtags.show'));
     });
 
     // Advanced Trending Routes - Twitter Standard Rate Limits
     Route::prefix('trending')->group(function () {
-        Route::get('/hashtags', [TrendingController::class, 'hashtags'])->middleware('throttle:' . config('throttle.trending.hashtags'));
-        Route::get('/posts', [TrendingController::class, 'posts'])->middleware('throttle:' . config('throttle.trending.posts'));
-        Route::get('/users', [TrendingController::class, 'users'])->middleware('throttle:' . config('throttle.trending.users'));
-        Route::get('/personalized', [TrendingController::class, 'personalized'])->middleware('throttle:' . config('throttle.trending.personalized'));
-        Route::get('/velocity/{type}/{id}', [TrendingController::class, 'velocity'])->middleware('throttle:' . config('throttle.trending.velocity'));
-        Route::get('/all', [TrendingController::class, 'all'])->middleware('throttle:' . config('throttle.trending.all'));
-        Route::get('/stats', [TrendingController::class, 'stats'])->middleware('throttle:' . config('throttle.trending.stats'));
-        Route::post('/refresh', [TrendingController::class, 'refresh'])->middleware('throttle:' . config('throttle.trending.refresh'));
+        Route::get('/hashtags', [TrendingController::class, 'hashtags'])->middleware('throttle:' . config('limits.rate_limits.trending.hashtags'));
+        Route::get('/posts', [TrendingController::class, 'posts'])->middleware('throttle:' . config('limits.rate_limits.trending.posts'));
+        Route::get('/users', [TrendingController::class, 'users'])->middleware('throttle:' . config('limits.rate_limits.trending.users'));
+        Route::get('/personalized', [TrendingController::class, 'personalized'])->middleware('throttle:' . config('limits.rate_limits.trending.personalized'));
+        Route::get('/velocity/{type}/{id}', [TrendingController::class, 'velocity'])->middleware('throttle:' . config('limits.rate_limits.trending.velocity'));
+        Route::get('/all', [TrendingController::class, 'all'])->middleware('throttle:' . config('limits.rate_limits.trending.all'));
+        Route::get('/stats', [TrendingController::class, 'stats'])->middleware('throttle:' . config('limits.rate_limits.trending.stats'));
+        Route::post('/refresh', [TrendingController::class, 'refresh'])->middleware('throttle:' . config('limits.rate_limits.trending.refresh'));
     });
 
     // Spaces (Audio Rooms) Routes
@@ -341,10 +341,10 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     });
 
     // Poll routes
-    Route::post('/polls', [PollController::class, 'store'])->middleware(['permission:poll.create', 'throttle:' . config('throttle.polls.create')]);
-    Route::post('/polls/{poll}/vote/{option}', [PollController::class, 'vote'])->middleware(['permission:poll.vote', 'throttle:' . config('throttle.polls.vote')]);
-    Route::get('/polls/{poll}/results', [PollController::class, 'results'])->middleware('throttle:' . config('throttle.polls.results'));
-    Route::delete('/polls/{poll}', [PollController::class, 'destroy'])->middleware(['permission:poll.delete.own', 'throttle:' . config('throttle.polls.delete')]);
+    Route::post('/polls', [PollController::class, 'store'])->middleware(['permission:poll.create', 'throttle:' . config('limits.rate_limits.polls.create')]);
+    Route::post('/polls/{poll}/vote/{option}', [PollController::class, 'vote'])->middleware(['permission:poll.vote', 'throttle:' . config('limits.rate_limits.polls.vote')]);
+    Route::get('/polls/{poll}/results', [PollController::class, 'results'])->middleware('throttle:' . config('limits.rate_limits.polls.results'));
+    Route::delete('/polls/{poll}', [PollController::class, 'destroy'])->middleware(['permission:poll.delete.own', 'throttle:' . config('limits.rate_limits.polls.delete')]);
 
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
@@ -385,10 +385,10 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/force', [AutoScalingController::class, 'forceScale'])->middleware('permission:autoscaling.manage');
     });
 
-    Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware(['throttle:' . config('throttle.social.block'), 'can:block,user']);
-    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock'])->middleware(['throttle:' . config('throttle.social.block'), 'can:block,user']);
-    Route::post('/users/{user}/mute', [ProfileController::class, 'mute'])->middleware(['throttle:' . config('throttle.social.mute'), 'can:mute,user']);
-    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute'])->middleware(['throttle:' . config('throttle.social.mute'), 'can:mute,user']);
+    Route::post('/users/{user}/block', [ProfileController::class, 'block'])->middleware(['throttle:' . config('limits.rate_limits.social.block'), 'can:block,user']);
+    Route::post('/users/{user}/unblock', [ProfileController::class, 'unblock'])->middleware(['throttle:' . config('limits.rate_limits.social.block'), 'can:block,user']);
+    Route::post('/users/{user}/mute', [ProfileController::class, 'mute'])->middleware(['throttle:' . config('limits.rate_limits.social.mute'), 'can:mute,user']);
+    Route::post('/users/{user}/unmute', [ProfileController::class, 'unmute'])->middleware(['throttle:' . config('limits.rate_limits.social.mute'), 'can:mute,user']);
 
     // Block/Mute Management
     Route::prefix('blocked')->group(function () {
@@ -419,9 +419,9 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     // Content Moderation & Reporting
     Route::prefix('reports')->group(function () {
         // User reporting
-        Route::post('/post/{post}', [ModerationController::class, 'reportPost'])->middleware('throttle:' . config('throttle.moderation.report'));
-        Route::post('/user/{user}', [ModerationController::class, 'reportUser'])->middleware('throttle:' . config('throttle.moderation.report'));
-        Route::post('/comment/{comment}', [ModerationController::class, 'reportComment'])->middleware('throttle:' . config('throttle.moderation.report'));
+        Route::post('/post/{post}', [ModerationController::class, 'reportPost'])->middleware('throttle:' . config('limits.rate_limits.moderation.report'));
+        Route::post('/user/{user}', [ModerationController::class, 'reportUser'])->middleware('throttle:' . config('limits.rate_limits.moderation.report'));
+        Route::post('/comment/{comment}', [ModerationController::class, 'reportComment'])->middleware('throttle:' . config('limits.rate_limits.moderation.report'));
         Route::get('/my-reports', [ModerationController::class, 'myReports']);
         
         // Admin only
@@ -444,25 +444,25 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Mention System
     Route::prefix('mentions')->group(function () {
-        Route::get('/search-users', [MentionController::class, 'searchUsers'])->middleware(['permission:mention.view', 'throttle:' . config('throttle.mentions.search')]);
-        Route::get('/my-mentions', [MentionController::class, 'getUserMentions'])->middleware(['permission:mention.view', 'throttle:' . config('throttle.mentions.view')]);
+        Route::get('/search-users', [MentionController::class, 'searchUsers'])->middleware(['permission:mention.view', 'throttle:' . config('limits.rate_limits.mentions.search')]);
+        Route::get('/my-mentions', [MentionController::class, 'getUserMentions'])->middleware(['permission:mention.view', 'throttle:' . config('limits.rate_limits.mentions.view')]);
         Route::get('/{type}/{id}', [MentionController::class, 'getMentions'])
             ->where('type', 'post|comment')
-            ->middleware('throttle:' . config('throttle.mentions.view'));
+            ->middleware('throttle:' . config('limits.rate_limits.mentions.view'));
     });
 
     // Real-time Features
     Route::prefix('realtime')->group(function () {
         Route::post('/status', [OnlineStatusController::class, 'updateStatus'])
-            ->middleware(['permission:realtime.status.update', 'throttle:' . config('throttle.realtime.default')]);
+            ->middleware(['permission:realtime.status.update', 'throttle:' . config('limits.rate_limits.realtime.default')]);
         Route::get('/online-users', [OnlineStatusController::class, 'getOnlineUsers'])
-            ->middleware(['permission:realtime.users.view', 'throttle:' . config('throttle.realtime.default')]);
+            ->middleware(['permission:realtime.users.view', 'throttle:' . config('limits.rate_limits.realtime.default')]);
         Route::get('/users/{userId}/status', [OnlineStatusController::class, 'getUserStatus'])
-            ->middleware(['permission:realtime.users.view', 'throttle:' . config('throttle.realtime.default')]);
+            ->middleware(['permission:realtime.users.view', 'throttle:' . config('limits.rate_limits.realtime.default')]);
         Route::get('/timeline', [TimelineController::class, 'liveTimeline'])
-            ->middleware(['permission:realtime.timeline.view', 'throttle:' . config('throttle.realtime.default')]);
+            ->middleware(['permission:realtime.timeline.view', 'throttle:' . config('limits.rate_limits.realtime.default')]);
         Route::get('/posts/{post}/updates', [TimelineController::class, 'getPostUpdates'])
-            ->middleware(['permission:realtime.timeline.view', 'throttle:' . config('throttle.realtime.default')]);
+            ->middleware(['permission:realtime.timeline.view', 'throttle:' . config('limits.rate_limits.realtime.default')]);
     });
 
     // Moments Routes

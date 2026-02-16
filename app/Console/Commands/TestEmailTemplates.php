@@ -115,7 +115,7 @@ class TestEmailTemplates extends Command
         $this->info('📧 Testing Bulk Email...');
         
         try {
-            $subject = 'Weekly Newsletter - Microblogging Updates';
+            $subject = 'Weekly Newsletter - Clevlance Updates';
             $view = 'emails.bulk';
             $data = [
                 'content' => 'Check out the latest features and trending posts on our platform!',

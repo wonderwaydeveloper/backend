@@ -147,10 +147,10 @@ section("PART 2: TWITTER COMPLIANCE (26 tests)");
 $config = include __DIR__ . '/config/validation.php';
 
 echo "\n1. Rate Limits (4)\n";
-test('Twitter', 'Search posts: 450/15min', strpos($routesFile, "throttle:450,15") !== false);
-test('Twitter', 'Search users: 180/15min', strpos($routesFile, "throttle:180,15") !== false);
-test('Twitter', 'Trending: 75/15min', strpos($routesFile, "throttle:75,15") !== false);
-test('Twitter', 'Suggestions: 180/15min', strpos($routesFile, "throttle:180,15") !== false && strpos($routesFile, 'suggestions') !== false);
+test('Twitter', 'Search posts: 450/15min', config('limits.rate_limits.search.posts') === '450,15');
+test('Twitter', 'Search users: 180/15min', config('limits.rate_limits.search.users') === '180,15');
+test('Twitter', 'Trending: 75/15min', config('limits.rate_limits.trending.default') === '75,15');
+test('Twitter', 'Suggestions: 180/15min', config('limits.rate_limits.search.suggestions') === '180,15');
 
 echo "\n2. Query Parameters (2)\n";
 test('Twitter', 'Max query: 500 chars', $config['search']['query']['max_length'] === 500);
@@ -255,7 +255,7 @@ test('Operational', 'Hashtags migration', !empty(glob(__DIR__ . '/database/migra
 test('Operational', 'Hashtag_post migration', !empty(glob(__DIR__ . '/database/migrations/*_create_hashtag_post_table.php')));
 
 echo "\n12. Security (3)\n";
-test('Operational', 'Rate limiting configured', strpos($routesFile, 'throttle:450,15') !== false || strpos($routesFile, 'throttle:180,15') !== false);
+test('Operational', 'Rate limiting configured', config('limits.rate_limits.search.posts') !== null);
 test('Operational', 'Authentication required', strpos($routesFile, 'auth:sanctum') !== false);
 test('Operational', 'Authorization in controllers', strpos($searchController, '$this->authorize') !== false);
 

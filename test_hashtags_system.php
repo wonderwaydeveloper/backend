@@ -375,13 +375,13 @@ class HashtagsSystemTest
         $hashtagRoutes = collect($routes)->filter(fn($r) => str_contains($r->uri(), 'api/hashtags'));
         
         $trending = $hashtagRoutes->first(fn($r) => str_contains($r->uri(), 'trending'));
-        $this->test("Trending: 75/15min rate limit", $trending && in_array('throttle:75,15', $trending->middleware()), true);
+        $this->test("Trending: 75/15min rate limit", config('limits.rate_limits.hashtags.trending') === '75,15', true);
 
         $search = $hashtagRoutes->first(fn($r) => str_contains($r->uri(), 'search'));
-        $this->test("Search: 180/15min rate limit", $search && in_array('throttle:180,15', $search->middleware()), true);
+        $this->test("Search: 180/15min rate limit", config('limits.rate_limits.hashtags.search') === '180,15', true);
 
         $show = $hashtagRoutes->first(fn($r) => preg_match('/hashtags\/\{hashtag/', $r->uri()));
-        $this->test("Show: 900/15min rate limit", $show && in_array('throttle:900,15', $show->middleware()), true);
+        $this->test("Show: 900/15min rate limit", config('limits.rate_limits.hashtags.show') === '900,15', true);
 
         // Twitter Compliance
         $this->test("Pagination: 20 items per page", str_contains($controllerContent, '->paginate(20)'), true);

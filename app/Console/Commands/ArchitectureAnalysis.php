@@ -13,7 +13,7 @@ class ArchitectureAnalysis extends Command
 
     public function handle()
     {
-        $this->info('🏗️ Analyzing Microblogging Backend Architecture...');
+        $this->info('🏗️ Analyzing Clevlance Backend Architecture...');
         
         $this->analyzeLayerSeparation();
         $this->analyzeDependencyInjection();

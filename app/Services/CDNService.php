@@ -11,7 +11,7 @@ class CDNService
 
     public function __construct()
     {
-        $this->cdnUrl = config('app.cdn_url', 'https://cdn-images.microblogging.com');
+        $this->cdnUrl = config('app.cdn_url', 'https://cdn-images.clevlance.com');
     }
 
     public function uploadToCDN(string $filePath): string

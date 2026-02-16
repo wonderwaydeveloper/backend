@@ -241,7 +241,7 @@ APP_DEBUG=false
 # Database
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
-DB_DATABASE=microblogging
+DB_DATABASE=clevlance
 
 # Redis (Sessions & Cache)
 REDIS_HOST=127.0.0.1
