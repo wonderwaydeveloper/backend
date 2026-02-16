@@ -15,8 +15,6 @@ return new class () extends Migration {
             $table->foreignId('conversation_id')->constrained()->cascadeOnDelete();
             $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
             $table->text('content')->nullable();
-            $table->string('media_path')->nullable();
-            $table->string('media_type')->nullable();
             $table->string('gif_url')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->timestamps();

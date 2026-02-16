@@ -13,7 +13,6 @@ class Moment extends Model
         'user_id',
         'title',
         'description',
-        'cover_image',
         'privacy',
         'is_featured',
         'posts_count',
@@ -42,6 +41,11 @@ class Moment extends Model
             ->withPivot('position')
             ->withTimestamps()
             ->orderBy('moment_posts.position');
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
     }
 
     public function scopePublic($query)

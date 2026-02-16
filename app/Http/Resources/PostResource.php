@@ -16,8 +16,10 @@ class PostResource extends JsonResource
             'id' => $data['id'] ?? null,
             'user_id' => $data['user_id'] ?? null,
             'content' => $data['content'] ?? null,
-            'image' => $data['image'] ?? null,
-            'video' => $data['video'] ?? null,
+            'media' => $this->when(
+                !is_array($this->resource) && $this->relationLoaded('media'),
+                fn() => MediaResource::collection($this->media)
+            ),
             'gif_url' => $data['gif_url'] ?? null,
             'likes_count' => $data['likes_count'] ?? 0,
             'comments_count' => $data['comments_count'] ?? 0,

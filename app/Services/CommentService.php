@@ -15,7 +15,7 @@ class CommentService
         private NotificationService $notificationService
     ) {}
 
-    public function createComment(Post $post, User $user, string $content): Comment
+    public function createComment(Post $post, User $user, string $content, $mediaFile = null): Comment
     {
         // Check if post is draft
         if ($post->is_draft) {
@@ -37,6 +37,12 @@ class CommentService
                 'user_id' => $user->id,
                 'content' => $content,
             ]);
+            
+            // Handle media
+            if ($mediaFile) {
+                $media = app(\App\Services\MediaService::class)->uploadImage($mediaFile, $user);
+                app(\App\Services\MediaService::class)->attachToModel($media, $comment);
+            }
 
             // Increment post comments count
             $post->increment('comments_count');
@@ -56,7 +62,7 @@ class CommentService
 
             DB::commit();
 
-            return $comment;
+            return $comment->load('media');
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

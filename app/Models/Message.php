@@ -13,8 +13,6 @@ class Message extends Model
         'sender_id',
         'content',
         'read_at',
-        'media_path',
-        'media_type',
         'gif_url',
     ];
 
@@ -25,6 +23,11 @@ class Message extends Model
     public function conversation()
     {
         return $this->belongsTo(Conversation::class);
+    }
+
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
     }
 
     public function sender()

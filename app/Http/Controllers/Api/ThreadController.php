@@ -87,7 +87,8 @@ class ThreadController extends Controller
         
         $request->validate([
             'content' => ['required', new ContentLength('post')],
-            'image' => ['nullable', new FileUpload('avatar')],
+            'media' => 'nullable|array|max:4',
+            'media.*' => 'file|mimes:jpeg,jpg,png,gif,webp,mp4,mov|max:10240',
         ]);
 
         $threadRoot = $post->getThreadRoot();
@@ -102,11 +103,16 @@ class ThreadController extends Controller
             'published_at' => now(),
         ];
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('posts', 'public');
-        }
-
         $newPost = Post::create($data);
+        
+        // Handle media
+        if ($request->hasFile('media')) {
+            foreach ($request->file('media') as $file) {
+                $media = app(\App\Services\MediaService::class)->uploadImage($file, $request->user());
+                app(\App\Services\MediaService::class)->attachToModel($media, $newPost);
+            }
+        }
+        
         $newPost->syncHashtags();
         $mentionedUsers = $newPost->processMentions($data['content']);
 
@@ -116,7 +122,7 @@ class ThreadController extends Controller
 
         broadcast(new \App\Events\PostPublished($newPost->load('user:id,name,username,avatar')));
 
-        $newPost->load('user:id,name,username,avatar', 'hashtags');
+        $newPost->load('user:id,name,username,avatar', 'hashtags', 'media');
 
         return new PostResource($newPost);
     }

@@ -33,10 +33,13 @@ class CommentController extends Controller
         $this->authorize('create', Comment::class);
 
         try {
+            $mediaFile = $request->hasFile('media') ? $request->file('media') : null;
+            
             $comment = $this->commentService->createComment(
                 $post,
                 $request->user(),
-                $request->input('content')
+                $request->input('content'),
+                $mediaFile
             );
 
             // Process mentions
@@ -54,7 +57,7 @@ class CommentController extends Controller
                 ],
             ]));
 
-            $comment->load('user:id,name,username,avatar');
+            $comment->load('user:id,name,username,avatar', 'media');
 
             return response()->json($comment, 201);
         } catch (\Exception $e) {

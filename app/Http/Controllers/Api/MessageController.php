@@ -13,12 +13,9 @@ use Illuminate\Http\Request;
 
 class MessageController extends Controller
 {
-    protected $messageService;
-
-    public function __construct(MessageService $messageService)
-    {
-        $this->messageService = $messageService;
-    }
+    public function __construct(
+        private MessageService $messageService
+    ) {}
     public function conversations(Request $request)
     {
         $conversations = $this->messageService->getConversations($request->user());
@@ -45,15 +42,12 @@ class MessageController extends Controller
             $validated = $request->validated();
             $data = ['content' => $validated['content'] ?? null];
 
-            if ($request->hasFile('media')) {
-                $file = $request->file('media');
-                $extension = $file->getClientOriginalExtension();
-                $data['media_path'] = $file->store('messages', 'public');
-                $data['media_type'] = in_array($extension, ['mp4', 'mov']) ? 'video' : 'image';
-            }
-
             if (isset($validated['gif_url'])) {
                 $data['gif_url'] = $validated['gif_url'];
+            }
+            
+            if ($request->hasFile('attachments')) {
+                $data['attachments'] = $request->file('attachments');
             }
 
             $message = $this->messageService->sendMessage($request->user(), $user, $data);

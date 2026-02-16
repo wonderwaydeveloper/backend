@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Contracts\Services\{PostServiceInterface, FileUploadServiceInterface};
+use App\Contracts\Services\PostServiceInterface;
 use App\DTOs\{PostDTO, QuotePostDTO};
 use App\Events\{PostInteraction, PostPublished};
 use App\Jobs\ProcessPostJob;
@@ -37,7 +37,7 @@ class PostService implements PostServiceInterface
     public function __construct(
         private SpamDetectionService $spamDetectionService,
         private CacheOptimizationService $cacheService,
-        private FileUploadServiceInterface $fileUploadService,
+        private MediaService $mediaService,
         private PostLikeService $postLikeService
     ) {
     }
@@ -114,7 +114,7 @@ class PostService implements PostServiceInterface
             $excludedIds = array_merge($blockedIds, $mutedIds);
 
             return Post::forTimeline()
-                ->select(['id', 'user_id', 'content', 'created_at', 'likes_count', 'comments_count', 'image', 'gif_url', 'quoted_post_id'])
+                ->select(['id', 'user_id', 'content', 'created_at', 'likes_count', 'comments_count', 'gif_url', 'quoted_post_id'])
                 ->whereIn('user_id', $followingIds)
                 ->whereNotIn('user_id', $excludedIds)
                 ->whereNull('thread_id')
@@ -188,21 +188,26 @@ class PostService implements PostServiceInterface
     /**
      * Create a new post
      */
-    public function createPost(PostDTO $postDTO, ?UploadedFile $image = null, ?UploadedFile $video = null): Post
+    public function createPost(PostDTO $postDTO, array $mediaFiles = []): Post
     {
-        return DB::transaction(function () use ($postDTO, $image, $video) {
+        return DB::transaction(function () use ($postDTO, $mediaFiles) {
             $postData = $postDTO->toArray();
             $postData['content'] = $this->sanitizeContent($postData['content']);
 
-            // Handle file uploads
-            $postData = $this->handleFileUploads($postData, $image, $video);
-
             $post = $this->create($postData);
 
-            // Process post content and handle business logic
-            $this->processPostBusinessLogic($post, $postDTO->isDraft, $video);
+            // Handle media uploads
+            if (!empty($mediaFiles)) {
+                foreach ($mediaFiles as $file) {
+                    $media = $this->mediaService->uploadImage($file, $post->user);
+                    $this->mediaService->attachToModel($media, $post);
+                }
+            }
 
-            return $post->load('user:id,name,username,avatar', 'hashtags');
+            // Process post content and handle business logic
+            $this->processPostBusinessLogic($post, $postDTO->isDraft);
+
+            return $post->load('user:id,name,username,avatar', 'hashtags', 'media');
         });
     }
 
@@ -236,8 +241,8 @@ class PostService implements PostServiceInterface
      */
     public function deletePost(Post $post): void
     {
-        if ($post->image) {
-            $this->fileUploadService->deleteFile($post->image);
+        foreach ($post->media as $media) {
+            $this->mediaService->deleteMedia($media);
         }
 
         $post->delete();
@@ -388,31 +393,13 @@ class PostService implements PostServiceInterface
         }
     }
 
-    /**
-     * Handle file uploads
-     */
-    private function handleFileUploads(array $postData, ?UploadedFile $image, ?UploadedFile $video): array
-    {
-        if ($image) {
-            $postData['image'] = $this->fileUploadService->uploadImage($image);
-        }
 
-        if ($video) {
-            $postData['video'] = 'processing';
-        }
-
-        return $postData;
-    }
 
     /**
      * Process post business logic
      */
-    private function processPostBusinessLogic(Post $post, bool $isDraft, ?UploadedFile $video): void
+    private function processPostBusinessLogic(Post $post, bool $isDraft): void
     {
-        if ($video) {
-            $this->fileUploadService->uploadVideo($video, $post);
-        }
-
         $this->processPostContent($post);
 
         if (!$isDraft) {

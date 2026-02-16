@@ -5,10 +5,10 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 
 // Service Interfaces
-use App\Contracts\Services\{PostServiceInterface, UserServiceInterface, NotificationServiceInterface, AuthServiceInterface, FileUploadServiceInterface};
+use App\Contracts\Services\{PostServiceInterface, UserServiceInterface, NotificationServiceInterface, AuthServiceInterface};
 
 // Service Implementations
-use App\Services\{PostService, UserService, NotificationService, AuthService, FileUploadService};
+use App\Services\{PostService, UserService, NotificationService, AuthService, MediaService};
 
 // Repository Interfaces  
 use App\Contracts\Repositories\PostRepositoryInterface;
@@ -38,7 +38,7 @@ class CleanArchitectureServiceProvider extends ServiceProvider
         $this->app->bind(UserServiceInterface::class, UserService::class);
         $this->app->bind(NotificationServiceInterface::class, NotificationService::class);
         $this->app->bind(AuthServiceInterface::class, AuthService::class);
-        $this->app->bind(FileUploadServiceInterface::class, FileUploadService::class);
+        $this->app->singleton(MediaService::class);
 
         // Repository Bindings with Cache Decorators
         $this->app->bind('App\\Repositories\\Eloquent\\EloquentPostRepository', \App\Repositories\PostRepository::class);

@@ -61,7 +61,7 @@ class ProfileController extends Controller
         
         $data = $request->validated();
         
-        // Secure file upload handling
+        // Keep avatar/cover as direct columns (frequently accessed)
         if ($request->hasFile('avatar')) {
             $request->validate(['avatar' => new FileUpload('avatar')]);
             $avatarPath = $request->file('avatar')->store('avatars', 'public');

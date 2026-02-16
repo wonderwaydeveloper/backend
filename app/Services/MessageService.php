@@ -41,18 +41,22 @@ class MessageService
                     'content' => isset($data['content']) ? strip_tags($data['content']) : null,
                 ];
 
-                if (isset($data['media_path'])) {
-                    $messageData['media_path'] = $data['media_path'];
-                    $messageData['media_type'] = $data['media_type'];
-                }
-
                 if (isset($data['gif_url'])) {
                     $messageData['gif_url'] = $data['gif_url'];
                 }
 
                 $message = Message::create($messageData);
+                
+                // Handle media attachments
+                if (isset($data['attachments'])) {
+                    foreach ($data['attachments'] as $file) {
+                        $media = app(\App\Services\MediaService::class)->uploadDocument($file, $sender);
+                        app(\App\Services\MediaService::class)->attachToModel($media, $message);
+                    }
+                }
+                
                 $conversation->update(['last_message_at' => now()]);
-                $message->load('sender:id,name,username,avatar');
+                $message->load('sender:id,name,username,avatar', 'media');
 
                 broadcast(new MessageSent($message));
                 ProcessMessageJob::dispatch($message);

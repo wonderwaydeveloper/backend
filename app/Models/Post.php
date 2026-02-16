@@ -19,8 +19,6 @@ class Post extends Model
         'user_id',
         'community_id',
         'content',
-        'image',
-        'video',
         'gif_url',
         'likes_count',
         'comments_count',
@@ -234,7 +232,7 @@ class Post extends Model
             'is_draft' => $this->is_draft,
             'likes_count' => $this->likes_count,
             'comments_count' => $this->comments_count,
-            'has_media' => ! empty($this->image) || ! empty($this->gif_url),
+            'has_media' => $this->media()->exists() || ! empty($this->gif_url),
             'thread_id' => $this->thread_id,
             'quoted_post_id' => $this->quoted_post_id,
         ];
@@ -304,19 +302,9 @@ class Post extends Model
         ]);
     }
 
-    public function video()
-    {
-        return $this->hasOne(Video::class);
-    }
-
-    public function hasVideo(): bool
-    {
-        return $this->video()->exists();
-    }
-
     public function hasMedia(): bool
     {
-        return !empty($this->image) || !empty($this->gif_url) || $this->hasVideo();
+        return $this->media()->exists() || !empty($this->gif_url);
     }
 
     public function communityNotes()

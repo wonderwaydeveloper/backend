@@ -12,7 +12,6 @@ return new class () extends Migration {
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
-            $table->string('cover_image')->nullable();
             $table->enum('privacy', ['public', 'private'])->default('public');
             $table->boolean('is_featured')->default(false);
             $table->integer('posts_count')->default(0);

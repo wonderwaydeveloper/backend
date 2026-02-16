@@ -12,6 +12,7 @@ class CommentResource extends JsonResource
         return [
             'id' => $this->id,
             'content' => $this->content,
+            'media' => MediaResource::collection($this->whenLoaded('media')),
             'likes_count' => $this->likes_count,
             'is_liked' => $this->when(auth()->check(), fn () => $this->isLikedBy(auth()->id())),
             'user' => new UserResource($this->whenLoaded('user')),

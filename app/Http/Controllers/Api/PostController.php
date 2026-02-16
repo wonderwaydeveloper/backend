@@ -36,7 +36,8 @@ class PostController extends Controller
         
         try {
             $dto = PostDTO::fromRequest($request->validated(), $request->user()->id);
-            $post = $this->postService->createPost($dto, $request->file('image'), $request->file('video'));
+            $mediaFiles = $request->hasFile('media') ? $request->file('media') : [];
+            $post = $this->postService->createPost($dto, $mediaFiles);
             return response()->json(new PostResource($post), 201);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to create post'], 500);

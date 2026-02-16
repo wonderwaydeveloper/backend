@@ -16,8 +16,8 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => ['required', new ContentLength('post')],
-            'image' => ['nullable', new FileUpload('avatar')],
-            'video' => ['nullable', new FileUpload('video')],
+            'media' => 'nullable|array|max:4',
+            'media.*' => ['file', 'mimes:jpeg,jpg,png,gif,webp,mp4,mov,avi', 'max:10240'],
             'gif_url' => 'nullable|url|max:500',
             'reply_settings' => 'nullable|in:everyone,following,mentioned,none',
             'quoted_post_id' => 'nullable|exists:posts,id',
@@ -30,12 +30,11 @@ class StorePostRequest extends FormRequest
         return [
             'content.required' => 'Post content is required',
             'content.max' => 'Post content must not exceed 280 characters',
-            'image.image' => 'File must be an image',
-            'image.mimes' => 'Image format must be jpeg, jpg, png, gif or webp',
-            'image.max' => 'Image size must not exceed 2MB',
-            'video.file' => 'Video file is invalid',
-            'video.mimes' => 'Video format must be mp4, mov, avi, mkv or webm',
-            'video.max' => 'Video size must not exceed 100MB',
+            'media.array' => 'Media must be an array',
+            'media.max' => 'You can upload maximum 4 media files',
+            'media.*.file' => 'Each media item must be a file',
+            'media.*.mimes' => 'Media format must be jpeg, jpg, png, gif, webp, mp4, mov, or avi',
+            'media.*.max' => 'Each media file must not exceed 10MB',
             'gif_url.url' => 'GIF URL is invalid',
             'gif_url.max' => 'GIF URL is too long',
             'reply_settings.in' => 'Reply settings is invalid',
@@ -50,7 +49,7 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => 'Post content',
-            'image' => 'Image',
+            'media' => 'Media files',
             'gif_url' => 'GIF URL',
             'reply_settings' => 'Reply settings',
             'quoted_post_id' => 'Quoted post',

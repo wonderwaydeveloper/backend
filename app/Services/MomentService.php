@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Moment;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\MediaService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Log;
 
 class MomentService
 {
+    public function __construct(
+        private MediaService $mediaService
+    ) {}
     public function createMoment(User $user, array $data): Moment
     {
         return DB::transaction(function () use ($user, $data) {
@@ -29,7 +33,7 @@ class MomentService
                 }
             }
 
-            return $moment->load('creator', 'posts');
+            return $moment->load('creator', 'posts', 'media');
         });
     }
 

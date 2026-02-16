@@ -15,9 +15,10 @@ class SendMessageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'content' => ['required_without_all:media,gif_url', 'nullable', new ContentLength('message')],
-            'media' => ['required_without_all:content,gif_url', 'nullable', new FileUpload('media_general')],
-            'gif_url' => 'required_without_all:content,media|nullable|url',
+            'content' => ['required_without_all:attachments,gif_url', 'nullable', new ContentLength('message')],
+            'attachments' => 'required_without_all:content,gif_url|nullable|array|max:10',
+            'attachments.*' => 'file|max:10240',
+            'gif_url' => 'required_without_all:content,attachments|nullable|url',
         ];
     }
 
@@ -25,7 +26,8 @@ class SendMessageRequest extends FormRequest
     {
         return [
             'content.max' => 'Message must not exceed 1000 characters',
-            'media.max' => 'File size must not exceed 10MB',
+            'attachments.max' => 'You can upload maximum 10 attachments',
+            'attachments.*.max' => 'Each file must not exceed 10MB',
             'gif_url.url' => 'GIF URL is invalid',
         ];
     }

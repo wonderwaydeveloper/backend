@@ -11,8 +11,6 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->text('content');
-            $table->string('image')->nullable();
-            $table->string('video')->nullable();
             $table->string('gif_url')->nullable();
             $table->boolean('is_draft')->default(false);
             $table->boolean('is_flagged')->default(false);

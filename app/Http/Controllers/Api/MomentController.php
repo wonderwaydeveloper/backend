@@ -7,14 +7,15 @@ use App\Http\Requests\MomentRequest;
 use App\Http\Resources\MomentResource;
 use App\Models\Moment;
 use App\Models\Post;
-use App\Services\MomentService;
+use App\Services\{MomentService, MediaService};
 use Illuminate\Http\Request;
 
 class MomentController extends Controller
 {
-    public function __construct(private MomentService $momentService)
-    {
-    }
+    public function __construct(
+        private MomentService $momentService,
+        private MediaService $mediaService
+    ) {}
     public function index(Request $request)
     {
         $moments = $this->momentService->getPublicMoments($request->boolean('featured'));
@@ -25,12 +26,17 @@ class MomentController extends Controller
     {
         $data = $request->validated();
         
-        if ($request->hasFile('cover_image')) {
-            $data['cover_image'] = $request->file('cover_image')->store('moments', 'public');
-        }
-
         $moment = $this->momentService->createMoment($request->user(), $data);
-        return new MomentResource($moment);
+        
+        if ($request->hasFile('cover_image')) {
+            $media = $this->mediaService->uploadImage(
+                $request->file('cover_image'),
+                $request->user()
+            );
+            $this->mediaService->attachToModel($media, $moment);
+        }
+        
+        return new MomentResource($moment->load('media'));
     }
 
     public function show(Moment $moment)
