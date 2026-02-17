@@ -136,7 +136,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed Docker deployment instructions.
 - **Cache**: Redis
 - **Search**: Meilisearch
 - **File Storage**: Local/S3
-- **API**: RESTful + GraphQL
+- **API**: RESTful
 
 ## 📚 Documentation
 
@@ -194,19 +194,41 @@ Key configuration files:
 
 ## 📝 API Endpoints
 
-Total: 300+ endpoints across 34 systems
+Total: 306 endpoints across 25 systems
 
-Main categories:
-- Authentication (20 endpoints)
-- Posts & Content (45 endpoints)
-- Social Interactions (30 endpoints)
-- Search & Discovery (15 endpoints)
-- Messaging (10 endpoints)
-- Communities (15 endpoints)
-- Monetization (12 endpoints)
-- Admin & Moderation (25 endpoints)
+### Core Systems (25)
+1. **Authentication & Security** (40 endpoints)
+2. **Posts & Content** (24 endpoints)
+3. **Comments** (4 endpoints)
+4. **Social Features** (12 endpoints)
+5. **Profile & Account** (9 endpoints)
+6. **Search & Discovery** (14 endpoints)
+7. **Messaging** (6 endpoints)
+8. **Notifications** (13 endpoints)
+9. **Communities** (16 endpoints)
+10. **Spaces (Audio Rooms)** (7 endpoints)
+11. **Lists** (11 endpoints)
+12. **Bookmarks & Reposts** (6 endpoints)
+13. **Hashtags** (4 endpoints)
+14. **Polls** (3 endpoints)
+15. **Mentions** (3 endpoints)
+16. **Moderation & Reporting** (9 endpoints)
+17. **Media Management** (4 endpoints)
+18. **Moments** (9 endpoints)
+19. **Analytics** (8 endpoints)
+20. **A/B Testing** (7 endpoints)
+21. **Monetization** (16 endpoints)
+22. **Performance & Monitoring** (13 endpoints)
+23. **Real-time Features** (4 endpoints)
+24. **Device Management** (9 endpoints)
+25. **Subscriptions** (5 endpoints)
 
-See [API.md](API.md) for complete endpoint documentation.
+### Removed Systems ❌
+- ~~GIF Integration~~ (2 endpoints removed)
+- ~~GraphQL~~ (1 endpoint removed)
+- ~~Organization Management~~ (1 endpoint removed)
+
+See [SYSTEMS_LIST.md](docs/SYSTEMS_LIST.md) for complete system documentation.
 
 ## 🤝 Contributing
 
@@ -234,12 +256,35 @@ This project is licensed under the MIT License.
 
 ## 🎯 Roadmap
 
+### Phase 1: Security & Optimization (Current)
+- [ ] Fix mass assignment vulnerabilities
+- [ ] Implement database indexes
+- [ ] Resolve N+1 query issues
+- [ ] Secure verification code storage
+- [ ] Add input validation
+- [ ] Implement rate limiting improvements
+
+### Phase 2: Performance Enhancement
+- [ ] Query optimization
+- [ ] Caching strategy improvements
+- [ ] Database connection pooling
+- [ ] CDN integration
+- [ ] Asset optimization
+
+### Phase 3: Feature Expansion
 - [ ] Video streaming
-- [ ] Live spaces
+- [ ] Live spaces enhancement
 - [ ] Advanced analytics dashboard
 - [ ] Mobile app deep linking
 - [ ] Multi-language support
 - [ ] AI-powered content moderation
+
+### Phase 4: Scalability
+- [ ] Microservices architecture
+- [ ] Load balancing
+- [ ] Auto-scaling improvements
+- [ ] Database sharding
+- [ ] Message queue optimization
 
 ---
 

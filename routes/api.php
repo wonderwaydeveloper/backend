@@ -13,7 +13,6 @@ use App\Http\Controllers\Api\FollowRequestController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\VideoController;
-use App\Http\Controllers\Api\GifController;
 use App\Http\Controllers\Api\RepostController;
 use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\ScheduledPostController;
@@ -30,8 +29,6 @@ use App\Http\Controllers\Api\MomentController;
 use App\Http\Controllers\Api\MonitoringController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
-use App\Http\Controllers\Api\OrganizationController;
-
 use App\Http\Controllers\Api\PerformanceController;
 use App\Http\Controllers\Api\PollController;
 use App\Http\Controllers\Api\ConversionController;
@@ -43,7 +40,6 @@ use App\Http\Controllers\Api\PushNotificationController;
 use App\Http\Controllers\Api\TimelineController;
 use App\Http\Controllers\Api\ABTestController;
 use App\Http\Controllers\Api\AutoScalingController;
-use App\Http\Controllers\Api\GraphQLController;
 use App\Monetization\Controllers\AdvertisementController;
 use App\Monetization\Controllers\CreatorFundController;
 use App\Monetization\Controllers\PremiumController;
@@ -69,9 +65,6 @@ Route::post('/test', function () {
 Route::post('/upload', function () {
     return response()->json(['message' => 'Upload endpoint']);
 });
-
-// GraphQL endpoint
-Route::post('/graphql', [GraphQLController::class, 'handle'])->middleware('auth:sanctum');
 
 // === Authentication Routes ===
 Route::prefix('auth')->group(function () {
@@ -207,9 +200,6 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::post('/scheduled-posts', [ScheduledPostController::class, 'store'])->middleware(['permission:post.schedule', 'check.feature:scheduled_posts']);
     Route::get('/scheduled-posts', [ScheduledPostController::class, 'index']);
     Route::delete('/scheduled-posts/{scheduledPost}', [ScheduledPostController::class, 'destroy']);
-
-    Route::get('/gifs/search', [GifController::class, 'search']);
-    Route::get('/gifs/trending', [GifController::class, 'trending']);
 
     Route::get('/bookmarks', [BookmarkController::class, 'index']);
     Route::post('/posts/{post}/bookmark', [BookmarkController::class, 'toggle'])->middleware('permission:post.bookmark');
@@ -551,9 +541,5 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/{community}/join-requests/{request}/reject', [CommunityController::class, 'rejectJoinRequest']);
     });
 
-    // Organization Routes
-    Route::prefix('organization')->middleware('check.subscription:organization')->group(function () {
-        Route::get('/dashboard', [OrganizationController::class, 'dashboard']);
-    });
 });
 
