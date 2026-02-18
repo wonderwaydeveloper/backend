@@ -178,6 +178,35 @@ php artisan test --coverage
 - PHPUnit Tests: 46
 - Custom Test Scripts: 289
 
+### Test Scripts (test-scripts/)
+
+Custom comprehensive test scripts for system validation.
+
+**How it works:**
+Test scripts are created based on documentation in `test-scripts/docs/`:
+- `SYSTEMS_LIST.md` defines all systems and endpoints
+- `TEST_ARCHITECTURE.md` provides testing standards
+- `ROADMAP.md` tracks progress and priorities
+- `SYSTEM_REVIEW_CRITERIA.md` defines quality metrics
+
+**Completed Systems:**
+- ✅ `01_security.php` - Security & Device Management (105 tests)
+- ✅ `02_authentication.php` - Authentication & Registration (126 tests)
+- ✅ `03_posts.php` - Posts & Content System (289 tests)
+
+**Test Architecture:**
+- 8 standardized sections per system
+- Integration testing with other systems
+- Database schema validation
+- Security layers verification
+- Business logic testing
+
+**Documentation:**
+- `test-scripts/docs/ROADMAP.md` - Testing roadmap (3/26 systems completed)
+- `test-scripts/docs/SYSTEMS_LIST.md` - Complete systems list (305 endpoints)
+- `test-scripts/docs/TEST_ARCHITECTURE.md` - Testing standards
+- `test-scripts/docs/SYSTEM_REVIEW_CRITERIA.md` - Review criteria
+
 ## 📊 Performance
 
 - Average API response time: 32ms
