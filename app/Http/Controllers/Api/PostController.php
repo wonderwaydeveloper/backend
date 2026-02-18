@@ -61,12 +61,14 @@ class PostController extends Controller
             }
             
             // Track analytics event
-            \App\Models\AnalyticsEvent::track(
-                'post_view',
-                'post',
-                $post->id,
-                auth()->id()
-            );
+            if (auth()->id() && $post->id) {
+                \App\Models\AnalyticsEvent::track(
+                    'post_view',
+                    'post',
+                    $post->id,
+                    auth()->id()
+                );
+            }
             
             return response()->json(new PostResource($post->load(['user', 'likes', 'comments'])));
         } catch (\Exception $e) {
@@ -93,7 +95,7 @@ class PostController extends Controller
         $result = $this->postService->toggleLike($post, auth()->user());
         
         // Track analytics event
-        if ($result['liked'] ?? false) {
+        if (($result['liked'] ?? false) && auth()->id()) {
             \App\Models\AnalyticsEvent::track(
                 'post_like',
                 'post',

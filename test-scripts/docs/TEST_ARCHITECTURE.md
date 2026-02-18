@@ -123,8 +123,14 @@ test("Sanctum middleware", fn() => strpos(file_get_contents(__DIR__ . '/routes/a
 test("Policy exists", fn() => class_exists('App\\Policies\\PostPolicy'));
 test("Policy methods", fn() => method_exists('App\\Policies\\PostPolicy', 'update'));
 
-// Permissions
+// Permissions (Spatie)
 test("Permission exists", fn() => \\Spatie\\Permission\\Models\\Permission::where('name', 'post.create')->exists());
+test("User has permission", fn() => $user->hasPermissionTo('post.create'));
+
+// Roles (Spatie)
+test("Role exists", fn() => \\Spatie\\Permission\\Models\\Role::where('name', 'user')->exists());
+test("User has role", fn() => $user->hasRole('user'));
+test("Role has permission", fn() => \\Spatie\\Permission\\Models\\Role::findByName('user')->hasPermissionTo('post.create'));
 
 // XSS Protection
 test("XSS prevention", fn() => !str_contains($post->content, '<script>'));
@@ -402,8 +408,11 @@ test("Block integration", fn() => method_exists('App\\Services\\PostService', 'f
 test("Block check in timeline", function() {
     $blocker = User::factory()->create();
     $blocked = User::factory()->create();
-    \App\Models\Block::create(['blocker_id' => $blocker->id, 'blocked_id' => $blocked->id]);
+    $blocker->blockedUsers()->attach($blocked->id);
     $blockedIds = $blocker->blockedUsers()->pluck('users.id');
+    $blocker->blockedUsers()->detach($blocked->id);
+    $blocker->delete();
+    $blocked->delete();
     return $blockedIds->contains($blocked->id);
 });
 
@@ -443,7 +452,7 @@ test("Integration: Post → Notification → Block Filter", function() {
     $blocked = User::factory()->create();
     
     // Block
-    \App\Models\Block::create(['blocker_id' => $follower->id, 'blocked_id' => $blocked->id]);
+    $follower->blockedUsers()->attach($blocked->id);
     
     // Create post with mention
     $post = Post::create([
@@ -458,6 +467,13 @@ test("Integration: Post → Notification → Block Filter", function() {
     // Check blocked user doesn't see in timeline
     $blockedIds = $follower->blockedUsers()->pluck('users.id');
     $timeline = Post::whereNotIn('user_id', $blockedIds)->get();
+    
+    // Cleanup
+    $post->delete();
+    $follower->blockedUsers()->detach($blocked->id);
+    $author->delete();
+    $follower->delete();
+    $blocked->delete();
     
     return $notification !== null && $timeline->contains($post);
 });

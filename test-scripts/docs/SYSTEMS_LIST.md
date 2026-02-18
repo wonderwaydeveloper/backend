@@ -94,9 +94,14 @@
 
 ### Controllers
 - `PostController`
+- `CommentController`
+- `BookmarkController`
+- `RepostController`
 - `ThreadController`
 - `ScheduledPostController`
-- `VideoController`
+- `PollController`
+- `MediaController`
+- `CommunityNoteController`
 
 ### Features
 - **Post Management**
@@ -127,9 +132,6 @@
   - POST `/scheduled-posts` - زمانبندی پست
   - GET `/scheduled-posts` - لیست پستهای زمانبندی شده
   - DELETE `/scheduled-posts/{scheduledPost}` - حذف
-
-- **Video**
-  - GET `/videos/{video}/status` - وضعیت ویدیو
 
 ---
 
@@ -422,10 +424,13 @@
 - `MediaController`
 
 ### Features
+- GET `/media` - لیست مدیا
+- GET `/media/{media}` - نمایش مدیا
 - POST `/media/upload/image` - آپلود تصویر
 - POST `/media/upload/video` - آپلود ویدیو
 - POST `/media/upload/document` - آپلود سند
-- DELETE `/media/delete` - حذف مدیا
+- DELETE `/media/{media}` - حذف مدیا
+- GET `/media/{media}/status` - وضعیت پردازش
 
 ---
 
@@ -579,8 +584,8 @@
 
 ## آمار کلی
 
-- **تعداد کل Controllers**: 44
-- **تعداد کل Endpoints**: 306
+- **تعداد کل Controllers**: 43
+- **تعداد کل Endpoints**: 305
 - **تعداد سیستمهای اصلی**: 26
 - **نوع Authentication**: Sanctum (Token-based)
 - **Real-time**: WebSocket/Broadcasting

@@ -34,7 +34,7 @@ class ScheduledPostController extends Controller
     public function index(Request $request)
     {
         $scheduledPosts = ScheduledPost::where('user_id', $request->user()->id)
-            ->where('published', false)
+            ->where('status', 'pending')
             ->orderBy('scheduled_at')
             ->paginate();
 

@@ -27,6 +27,10 @@ return new class extends Migration
             $table->unsignedInteger('height')->nullable();
             $table->unsignedInteger('duration')->nullable();
             $table->string('alt_text', 200)->nullable();
+            $table->enum('encoding_status', ['pending', 'processing', 'completed', 'failed'])->default('completed');
+            $table->json('video_qualities')->nullable();
+            $table->json('image_variants')->nullable();
+            $table->unsignedTinyInteger('processing_progress')->default(100);
             $table->timestamps();
             
             $table->index(['mediable_type', 'mediable_id']);

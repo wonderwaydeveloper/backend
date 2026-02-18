@@ -74,6 +74,7 @@ A high-performance, feature-rich social media platform built with Laravel 12, de
 - PHP 8.2+
 - MySQL 8.0+ or PostgreSQL 14+
 - Redis 7.0+
+- Meilisearch 1.5+
 - Composer 2.x
 - Node.js 18+ & NPM
 - Docker & Docker Compose (for containerized deployment)
@@ -143,6 +144,9 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed Docker deployment instructions.
 - [API Documentation](API.md) - Complete API endpoints reference
 - [Architecture](ARCHITECTURE.md) - System architecture and design patterns
 - [Deployment Guide](DEPLOYMENT.md) - Production deployment instructions
+- [Meilisearch Setup](MEILISEARCH_SETUP.md) - Search engine configuration
+- [FFmpeg Installation](FFMPEG_INSTALL.md) - Video processing setup
+- [Media Deployment](MEDIA_DEPLOYMENT.md) - Media handling guide
 
 ## 🔒 Security
 
@@ -170,10 +174,9 @@ php artisan test --testsuite=Feature
 php artisan test --coverage
 ```
 
-**Test Results**: 2,907 tests passing (100%)
-- Core Tests: 2,769
-- Integration Tests: 82
-- Load Tests: 56
+**Test Results**: 335 tests passing (100%)
+- PHPUnit Tests: 46
+- Custom Test Scripts: 289
 
 ## 📊 Performance
 
@@ -194,11 +197,11 @@ Key configuration files:
 
 ## 📝 API Endpoints
 
-Total: 306 endpoints across 25 systems
+Total: 305 endpoints across 25 systems
 
 ### Core Systems (25)
 1. **Authentication & Security** (40 endpoints)
-2. **Posts & Content** (24 endpoints)
+2. **Posts & Content** (23 endpoints)
 3. **Comments** (4 endpoints)
 4. **Social Features** (12 endpoints)
 5. **Profile & Account** (9 endpoints)

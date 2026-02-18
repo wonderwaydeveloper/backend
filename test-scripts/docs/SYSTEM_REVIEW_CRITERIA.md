@@ -27,6 +27,7 @@
 - Authentication (auth:sanctum)
 - Authorization (Policies)
 - Permissions (Spatie)
+- Roles (Spatie)
 - XSS Protection
 - SQL Injection Protection
 - Mass Assignment Protection
@@ -50,6 +51,9 @@
 - Notifications integrated
 - Events/Listeners
 - Jobs/Queues (if needed)
+- Cross-system relationships work
+- Foreign keys to other systems
+- Shared services integration
 
 ### 8️⃣ Testing (5%)
 - Test script exists
@@ -90,6 +94,7 @@
 - [ ] Proper error handling
 - [ ] Database indexes
 - [ ] Integration با Block/Mute
+- [ ] Permissions & Roles configured
 
 ### Advanced Requirements (Nice to Have)
 - [ ] DTOs
@@ -129,7 +134,9 @@ Score: __/15
 
 ## 4. Security (20%)
 - [ ] Authentication
-- [ ] Authorization
+- [ ] Authorization (Policies)
+- [ ] Permissions (Spatie)
+- [ ] Roles (Spatie)
 - [ ] XSS/SQL protection
 - [ ] Rate limiting
 Score: __/20
@@ -148,6 +155,9 @@ Score: __/10
 ## 7. Integration (5%)
 - [ ] Block/Mute
 - [ ] Notifications
+- [ ] Events/Listeners
+- [ ] Cross-system relationships
+- [ ] Foreign keys work
 Score: __/5
 
 ## 8. Testing (5%)
@@ -164,7 +174,7 @@ Score: __/5
 ## 🎯 الزامات کلی
 
 1. **Tests**: ≥95% coverage
-2. **Security**: حداقل 8 لایه
+2. **Security**: حداقل 8 لایه (Authentication, Policies, Permissions, Roles, XSS, SQL, CSRF, Rate Limiting)
 3. **Performance**: Response time < 100ms
 4. **Documentation**: مستندات کامل
 5. **Integration**: تست یکپارچگی

@@ -89,13 +89,12 @@ class CommunityNoteService
             ->get();
     }
 
-    public function getPendingNotes(): array
+    public function getPendingNotes()
     {
         return CommunityNote::pending()
             ->with(['post:id,content', 'author:id,name,username'])
             ->withCount('votes')
             ->orderBy('created_at', 'desc')
-            ->paginate(20)
-            ->toArray();
+            ->paginate(20);
     }
 }

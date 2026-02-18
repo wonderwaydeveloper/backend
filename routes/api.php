@@ -12,7 +12,6 @@ use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\FollowRequestController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\VideoController;
 use App\Http\Controllers\Api\RepostController;
 use App\Http\Controllers\Api\ThreadController;
 use App\Http\Controllers\Api\ScheduledPostController;
@@ -171,9 +170,6 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::post('/posts/{post}/publish', [PostController::class, 'publish'])->middleware('permission:post.edit.own');
     Route::get('/timeline', [PostController::class, 'timeline'])->name('main.timeline');
     Route::get('/drafts', [PostController::class, 'drafts']);
-
-    // Video routes
-    Route::get('/videos/{video}/status', [VideoController::class, 'status']);
 
     // Community Notes routes
     Route::prefix('posts/{post}/community-notes')->group(function () {
@@ -404,6 +400,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/upload/video', [MediaController::class, 'uploadVideo'])->middleware(['permission:media.upload', 'check.feature:hd_upload', 'role.ratelimit']);
         Route::post('/upload/document', [MediaController::class, 'uploadDocument'])->middleware(['permission:media.upload', 'role.ratelimit']);
         Route::delete('/{media}', [MediaController::class, 'destroy'])->middleware('permission:media.delete');
+        Route::get('/{media}/status', [MediaController::class, 'status'])->middleware('permission:media.view');
     });
 
     // Content Moderation & Reporting

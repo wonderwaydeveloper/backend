@@ -24,6 +24,10 @@ class Media extends Model
         'height',
         'duration',
         'alt_text',
+        'encoding_status',
+        'video_qualities',
+        'image_variants',
+        'processing_progress',
     ];
 
     protected $casts = [
@@ -31,6 +35,9 @@ class Media extends Model
         'width' => 'integer',
         'height' => 'integer',
         'duration' => 'integer',
+        'video_qualities' => 'array',
+        'image_variants' => 'array',
+        'processing_progress' => 'integer',
     ];
 
     public function user()
@@ -71,5 +78,20 @@ class Media extends Model
     public function isDocument(): bool
     {
         return $this->type === 'document';
+    }
+
+    public function isProcessed(): bool
+    {
+        return $this->encoding_status === 'completed';
+    }
+
+    public function getVideoUrl(string $quality): ?string
+    {
+        return $this->video_qualities[$quality] ?? null;
+    }
+
+    public function getImageUrl(string $size): ?string
+    {
+        return $this->image_variants[$size] ?? $this->url;
     }
 }

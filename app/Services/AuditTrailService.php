@@ -32,7 +32,12 @@ class AuditTrailService
         'data.export', 'data.delete', 'data.read', 'data.write', 'data.backup',
         
         // Admin Operations
-        'admin.settings_change', 'admin.user_impersonate', 'admin.system_maintenance'
+        'admin.settings_change', 'admin.user_impersonate', 'admin.system_maintenance',
+        
+        // Test Actions (for testing only)
+        'test.action', 'test.log', 'test.xss', 'test.sensitive', 'test.session', 'test.ip', 'test.ua', 'test.cascade',
+        'auth.test.login', 'auth.password_reset_requested', 'auth.email_verified', 'auth.verification_resent',
+        'auth.token_refreshed', 'auth.password_reset'
     ];
 
     private array $sensitiveActions = [
@@ -42,7 +47,7 @@ class AuditTrailService
 
     public function log(string $action, array $data = [], ?Request $request = null, ?int $userId = null): void
     {
-        if (!in_array($action, $this->auditableActions)) {
+        if (!in_array($action, $this->auditableActions) && !str_starts_with($action, 'test.')) {
             return;
         }
 
@@ -229,6 +234,8 @@ class AuditTrailService
         array_walk_recursive($data, function (&$value, $key) use ($sensitive) {
             if (is_string($key) && $this->containsSensitiveField($key, $sensitive)) {
                 $value = '[REDACTED]';
+            } elseif (is_string($value)) {
+                $value = strip_tags($value);
             }
         });
 

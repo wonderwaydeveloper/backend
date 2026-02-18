@@ -14,140 +14,140 @@ class PermissionSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Posts
-        Permission::create(['name' => 'post.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.edit.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.delete.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.delete.any', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.schedule', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.edit.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.delete.any', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.schedule', 'guard_name' => 'sanctum']);
 
         // Comments
-        Permission::create(['name' => 'comment.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'comment.delete.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'comment.delete.any', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'comment.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'comment.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'comment.delete.any', 'guard_name' => 'sanctum']);
 
         // Messages
-        Permission::create(['name' => 'message.send', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'message.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'message.send', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'message.delete.own', 'guard_name' => 'sanctum']);
 
         // Profile
-        Permission::create(['name' => 'profile.edit.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'profile.view.private', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'profile.edit.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'profile.view.private', 'guard_name' => 'sanctum']);
 
         // Follow
-        Permission::create(['name' => 'user.follow', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'user.unfollow', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'user.follow', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'user.unfollow', 'guard_name' => 'sanctum']);
 
         // Interactions
-        Permission::create(['name' => 'post.like', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.repost', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'post.bookmark', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.like', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.repost', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'post.bookmark', 'guard_name' => 'sanctum']);
 
         // Lists
-        Permission::create(['name' => 'list.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'list.edit.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'list.delete.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'list.update.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'list.manage.members', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'list.subscribe', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.edit.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.update.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.manage.members', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'list.subscribe', 'guard_name' => 'sanctum']);
 
         // Spaces
-        Permission::create(['name' => 'space.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.host', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.speak', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.join', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.leave', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.manage.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.delete.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.update.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.manage.roles', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'space.end.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.host', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.speak', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.join', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.leave', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.manage.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.update.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.manage.roles', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'space.end.own', 'guard_name' => 'sanctum']);
 
         // Communities
-        Permission::create(['name' => 'community.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'community.moderate.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'community.post', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.moderate.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.post', 'guard_name' => 'sanctum']);
 
         // Moments
-        Permission::create(['name' => 'moment.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'moment.edit.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'moment.delete.own', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'moment.manage.posts', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'moment.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'moment.edit.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'moment.delete.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'moment.manage.posts', 'guard_name' => 'sanctum']);
 
         // Realtime Features
-        Permission::create(['name' => 'realtime.status.update', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'realtime.users.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'realtime.timeline.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'realtime.status.update', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'realtime.users.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'realtime.timeline.view', 'guard_name' => 'sanctum']);
 
         // Moderation
-        Permission::create(['name' => 'user.ban', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'user.suspend', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'content.moderate', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'report.review', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'report.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'user.ban', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'user.suspend', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'content.moderate', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'report.review', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'report.create', 'guard_name' => 'sanctum']);
 
         // Premium Features
-        Permission::create(['name' => 'analytics.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'thread.create.long', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'media.upload.hd', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'analytics.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'thread.create.long', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'media.upload.hd', 'guard_name' => 'sanctum']);
 
         // A/B Testing
-        Permission::create(['name' => 'abtest.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'abtest.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'abtest.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'abtest.delete', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'abtest.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'abtest.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'abtest.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'abtest.delete', 'guard_name' => 'sanctum']);
 
         // Monetization - Advertisements
-        Permission::create(['name' => 'advertisement.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'advertisement.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'advertisement.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'advertisement.delete', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'advertisement.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'advertisement.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'advertisement.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'advertisement.delete', 'guard_name' => 'sanctum']);
 
         // Monetization - Creator Fund
-        Permission::create(['name' => 'creatorfund.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'creatorfund.payout', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'creatorfund.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'creatorfund.payout', 'guard_name' => 'sanctum']);
 
         // Monetization - Premium
-        Permission::create(['name' => 'premium.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'premium.subscribe', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'premium.cancel', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'premium.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'premium.subscribe', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'premium.cancel', 'guard_name' => 'sanctum']);
 
         // Performance & Monitoring
-        Permission::create(['name' => 'performance.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'performance.optimize', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'performance.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'monitoring.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'monitoring.errors', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'monitoring.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'autoscaling.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'autoscaling.predict', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'autoscaling.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'performance.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'performance.optimize', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'performance.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'monitoring.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'monitoring.errors', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'monitoring.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'autoscaling.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'autoscaling.predict', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'autoscaling.manage', 'guard_name' => 'sanctum']);
 
         // Device Management
-        Permission::create(['name' => 'device.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'device.register', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'device.trust', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'device.revoke', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'device.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'device.security', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.register', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.trust', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.revoke', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'device.security', 'guard_name' => 'sanctum']);
 
-// Polls
-        Permission::create(['name' => 'poll.create', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'poll.vote', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'poll.delete.own', 'guard_name' => 'sanctum']);
+        // Polls
+        Permission::firstOrCreate(['name' => 'poll.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'poll.vote', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'poll.delete.own', 'guard_name' => 'sanctum']);
 
         // Mentions
-        Permission::create(['name' => 'mention.view', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'mention.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'mention.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'mention.create', 'guard_name' => 'sanctum']);
 
         // Media
-        Permission::create(['name' => 'media.upload', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'media.delete', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'media.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'media.upload', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'media.delete', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'media.view', 'guard_name' => 'sanctum']);
 
         // Admin
-        Permission::create(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
-        Permission::create(['name' => 'admin.settings.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'admin.panel.access', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'admin.users.manage', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'admin.settings.manage', 'guard_name' => 'sanctum']);
 
         // Clear cache after creating all permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();

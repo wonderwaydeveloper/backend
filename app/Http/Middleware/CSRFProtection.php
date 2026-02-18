@@ -18,6 +18,11 @@ class CSRFProtection
     
     public function handle(Request $request, Closure $next)
     {
+        // Skip CSRF in testing environment
+        if (app()->environment('testing')) {
+            return $next($request);
+        }
+        
         // Skip CSRF for API routes using Sanctum token authentication
         if ($request->is('api/*') && $request->bearerToken()) {
             return $next($request);

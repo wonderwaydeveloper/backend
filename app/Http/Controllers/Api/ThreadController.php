@@ -8,6 +8,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Rules\{ContentLength, FileUpload};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ThreadController extends Controller
 {

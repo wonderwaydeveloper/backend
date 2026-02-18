@@ -12,6 +12,10 @@ use Intervention\Image\ImageManager;
 
 class MediaService
 {
+    public function __construct(private FileValidationService $validator)
+    {
+    }
+
     public function findById(int $id): ?Media
     {
         return Media::find($id);
@@ -19,58 +23,98 @@ class MediaService
 
     public function uploadImage($file, User $user, ?string $altText = null, ?string $type = 'post')
     {
-        $filename = $this->generateFilename($file->getClientOriginalExtension());
-        $path = "media/images/" . date('Y/m/d');
+        $this->validator->validateImage($file);
         
-        $processedImage = $this->processImage($file, $type, 85);
-        $fullPath = "{$path}/{$filename}";
-        
-        Storage::disk('public')->put($fullPath, $processedImage);
-        
-        $url = Storage::disk('public')->url($fullPath);
-        $dimensions = $this->getImageDimensions($processedImage);
-        
-        $media = Media::create([
-            'user_id' => $user->id,
-            'type' => 'image',
-            'path' => $fullPath,
-            'url' => $url,
-            'filename' => $filename,
-            'mime_type' => $file->getMimeType(),
-            'size' => strlen($processedImage),
-            'width' => $dimensions['width'],
-            'height' => $dimensions['height'],
-            'alt_text' => $altText,
-        ]);
-        
-        GenerateThumbnailJob::dispatch($fullPath, $type);
-        
-        return $media;
+        return \DB::transaction(function () use ($file, $user, $altText, $type) {
+            try {
+                $filename = $this->generateFilename('webp');
+                $path = "media/images/" . date('Y/m/d');
+                
+                $processedImage = $this->processImage($file, $type, 85);
+                $fullPath = "{$path}/{$filename}";
+                
+                Storage::disk('public')->put($fullPath, $processedImage);
+                
+                if (!Storage::disk('public')->exists($fullPath)) {
+                    throw new \Exception('Failed to save image file');
+                }
+                
+                $url = Storage::disk('public')->url($fullPath);
+                $dimensions = $this->getImageDimensions($processedImage);
+                
+                $media = Media::create([
+                    'user_id' => $user->id,
+                    'type' => 'image',
+                    'path' => $fullPath,
+                    'url' => $url,
+                    'filename' => $filename,
+                    'mime_type' => 'image/webp',
+                    'size' => strlen($processedImage),
+                    'width' => $dimensions['width'],
+                    'height' => $dimensions['height'],
+                    'alt_text' => $altText,
+                ]);
+                
+                \App\Jobs\GenerateImageVariantsJob::dispatch($media);
+                
+                return $media;
+                
+            } catch (\Exception $e) {
+                if (isset($fullPath) && Storage::disk('public')->exists($fullPath)) {
+                    Storage::disk('public')->delete($fullPath);
+                }
+                throw $e;
+            }
+        });
     }
 
     public function uploadVideo($file, User $user, ?string $type = 'post')
     {
-        $filename = $this->generateFilename($file->getClientOriginalExtension());
-        $path = "media/{$type}s/videos/" . date('Y/m/d');
-        $fullPath = "{$path}/{$filename}";
+        $this->validator->validateVideo($file);
         
-        Storage::disk('public')->putFileAs($path, $file, $filename);
-        
-        $url = Storage::disk('public')->url($fullPath);
-        
-        return Media::create([
-            'user_id' => $user->id,
-            'type' => 'video',
-            'path' => $fullPath,
-            'url' => $url,
-            'filename' => $filename,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        return \DB::transaction(function () use ($file, $user, $type) {
+            try {
+                $filename = $this->generateFilename($file->getClientOriginalExtension());
+                $path = "media/{$type}s/videos/" . date('Y/m/d');
+                $fullPath = "{$path}/{$filename}";
+                
+                Storage::disk('public')->putFileAs($path, $file, $filename);
+                
+                if (!Storage::disk('public')->exists($fullPath)) {
+                    throw new \Exception('Failed to save video file');
+                }
+                
+                $url = Storage::disk('public')->url($fullPath);
+                
+                $media = Media::create([
+                    'user_id' => $user->id,
+                    'type' => 'video',
+                    'path' => $fullPath,
+                    'url' => $url,
+                    'filename' => $filename,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'encoding_status' => 'pending',
+                    'processing_progress' => 0,
+                ]);
+
+                \App\Jobs\ProcessVideoJob::dispatch($media);
+
+                return $media;
+                
+            } catch (\Exception $e) {
+                if (isset($fullPath) && Storage::disk('public')->exists($fullPath)) {
+                    Storage::disk('public')->delete($fullPath);
+                }
+                throw $e;
+            }
+        });
     }
 
     public function uploadDocument($file, User $user)
     {
+        $this->validator->validateDocument($file);
+        
         $filename = $this->generateFilename($file->getClientOriginalExtension());
         $path = "media/documents/" . date('Y/m/d');
         $fullPath = "{$path}/{$filename}";
@@ -100,6 +144,24 @@ class MediaService
             $thumbnailPath = str_replace('/storage/', '', parse_url($media->thumbnail_url, PHP_URL_PATH));
             if (Storage::disk('public')->exists($thumbnailPath)) {
                 Storage::disk('public')->delete($thumbnailPath);
+            }
+        }
+
+        if ($media->image_variants) {
+            foreach ($media->image_variants as $variant) {
+                $variantPath = str_replace('/storage/', '', parse_url($variant, PHP_URL_PATH));
+                if (Storage::disk('public')->exists($variantPath)) {
+                    Storage::disk('public')->delete($variantPath);
+                }
+            }
+        }
+
+        if ($media->video_qualities) {
+            foreach ($media->video_qualities as $quality) {
+                $qualityPath = str_replace('/storage/', '', parse_url($quality, PHP_URL_PATH));
+                if (Storage::disk('public')->exists($qualityPath)) {
+                    Storage::disk('public')->delete($qualityPath);
+                }
             }
         }
         
@@ -147,13 +209,13 @@ class MediaService
                 break;
             case 'post':
             default:
-                if ($image->width() > 1200) {
-                    $image->scale(width: 1200);
+                if ($image->width() > 4096 || $image->height() > 4096) {
+                    $image->scale(width: 4096);
                 }
                 break;
         }
 
-        return $image->toJpeg($quality)->toString();
+        return $image->toWebp($quality)->toString();
     }
 
     private function getImageDimensions($imageData)
