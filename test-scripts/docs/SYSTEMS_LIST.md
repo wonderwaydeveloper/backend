@@ -1,13 +1,41 @@
 # لیست کامل سیستمهای بکاند
 
-## 1. Authentication & Security 🔐
+## 1. Security 🛡️
+
+### Controllers
+- `DeviceController`
+- `AuditController`
+
+### Features
+- **Security Events**
+  - GET `/auth/security/events` - رویدادهای امنیتی
+
+- **Audit Logs**
+  - GET `/auth/audit/my-activity` - فعالیتهای من
+  - GET `/auth/audit/anomalies` - تشخیص ناهنجاری
+  - GET `/auth/audit/security-events` - رویدادهای امنیتی
+  - GET `/auth/audit/high-risk` - فعالیتهای پرخطر
+  - GET `/auth/audit/statistics` - آمار audit
+
+- **Device Management**
+  - POST `/devices/register` - ثبت دستگاه
+  - DELETE `/devices/{token}` - حذف دستگاه
+  - POST `/devices/advanced/register` - ثبت پیشرفته
+  - GET `/devices/list` - لیست دستگاهها
+  - GET `/devices/{device}/activity` - فعالیت دستگاه
+  - POST `/devices/{device}/trust` - اعتماد به دستگاه
+  - DELETE `/devices/{device}/revoke` - لغو دستگاه
+  - POST `/devices/revoke-all` - لغو همه
+  - GET `/devices/security-check` - بررسی امنیتی
+
+---
+
+## 2. Authentication 🔐
 
 ### Controllers
 - `UnifiedAuthController`
 - `PasswordResetController`
 - `SocialAuthController`
-- `DeviceController`
-- `AuditController`
 
 ### Features
 - **Login/Logout**
@@ -56,23 +84,13 @@
 - **Age Verification**
   - POST `/auth/complete-age-verification` - تایید سن
 
-- **Security Events**
-  - GET `/auth/security/events` - رویدادهای امنیتی
-
-- **Audit Logs**
-  - GET `/auth/audit/my-activity` - فعالیتهای من
-  - GET `/auth/audit/anomalies` - تشخیص ناهنجاری
-  - GET `/auth/audit/security-events` - رویدادهای امنیتی
-  - GET `/auth/audit/high-risk` - فعالیتهای پرخطر
-  - GET `/auth/audit/statistics` - آمار audit
-
 - **Social Authentication**
   - GET `/auth/social/{provider}` - ورود با Google
   - GET `/auth/social/{provider}/callback` - callback
 
 ---
 
-## 2. Posts & Content 📝
+## 3. Posts & Content 📝
 
 ### Controllers
 - `PostController`
@@ -115,7 +133,7 @@
 
 ---
 
-## 3. Comments 💬
+## 4. Comments 💬
 
 ### Controller
 - `CommentController`
@@ -128,7 +146,7 @@
 
 ---
 
-## 4. Social Features 👥
+## 5. Social Features 👥
 
 ### Controllers
 - `ProfileController`
@@ -158,7 +176,7 @@
 
 ---
 
-## 5. Profile & Account 👤
+## 6. Profile & Account 👤
 
 ### Controller
 - `ProfileController`
@@ -181,7 +199,7 @@
 
 ---
 
-## 6. Search & Discovery 🔍
+## 7. Search & Discovery 🔍
 
 ### Controllers
 - `SearchController`
@@ -212,7 +230,7 @@
 
 ---
 
-## 7. Messaging 💌
+## 8. Messaging 💌
 
 ### Controller
 - `MessageController`
@@ -227,7 +245,7 @@
 
 ---
 
-## 8. Notifications 🔔
+## 9. Notifications 🔔
 
 ### Controllers
 - `NotificationController`
@@ -256,7 +274,7 @@
 
 ---
 
-## 9. Communities 🏘️
+## 10. Communities 🏘️
 
 ### Controllers
 - `CommunityController`
@@ -285,7 +303,7 @@
 
 ---
 
-## 10. Spaces (Audio Rooms) 🎙️
+## 11. Spaces (Audio Rooms) 🎙️
 
 ### Controller
 - `SpaceController`
@@ -301,7 +319,7 @@
 
 ---
 
-## 11. Lists 📋
+## 12. Lists 📋
 
 ### Controller
 - `ListController`
@@ -321,7 +339,7 @@
 
 ---
 
-## 12. Bookmarks & Reposts 🔖
+## 13. Bookmarks & Reposts 🔖
 
 ### Controllers
 - `BookmarkController`
@@ -340,7 +358,7 @@
 
 ---
 
-## 13. Hashtags #️⃣
+## 14. Hashtags #️⃣
 
 ### Controller
 - `HashtagController`
@@ -353,7 +371,7 @@
 
 ---
 
-## 14. Polls 📊
+## 15. Polls 📊
 
 ### Controller
 - `PollController`
@@ -365,7 +383,7 @@
 
 ---
 
-## 15. Mentions @
+## 16. Mentions @
 
 ### Controller
 - `MentionController`
@@ -377,7 +395,7 @@
 
 ---
 
-## 16. Moderation & Reporting 🚨
+## 17. Moderation & Reporting 🚨
 
 ### Controller
 - `ModerationController`
@@ -398,7 +416,7 @@
 
 ---
 
-## 17. Media Management 🖼️
+## 18. Media Management 🖼️
 
 ### Controller
 - `MediaController`
@@ -411,7 +429,7 @@
 
 ---
 
-## 18. Moments ⭐
+## 19. Moments ⭐
 
 ### Controller
 - `MomentController`
@@ -429,7 +447,7 @@
 
 ---
 
-## 19. Analytics 📈
+## 20. Analytics 📈
 
 ### Controllers
 - `AnalyticsController`
@@ -450,7 +468,7 @@
 
 ---
 
-## 20. A/B Testing 🧪
+## 21. A/B Testing 🧪
 
 ### Controller
 - `ABTestController`
@@ -466,7 +484,7 @@
 
 ---
 
-## 21. Monetization 💰
+## 22. Monetization 💰
 
 ### Controllers
 - `AdvertisementController`
@@ -496,7 +514,7 @@
 
 ---
 
-## 22. Performance & Monitoring ⚡
+## 23. Performance & Monitoring ⚡
 
 ### Controllers
 - `PerformanceController`
@@ -531,7 +549,7 @@
 
 ---
 
-## 23. Real-time Features ⚡
+## 24. Real-time Features ⚡
 
 ### Controllers
 - `OnlineStatusController`
@@ -542,24 +560,6 @@
 - GET `/realtime/online-users` - کاربران آنلاین
 - GET `/realtime/timeline` - تایملاین زنده
 - GET `/realtime/posts/{post}` - بروزرسانی پست
-
----
-
-## 24. Device Management 📱
-
-### Controller
-- `DeviceController`
-
-### Features
-- POST `/devices/register` - ثبت دستگاه
-- DELETE `/devices/{token}` - حذف دستگاه
-- POST `/devices/advanced/register` - ثبت پیشرفته
-- GET `/devices/list` - لیست دستگاهها
-- GET `/devices/{device}/activity` - فعالیت دستگاه
-- POST `/devices/{device}/trust` - اعتماد به دستگاه
-- DELETE `/devices/{device}/revoke` - لغو دستگاه
-- POST `/devices/revoke-all` - لغو همه
-- GET `/devices/security-check` - بررسی امنیتی
 
 ---
 
@@ -581,7 +581,7 @@
 
 - **تعداد کل Controllers**: 44
 - **تعداد کل Endpoints**: 306
-- **تعداد سیستمهای اصلی**: 25
+- **تعداد سیستمهای اصلی**: 26
 - **نوع Authentication**: Sanctum (Token-based)
 - **Real-time**: WebSocket/Broadcasting
 - **Database**: MySQL
@@ -616,4 +616,4 @@
 ---
 
 تاریخ بروزرسانی: 2025-02-04
-نسخه: 4.0.0
+نسخه: 6.0.0

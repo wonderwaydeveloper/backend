@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-04  
-**پیشرفت کلی:** 0% (0/25 سیستم بررسی شده)
+**پیشرفت کلی:** 0% (0/26 سیستم بررسی شده)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,34 +9,34 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ⏳ سیستمهای در انتظار بررسی: 25/25 (100%)
+### ⏳ سیستمهای در انتظار بررسی: 26/26 (100%)
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | اولویت |
 |---|-------|-------|---------------|--------|--------|
-| 1 | Authentication & Security | ⏳ | - | - | 🔴 حیاتی |
-| 2 | Posts & Content | ⏳ | - | - | 🔴 حیاتی |
-| 3 | Comments | ⏳ | - | - | 🔴 حیاتی |
-| 4 | Social Features | ⏳ | - | - | 🔴 حیاتی |
-| 5 | Profile & Account | ⏳ | - | - | 🔴 حیاتی |
-| 6 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
-| 7 | Messaging | ⏳ | - | - | 🔴 حیاتی |
-| 8 | Notifications | ⏳ | - | - | 🔴 حیاتی |
-| 9 | Communities | ⏳ | - | - | 🔴 حیاتی |
-| 10 | Spaces (Audio Rooms) | ⏳ | - | - | 🔴 حیاتی |
-| 11 | Lists | ⏳ | - | - | 🔴 حیاتی |
-| 12 | Bookmarks & Reposts | ⏳ | - | - | 🔴 حیاتی |
-| 13 | Hashtags | ⏳ | - | - | 🟡 مهم |
-| 14 | Polls | ⏳ | - | - | 🟡 مهم |
-| 15 | Mentions | ⏳ | - | - | 🟡 مهم |
-| 16 | Moderation & Reporting | ⏳ | - | - | 🟡 مهم |
-| 17 | Media Management | ⏳ | - | - | 🟡 مهم |
-| 18 | Moments | ⏳ | - | - | 🟡 مهم |
-| 19 | Analytics | ⏳ | - | - | 🟡 مهم |
-| 20 | A/B Testing | ⏳ | - | - | 🟡 مهم |
-| 21 | Monetization | ⏳ | - | - | 🟢 تکمیلی |
-| 22 | Performance & Monitoring | ⏳ | - | - | 🟢 تکمیلی |
-| 23 | Real-time Features | ⏳ | - | - | 🟢 تکمیلی |
-| 24 | Device Management | ⏳ | - | - | 🟢 تکمیلی |
+| 1 | Authentication | ⏳ | - | - | 🔴 حیاتی |
+| 2 | Security | ⏳ | - | - | 🔴 حیاتی |
+| 3 | Posts & Content | ⏳ | - | - | 🔴 حیاتی |
+| 4 | Comments | ⏳ | - | - | 🔴 حیاتی |
+| 5 | Social Features | ⏳ | - | - | 🔴 حیاتی |
+| 6 | Profile & Account | ⏳ | - | - | 🔴 حیاتی |
+| 7 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
+| 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
+| 9 | Notifications | ⏳ | - | - | 🔴 حیاتی |
+| 10 | Communities | ⏳ | - | - | 🔴 حیاتی |
+| 11 | Spaces (Audio Rooms) | ⏳ | - | - | 🔴 حیاتی |
+| 12 | Lists | ⏳ | - | - | 🔴 حیاتی |
+| 13 | Bookmarks & Reposts | ⏳ | - | - | 🔴 حیاتی |
+| 14 | Hashtags | ⏳ | - | - | 🟡 مهم |
+| 15 | Polls | ⏳ | - | - | 🟡 مهم |
+| 16 | Mentions | ⏳ | - | - | 🟡 مهم |
+| 17 | Moderation & Reporting | ⏳ | - | - | 🟡 مهم |
+| 18 | Media Management | ⏳ | - | - | 🟡 مهم |
+| 19 | Moments | ⏳ | - | - | 🟡 مهم |
+| 20 | Analytics | ⏳ | - | - | 🟡 مهم |
+| 21 | A/B Testing | ⏳ | - | - | 🟡 مهم |
+| 22 | Monetization | ⏳ | - | - | 🟢 تکمیلی |
+| 23 | Performance & Monitoring | ⏳ | - | - | 🟢 تکمیلی |
+| 24 | Real-time Features | ⏳ | - | - | 🟢 تکمیلی |
 | 25 | Subscriptions | ⏳ | - | - | 🟢 تکمیلی |
 
 ### سیستمهای حذف شده ❌
@@ -48,75 +48,81 @@
 
 ## 🎯 اولویتبندی سیستمها
 
-### 🔴 حیاتی - فاز 1 (12 سیستم)
+### 🔴 حیاتی - فاز 1 (13 سیستم)
 
-#### 1. Authentication & Security
-- **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController, DeviceController, AuditController
+#### 1. Authentication
+- **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController
 - **Features:** Login/Logout, Multi-step Registration, Email/Phone Verification, 2FA, Password Management
-- **Endpoints:** 40
+- **Endpoints:** 31
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 2. Posts & Content
+#### 2. Security
+- **Controllers:** DeviceController, AuditController
+- **Features:** Security Events, Audit Logs, Device Management
+- **Endpoints:** 14
+- **وضعیت:** ⏳ در انتظار بررسی
+
+#### 3. Posts & Content
 - **Controllers:** PostController, ThreadController, ScheduledPostController, VideoController
 - **Features:** Post Management, Threads, Scheduled Posts
 - **Endpoints:** 24
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 3. Comments
+#### 4. Comments
 - **Controller:** CommentController
 - **Features:** Comment CRUD, Likes
 - **Endpoints:** 4
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 4. Social Features
+#### 5. Social Features
 - **Controllers:** FollowController, FollowRequestController
 - **Features:** Follow System, Block/Mute
 - **Endpoints:** 12
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 5. Profile & Account
+#### 6. Profile & Account
 - **Controller:** ProfileController
 - **Features:** Profile Management, Settings
 - **Endpoints:** 9
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 6. Search & Discovery
+#### 7. Search & Discovery
 - **Controllers:** SearchController, SuggestionController, TrendingController
 - **Features:** Search, Trending
 - **Endpoints:** 14
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 7. Messaging
+#### 8. Messaging
 - **Controller:** MessageController
 - **Features:** Direct Messages, Conversations
 - **Endpoints:** 6
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 8. Notifications
+#### 9. Notifications
 - **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
 - **Features:** Notifications, Preferences, Push
 - **Endpoints:** 13
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 9. Communities
+#### 10. Communities
 - **Controllers:** CommunityController, CommunityNoteController
 - **Features:** Community Management, Notes
 - **Endpoints:** 16
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 10. Spaces (Audio Rooms)
+#### 11. Spaces (Audio Rooms)
 - **Controller:** SpaceController
 - **Features:** Audio Rooms, Broadcasting
 - **Endpoints:** 7
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 11. Lists
+#### 12. Lists
 - **Controller:** ListController
 - **Features:** List Management
 - **Endpoints:** 11
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 12. Bookmarks & Reposts
+#### 13. Bookmarks & Reposts
 - **Controllers:** BookmarkController, RepostController
 - **Features:** Bookmarks, Reposts
 - **Endpoints:** 6
@@ -126,7 +132,7 @@
 
 ### 🟡 مهم - فاز 2 (8 سیستم)
 
-#### 13-20. سیستمهای فاز 2
+#### 14-21. سیستمهای فاز 2
 - Hashtags (4 endpoints)
 - Polls (3 endpoints)
 - Mentions (3 endpoints)
@@ -142,11 +148,10 @@
 
 ### 🟢 تکمیلی - فاز 3 (5 سیستم)
 
-#### 21-25. سیستمهای فاز 3
+#### 22-25. سیستمهای فاز 3
 - Monetization (16 endpoints)
 - Performance & Monitoring (13 endpoints)
 - Real-time Features (4 endpoints)
-- Device Management (9 endpoints)
 - Subscriptions (5 endpoints)
 
 **وضعیت:** ⏳ همه در انتظار بررسی
@@ -156,7 +161,8 @@
 ## 📅 برنامه بررسی
 
 ### فاز 1: بررسی سیستمهای حیاتی
-- [ ] Authentication & Security
+- [ ] Authentication
+- [ ] Security
 - [ ] Posts & Content
 - [ ] Comments
 - [ ] Social Features
@@ -183,7 +189,6 @@
 - [ ] Monetization
 - [ ] Performance & Monitoring
 - [ ] Real-time Features
-- [ ] Device Management
 - [ ] Subscriptions
 
 ---
@@ -230,7 +235,7 @@
 
 ## 🎯 اهداف
 
-1. **بررسی کامل 25 سیستم**
+1. **بررسی کامل 26 سیستم**
 2. **شناسایی مشکلات امنیتی**
 3. **بهینهسازی عملکرد**
 4. **تکمیل تستها**
@@ -248,5 +253,5 @@
 ---
 
 **تاریخ ایجاد:** 2025-02-04  
-**نسخه:** 6.0  
+**نسخه:** 7.0  
 **وضعیت:** 🔍 آماده شروع بررسی
