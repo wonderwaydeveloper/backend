@@ -331,12 +331,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function hasBlocked($userId): bool
     {
-        return $this->blockedUsers()->where('users.id', $userId)->exists();
+        return $this->blockedUsers()->where('blocked_id', $userId)->exists();
     }
 
     public function isBlockedBy($userId): bool
     {
-        return $this->blockedBy()->where('users.id', $userId)->exists();
+        return $this->blockedBy()->where('blocker_id', $userId)->exists();
     }
 
     // Mute relationships

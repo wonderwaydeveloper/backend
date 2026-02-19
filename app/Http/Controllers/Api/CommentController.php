@@ -70,7 +70,7 @@ class CommentController extends Controller
         $this->authorize('delete', $comment);
 
         try {
-            $this->commentService->deleteComment($comment);
+            $this->commentService->deleteComment($comment, auth()->user());
             return response()->json(['message' => 'Comment deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
@@ -79,6 +79,10 @@ class CommentController extends Controller
 
     public function like(Comment $comment)
     {
+        if (!auth()->user()->can('comment.like')) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
         try {
             $result = $this->commentService->toggleLike($comment, auth()->user());
             return response()->json($result);

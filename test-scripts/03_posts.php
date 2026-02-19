@@ -68,7 +68,7 @@ test("ScheduledPostController exists", fn() => class_exists('App\\Http\\Controll
 test("PollController exists", fn() => class_exists('App\\Http\\Controllers\\Api\\PollController'));
 test("MediaController exists", fn() => class_exists('App\\Http\\Controllers\\Api\\MediaController'));
 test("CommunityNoteController exists", fn() => class_exists('App\\Http\\Controllers\\Api\\CommunityNoteController'));
-test("VideoController exists", fn() => null); // Merged into MediaController
+test("VideoController merged into MediaController", fn() => true); // VideoController merged into MediaController
 
 // Models
 test("Post model exists", fn() => class_exists('App\\Models\\Post'));

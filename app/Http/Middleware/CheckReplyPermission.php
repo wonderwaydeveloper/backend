@@ -13,7 +13,12 @@ class CheckReplyPermission
         $post = $request->route('post');
         $user = $request->user();
 
-        if (! $post) {
+        if (!$post) {
+            return $next($request);
+        }
+
+        // Post owner can always comment
+        if ($post->user_id === $user->id) {
             return $next($request);
         }
 

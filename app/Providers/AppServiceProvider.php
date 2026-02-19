@@ -105,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
 
         \App\Models\Post::observe(\App\Observers\PostObserver::class);
         \App\Models\User::observe(\App\Observers\UserObserver::class);
+        \App\Models\Comment::observe(\App\Observers\CommentObserver::class);
         \App\Models\PremiumSubscription::observe(\App\Observers\PremiumSubscriptionObserver::class);
 
         // Register All Policies

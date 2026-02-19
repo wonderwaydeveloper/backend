@@ -24,6 +24,7 @@ class PermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'comment.create', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'comment.delete.own', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'comment.delete.any', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'comment.like', 'guard_name' => 'sanctum']);
 
         // Messages
         Permission::firstOrCreate(['name' => 'message.send', 'guard_name' => 'sanctum']);
@@ -156,7 +157,7 @@ class PermissionSeeder extends Seeder
         $user = Role::findByName('user', 'sanctum');
         $user->syncPermissions([
             'post.create', 'post.edit.own', 'post.delete.own',
-            'comment.create', 'comment.delete.own',
+            'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
             'post.like', 'post.repost', 'post.bookmark',

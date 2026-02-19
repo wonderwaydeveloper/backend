@@ -15,6 +15,14 @@ class CommentService
         private NotificationService $notificationService
     ) {}
 
+    public function getPostComments(int $postId, int $perPage = 20)
+    {
+        $cacheKey = "post_comments_{$postId}_page_" . request('page', 1);
+        return \Cache::remember($cacheKey, 300, function() use ($postId, $perPage) {
+            return Comment::forPost($postId)->paginate($perPage);
+        });
+    }
+
     public function createComment(Post $post, User $user, string $content, $mediaFile = null): Comment
     {
         // Check if post is draft
@@ -22,13 +30,28 @@ class CommentService
             throw new \Exception('Cannot comment on draft posts');
         }
 
+        // Check reply settings
+        if ($post->reply_settings === 'none' && $post->user_id !== $user->id) {
+            throw new \Exception('Replies are disabled for this post');
+        }
+
         // Check if user is blocked or muted
         if ($post->user && ($post->user->hasBlocked($user->id) || $post->user->hasMuted($user->id))) {
             throw new \Exception('You cannot comment on this post');
         }
 
-        // Sanitize content
+        // Sanitize content - remove script tags and their content completely
+        $content = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content);
         $content = strip_tags($content);
+        $content = trim($content);
+        
+        // Validate content length
+        if (empty($content)) {
+            throw new \Exception('Content cannot be empty');
+        }
+        if (strlen($content) > config('validation.content.comment.max_length')) {
+            throw new \Exception('Content too long');
+        }
 
         DB::beginTransaction();
         try {
@@ -44,14 +67,11 @@ class CommentService
                 app(\App\Services\MediaService::class)->attachToModel($media, $comment);
             }
 
-            // Increment post comments count
-            $post->increment('comments_count');
-
-            // Check spam
-            $spamResult = $this->spamDetection->checkComment($comment);
-            if ($spamResult['is_spam'] && $spamResult['score'] >= 80) {
+            // Check spam AFTER creation but BEFORE commit
+            $spamCheck = $this->spamDetection->checkComment($comment);
+            if ($spamCheck['is_spam'] && $spamCheck['score'] >= 80) {
                 DB::rollBack();
-                throw new \Exception('Comment detected as spam');
+                throw new \Exception('Content detected as spam');
             }
 
             // Process mentions
@@ -69,13 +89,14 @@ class CommentService
         }
     }
 
-    public function deleteComment(Comment $comment): void
+    public function deleteComment(Comment $comment, User $user): void
     {
+        // Authorization check
+        if ($comment->user_id !== $user->id && !$user->hasPermissionTo('comment.delete.any')) {
+            throw new \Exception('Unauthorized');
+        }
         DB::beginTransaction();
         try {
-            if ($comment->post->comments_count > 0) {
-                $comment->post->decrement('comments_count');
-            }
             $comment->delete();
             DB::commit();
         } catch (\Exception $e) {

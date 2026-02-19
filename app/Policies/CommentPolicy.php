@@ -7,13 +7,30 @@ use App\Models\User;
 
 class CommentPolicy
 {
-    public function viewAny(User $user): bool
+    public function viewAny(?User $user): bool
     {
-        return true;
+        return true; // Comments are public
     }
 
-    public function view(User $user, Comment $comment): bool
+    public function view(?User $user, Comment $comment): bool
     {
+        // Public comments are visible to everyone
+        $post = $comment->post;
+        
+        // If post is private, only followers can see
+        if ($post && $post->user && $post->user->is_private) {
+            if (!$user) return false;
+            if ($user->id === $post->user_id) return true;
+            return $post->user->followers()->where('follower_id', $user->id)->exists();
+        }
+        
+        // Check if viewer is blocked
+        if ($user && $comment->user) {
+            if ($comment->user->blockedUsers()->where('blocked_user_id', $user->id)->exists()) {
+                return false;
+            }
+        }
+        
         return true;
     }
 

@@ -153,6 +153,9 @@ Route::prefix('auth/social')->group(function () {
         ->where('provider', 'google'); // No rate limit - it's a redirect from Google
 });
 
+// Public Comments Route (no auth required)
+Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
+
 Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Posts Routes
@@ -207,9 +210,8 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
 
     // Comments Routes
-    Route::get('/posts/{post}/comments', [CommentController::class, 'index']);
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
-        ->middleware(['permission:comment.create', 'check.reply.permission']);
+        ->middleware(['permission:comment.create', 'check.reply.permission', 'role.ratelimit', 'throttle:60,1']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
     Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
 

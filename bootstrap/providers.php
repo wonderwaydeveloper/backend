@@ -2,6 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\EventServiceProvider::class,
     App\Providers\CleanArchitectureServiceProvider::class,
     App\Providers\RepositoryServiceProvider::class,
 ];

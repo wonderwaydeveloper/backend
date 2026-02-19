@@ -15,8 +15,12 @@ class CreateCommentRequest extends FormRequest
     public function rules(): array
     {
         $user = $this->user();
-        $maxFileSize = app(\App\Services\SubscriptionLimitService::class)->getMaxFileSize($user);
-        $maxFileSizeKB = $maxFileSize / 1024;
+        $maxFileSizeKB = 5120;
+        
+        if ($user) {
+            $maxFileSize = app(\App\Services\SubscriptionLimitService::class)->getMaxFileSize($user);
+            $maxFileSizeKB = $maxFileSize;
+        }
         
         return [
             'content' => ['required', new ContentLength('comment')],

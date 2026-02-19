@@ -128,9 +128,12 @@ class EmailService
 
     public function sendNotificationEmail($user, $notification)
     {
+        if (!$user->email) {
+            return false;
+        }
+
         try {
             Mail::to($user->email)->queue(new \App\Mail\NotificationEmail($user, $notification));
-            Log::info('Notification email queued', ['user_id' => $user->id]);
             return true;
         } catch (\Exception $e) {
             Log::error('Notification email failed', ['error' => $e->getMessage()]);
