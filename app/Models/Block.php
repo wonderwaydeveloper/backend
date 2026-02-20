@@ -13,6 +13,25 @@ class Block extends Model
         'reason',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($block) {
+            // Sanitize reason field to prevent XSS
+            if ($block->reason) {
+                $block->reason = strip_tags($block->reason);
+            }
+        });
+        
+        static::updating(function ($block) {
+            // Sanitize reason field to prevent XSS
+            if ($block->reason) {
+                $block->reason = strip_tags($block->reason);
+            }
+        });
+    }
+
     public function blocker(): BelongsTo
     {
         return $this->belongsTo(User::class, 'blocker_id');

@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-04  
-**پیشرفت کلی:** 15.4% (4/26 سیستم تکمیل شده)
+**پیشرفت کلی:** 19.2% (5/26 سیستم تکمیل شده)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,8 +9,14 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 4/26 (15.4%)
-### ⏳ سیستمهای در انتظار بررسی: 22/26 (84.6%)
+### ✅ سیستمهای تکمیل شده: 5/26 (19.2%)
+### ⏳ سیستمهای در انتظار بررسی: 21/26 (80.8%)
+
+### 📈 آمار تستها
+- **تعداد کل تستها:** 751 تست
+- **تعداد کل PHPUnit تستها:** 143 تست
+- **میانگین تست هر سیستم:** 150 تست
+- **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | اولویت |
 |---|-------|-------|---------------|--------|--------|
@@ -18,7 +24,7 @@
 | 2 | Authentication | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 3 | Posts & Content | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 4 | Comments | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 5 | Social Features | ⏳ | - | - | 🔴 حیاتی |
+| 5 | Social Features | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 6 | Profile & Account | ⏳ | - | - | 🔴 حیاتی |
 | 7 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
 | 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
@@ -87,11 +93,17 @@
 - **تست فایل:** `tests/Feature/CommentSystemTest.php` (51 تست)
 - **توضیح:** Authorization Twitter-standard، Broadcasting با ShouldBroadcast، Block/Mute در Service
 
-#### 5. Social Features
-- **Controllers:** FollowController, FollowRequestController
-- **Features:** Follow System, Block/Mute
-- **Endpoints:** 12
-- **وضعیت:** ⏳ در انتظار بررسی
+#### 5. Social Features ✅
+- **Controllers:** FollowController, FollowRequestController, ProfileController
+- **Features:** Follow/Unfollow, Follow Requests, Block/Mute, Private Accounts
+- **Endpoints:** 14
+- **وضعیت:** ✅ تکمیل شده (100/100)
+- **Test Coverage:** 100% (231 تست)
+- **تاریخ تکمیل:** 2025-02-04
+- **تست فایل:** `tests/Feature/SocialFeaturesSystemTest.php` (46 تست PHPUnit)
+- **اسکریپت تست:** `test-scripts/05_social_features.php` (231 تست، 20 بخش)
+- **توضیح:** Transaction + lockForUpdate, Counter underflow protection, XSS sanitization, Policy authorization
+- **مشکلات رفع شده:** 7 مورد (Self-follow, XSS, Duplicate logic, Authorization, Counter underflow, Policy registration, Rate limit tests)
 
 #### 6. Profile & Account
 - **Controller:** ProfileController
@@ -199,11 +211,11 @@
 ## 📅 برنامه بررسی
 
 ### فاز 1: بررسی سیستمهای حیاتی (13 سیستم)
-- [x] Security (✅ 100/100)
-- [x] Authentication (✅ 100/100)
-- [x] Posts & Content (✅ 100/100)
-- [x] Comments (✅ 100/100)
-- [ ] Social Features
+- [x] Security (✅ 100/100 - 105 تست)
+- [x] Authentication (✅ 100/100 - 126 تست)
+- [x] Posts & Content (✅ 100/100 - 289 تست)
+- [x] Comments (✅ 100/100 - 51 تست)
+- [x] Social Features (✅ 100/100 - 231 تست)
 - [ ] Profile & Account
 - [ ] Search & Discovery
 - [ ] Messaging
@@ -213,7 +225,8 @@
 - [ ] Lists
 - [ ] Bookmarks & Reposts
 
-**پیشرفت فاز 1:** 4/13 (30.8%)
+**پیشرفت فاز 1:** 5/13 (38.5%)
+**تعداد تستهای فاز 1:** 802 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
@@ -311,10 +324,35 @@
 
 ## 🎉 دستاوردها
 
+### سیستم Social Features (100/100)
+- ✅ 14 endpoint عملیاتی (3 Controller)
+- ✅ 231 تست (20 بخش استاندارد)
+- ✅ تست یکپارچه: SocialFeaturesSystemTest.php (46 تست PHPUnit)
+- ✅ Transaction + lockForUpdate pattern
+- ✅ Counter underflow protection
+- ✅ XSS sanitization در Model boot()
+- ✅ Policy authorization برای FollowRequest
+- ✅ Integration با Post/Comment/Message systems
+- ✅ 7 مشکل حیاتی رفع شد
+
+**Controllers تست شده:**
+- FollowController (4 endpoints)
+- FollowRequestController (4 endpoints)
+- ProfileController (6 endpoints: block/unblock/mute/unmute/blocked/muted)
+
+**مشکلات رفع شده:**
+1. Self-follow prevention
+2. XSS sanitization در Block.reason
+3. Duplicate auto-unfollow logic
+4. Authorization missing در FollowRequestController
+5. Counter underflow protection
+6. Policy registration برای FollowRequest
+7. Role permission checks در تستها
+
 ### سیستم Posts & Content (100/100)
 - ✅ 40 endpoint عملیاتی (شامل 10 Controller)
-- ✅ 263 تست (138 اصلی + 125 عمیق)
-- ✅ تست یکپارچه: PostsContentSystemTest.php
+- ✅ 289 تست (20 بخش استاندارد)
+- ✅ تست یکپارچه: PostsContentSystemTest.php (46 تست PHPUnit)
 - ✅ تستهای تکراری حذف شدند
 - ✅ نامگذاری بهینه شد (test_can_*)
 - ✅ PermissionSeeder بهبود یافت

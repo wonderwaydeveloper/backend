@@ -11,6 +11,11 @@ class UserFollowService
 {
     public function follow(int $userId, int $targetUserId): bool
     {
+        // Prevent self-follow
+        if ($userId === $targetUserId) {
+            throw new \InvalidArgumentException('Cannot follow yourself');
+        }
+        
         try {
             return DB::transaction(function () use ($userId, $targetUserId) {
                 $user = User::lockForUpdate()->findOrFail($userId);
@@ -54,9 +59,13 @@ class UserFollowService
                 $detached = $user->following()->detach($targetUserId);
                 
                 if ($detached > 0) {
-                    // Update counters atomically
-                    $user->decrement('following_count');
-                    $targetUser->decrement('followers_count');
+                    // Update counters atomically (prevent underflow)
+                    if ($user->following_count > 0) {
+                        $user->decrement('following_count');
+                    }
+                    if ($targetUser->followers_count > 0) {
+                        $targetUser->decrement('followers_count');
+                    }
                     return true;
                 }
                 

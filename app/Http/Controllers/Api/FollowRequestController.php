@@ -60,11 +60,7 @@ class FollowRequestController extends Controller
 
     public function accept(Request $request, FollowRequest $followRequest)
     {
-        if ($followRequest->following_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
+        $this->authorize('acceptFollowRequest', $followRequest);
 
         $followRequest->update(['status' => 'accepted']);
 
@@ -77,11 +73,7 @@ class FollowRequestController extends Controller
 
     public function reject(Request $request, FollowRequest $followRequest)
     {
-        if ($followRequest->following_id !== $request->user()->id) {
-            return response()->json([
-                'message' => 'Unauthorized',
-            ], 403);
-        }
+        $this->authorize('rejectFollowRequest', $followRequest);
 
         $followRequest->update(['status' => 'rejected']);
 

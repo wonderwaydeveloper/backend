@@ -7,24 +7,35 @@ use App\Models\{Block, Mute, User};
 
 class UserModerationService
 {
-    public function blockUser(User $user, User $targetUser): array
+    public function blockUser(User $user, User $targetUser, ?string $reason = null): array
     {
-        Block::firstOrCreate([
-            'blocker_id' => $user->id,
-            'blocked_id' => $targetUser->id
-        ]);
+        Block::firstOrCreate(
+            [
+                'blocker_id' => $user->id,
+                'blocked_id' => $targetUser->id
+            ],
+            ['reason' => $reason]
+        );
 
-        // Auto-unfollow with counter updates
+        // Auto-unfollow with counter updates (prevent underflow)
         if ($user->following()->where('following_id', $targetUser->id)->exists()) {
             $user->following()->detach($targetUser->id);
-            $user->decrement('following_count');
-            $targetUser->decrement('followers_count');
+            if ($user->following_count > 0) {
+                $user->decrement('following_count');
+            }
+            if ($targetUser->followers_count > 0) {
+                $targetUser->decrement('followers_count');
+            }
         }
         
         if ($targetUser->following()->where('following_id', $user->id)->exists()) {
             $targetUser->following()->detach($user->id);
-            $targetUser->decrement('following_count');
-            $user->decrement('followers_count');
+            if ($targetUser->following_count > 0) {
+                $targetUser->decrement('following_count');
+            }
+            if ($user->followers_count > 0) {
+                $user->decrement('followers_count');
+            }
         }
 
         event(new UserBlocked($user, $targetUser));
@@ -47,12 +58,15 @@ class UserModerationService
         ];
     }
 
-    public function muteUser(User $user, User $targetUser): array
+    public function muteUser(User $user, User $targetUser, ?string $expiresAt = null): array
     {
-        Mute::firstOrCreate([
-            'muter_id' => $user->id,
-            'muted_id' => $targetUser->id
-        ]);
+        Mute::firstOrCreate(
+            [
+                'muter_id' => $user->id,
+                'muted_id' => $targetUser->id
+            ],
+            ['expires_at' => $expiresAt]
+        );
 
         event(new UserMuted($user, $targetUser));
 

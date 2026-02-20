@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\FollowRequest;
 
 class UserPolicy
 {
@@ -65,5 +66,15 @@ class UserPolicy
     public function mute(User $user, User $model): bool
     {
         return $user->id !== $model->id;
+    }
+    
+    public function acceptFollowRequest(User $user, FollowRequest $followRequest): bool
+    {
+        return $followRequest->following_id === $user->id;
+    }
+    
+    public function rejectFollowRequest(User $user, FollowRequest $followRequest): bool
+    {
+        return $followRequest->following_id === $user->id;
     }
 }

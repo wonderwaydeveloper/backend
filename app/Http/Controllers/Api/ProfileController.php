@@ -166,16 +166,8 @@ class ProfileController extends Controller
         
         $request->validate(['reason' => 'nullable|string|max:255']);
         
-        Block::firstOrCreate(
-            ['blocker_id' => $currentUser->id, 'blocked_id' => $user->id],
-            ['reason' => $request->input('reason')]
-        );
-        
-        // Auto-unfollow when blocking
-        $currentUser->following()->detach($user->id);
-        $user->following()->detach($currentUser->id);
-        
-        event(new UserBlocked($currentUser, $user));
+        // Use service to avoid duplicate logic
+        $result = $this->userService->blockUser($currentUser, $user, $request->input('reason'));
         
         return response()->json(['message' => 'User blocked successfully']);
     }
@@ -202,14 +194,9 @@ class ProfileController extends Controller
         
         $request->validate(['expires_at' => 'nullable|date|after:now|before:+1 year']);
         
-        Mute::firstOrCreate(
-            ['muter_id' => $currentUser->id, 'muted_id' => $user->id],
-            ['expires_at' => $request->input('expires_at')]
-        );
+        $result = $this->userService->muteUser($currentUser, $user, $request->input('expires_at'));
         
-        event(new UserMuted($currentUser, $user));
-        
-        return response()->json(['message' => 'User muted successfully']);
+        return response()->json($result);
     }
     
     public function unmute(Request $request, User $user): JsonResponse

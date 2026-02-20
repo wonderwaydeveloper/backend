@@ -172,9 +172,9 @@ class UserService implements UserServiceInterface
         return $this->followService->unfollow($userId, $targetUserId);
     }
 
-    public function blockUser(User $user, User $targetUser): array
+    public function blockUser(User $user, User $targetUser, ?string $reason = null): array
     {
-        return $this->moderationService->blockUser($user, $targetUser);
+        return $this->moderationService->blockUser($user, $targetUser, $reason);
     }
 
     public function unblockUser(User $user, User $targetUser): array
@@ -182,9 +182,9 @@ class UserService implements UserServiceInterface
         return $this->moderationService->unblockUser($user, $targetUser);
     }
 
-    public function muteUser(User $user, User $targetUser): array
+    public function muteUser(User $user, User $targetUser, ?string $expiresAt = null): array
     {
-        return $this->moderationService->muteUser($user, $targetUser);
+        return $this->moderationService->muteUser($user, $targetUser, $expiresAt);
     }
 
     public function unmuteUser(User $user, User $targetUser): array
