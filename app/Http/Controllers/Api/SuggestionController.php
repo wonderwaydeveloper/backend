@@ -20,6 +20,6 @@ class SuggestionController extends Controller
         $limit = $request->input('limit', 10);
         $suggestions = $this->suggestionService->getSuggestions($request->user()->id, $limit);
 
-        return response()->json($suggestions);
+        return response()->json(['data' => $suggestions]);
     }
 }

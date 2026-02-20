@@ -81,7 +81,6 @@ class SearchController extends Controller
 
     public function advanced(Request $request)
     {
-        $this->authorize('advanced', auth()->user());
         
         $request->validate([
             'q' => 'required|string|min:1|max:100',

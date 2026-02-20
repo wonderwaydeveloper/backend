@@ -19,28 +19,33 @@ class TrendingService
      */
     public function getTrendingHashtags($limit = 10, $timeframe = 24)
     {
-        $cacheKey = "trending_hashtags_{$limit}_{$timeframe}";
+        try {
+            $cacheKey = "trending_hashtags_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
-            $cutoffTime = Carbon::now()->subHours($timeframe);
+            return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
+                $cutoffTime = Carbon::now()->subHours($timeframe);
 
-            return DB::table('hashtags')
-                ->select([
-                    'hashtags.*',
-                    DB::raw('COUNT(hashtag_post.post_id) as recent_posts_count'),
-                    DB::raw('SUM(posts.likes_count + posts.comments_count * 2) as engagement_score'),
-                    DB::raw('(COUNT(hashtag_post.post_id) * 0.6 + SUM(posts.likes_count + posts.comments_count * 2) * 0.4) as trend_score'),
-                ])
-                ->join('hashtag_post', 'hashtags.id', '=', 'hashtag_post.hashtag_id')
-                ->join('posts', 'hashtag_post.post_id', '=', 'posts.id')
-                ->where('posts.published_at', '>=', $cutoffTime)
-                ->where('posts.is_draft', false)
-                ->groupBy('hashtags.id')
-                ->having('recent_posts_count', '>=', config('limits.trending.thresholds.hashtag_min_posts'))
-                ->orderBy('trend_score', 'desc')
-                ->limit($limit)
-                ->get();
-        });
+                return DB::table('hashtags')
+                    ->select([
+                        'hashtags.*',
+                        DB::raw('COUNT(hashtag_post.post_id) as recent_posts_count'),
+                        DB::raw('SUM(posts.likes_count + posts.comments_count * 2) as engagement_score'),
+                        DB::raw('(COUNT(hashtag_post.post_id) * 0.6 + SUM(posts.likes_count + posts.comments_count * 2) * 0.4) as trend_score'),
+                    ])
+                    ->join('hashtag_post', 'hashtags.id', '=', 'hashtag_post.hashtag_id')
+                    ->join('posts', 'hashtag_post.post_id', '=', 'posts.id')
+                    ->where('posts.published_at', '>=', $cutoffTime)
+                    ->where('posts.is_draft', false)
+                    ->groupBy('hashtags.id')
+                    ->having('recent_posts_count', '>=', config('limits.trending.thresholds.hashtag_min_posts'))
+                    ->orderBy('trend_score', 'desc')
+                    ->limit($limit)
+                    ->get();
+            });
+        } catch (\Exception $e) {
+            \Log::error('Error getting trending hashtags: ' . $e->getMessage());
+            return collect([]);
+        }
     }
 
     /**
@@ -152,7 +157,7 @@ class TrendingService
                 DB::raw('(
                     likes_count * 1.0 + 
                     comments_count * 2.0 + 
-                    CASE WHEN posts.user_id IN (' . (empty($followedUsers) ? '0' : implode(',', $followedUsers)) . ') THEN 5.0 ELSE 0 END
+                    CASE WHEN posts.user_id IN (' . (empty($followedUsers) ? '0' : implode(',', array_map('intval', $followedUsers))) . ') THEN 5.0 ELSE 0 END
                 ) as personalized_score'),
             ])
             ->published()

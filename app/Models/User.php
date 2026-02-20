@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Scout\Searchable;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -15,6 +16,7 @@ class User extends Authenticatable implements MustVerifyEmail
     use Notifiable;
     use HasApiTokens;
     use HasRoles;
+    use Searchable;
 
     /**
      * The attributes that are NOT mass assignable.

@@ -13,7 +13,7 @@ return [
     'date' => ['before_rule' => 'before:today'],
     
     'search' => [
-        'query' => ['min_length' => 1, 'max_length' => 500],
+        'query' => ['min_length' => 2, 'max_length' => 100],
         'posts' => ['per_page' => 20, 'max_per_page' => 100],
         'users' => ['per_page' => 20, 'max_per_page' => 100],
         'hashtags' => ['per_page' => 20, 'max_per_page' => 100],

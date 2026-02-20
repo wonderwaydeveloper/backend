@@ -95,6 +95,8 @@ class SearchService
             }
 
             $results = $this->client->index('posts')->search($query, $searchParams);
+            $hits = $results->getHits();
+            $total = $results->getEstimatedTotalHits();
             
             // Filter out posts from blocked/muted users
             if (auth()->check()) {
@@ -111,21 +113,21 @@ class SearchService
                 $excludeIds = array_merge($blockedIds, $mutedIds);
                 
                 if (!empty($excludeIds)) {
-                    $results['hits'] = array_filter($results['hits'], function($post) use ($excludeIds) {
+                    $hits = array_filter($hits, function($post) use ($excludeIds) {
                         return !in_array($post['user_id'] ?? 0, $excludeIds);
                     });
-                    $results['hits'] = array_values($results['hits']);
+                    $hits = array_values($hits);
                 }
             }
             
             // Dispatch search event
-            event(new SearchPerformed(auth()->id(), $query, 'posts', $results['estimatedTotalHits']));
+            event(new SearchPerformed(auth()->id(), $query, 'posts', $total));
 
             return [
-                'data' => $results['hits'],
-                'total' => $results['estimatedTotalHits'],
-                'page' => $page,
-                'filters_applied' => $filters,
+                'data' => $hits,
+                'total' => $total,
+                'current_page' => $page,
+                'per_page' => $perPage,
             ];
         } catch (\Exception $e) {
             Log::error('Post search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
@@ -182,6 +184,8 @@ class SearchService
             }
 
             $results = $this->client->index('users')->search($query, $searchParams);
+            $hits = $results->getHits();
+            $total = $results->getEstimatedTotalHits();
             
             // Filter out blocked/muted users
             if (auth()->check()) {
@@ -198,18 +202,18 @@ class SearchService
                 $excludeIds = array_merge($blockedIds, $mutedIds);
                 
                 if (!empty($excludeIds)) {
-                    $results['hits'] = array_filter($results['hits'], function($user) use ($excludeIds) {
+                    $hits = array_filter($hits, function($user) use ($excludeIds) {
                         return !in_array($user['id'] ?? 0, $excludeIds);
                     });
-                    $results['hits'] = array_values($results['hits']);
+                    $hits = array_values($hits);
                 }
             }
 
             return [
-                'data' => $results['hits'],
-                'total' => $results['estimatedTotalHits'],
-                'page' => $page,
-                'filters_applied' => $filters,
+                'data' => $hits,
+                'total' => $total,
+                'current_page' => $page,
+                'per_page' => $perPage,
             ];
         } catch (\Exception $e) {
             Log::error('User search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
@@ -257,10 +261,10 @@ class SearchService
             $results = $this->client->index('hashtags')->search($query, $searchParams);
 
             return [
-                'data' => $results['hits'],
-                'total' => $results['estimatedTotalHits'],
-                'page' => $page,
-                'filters_applied' => $filters,
+                'data' => $results->getHits(),
+                'total' => $results->getEstimatedTotalHits(),
+                'current_page' => $page,
+                'per_page' => $perPage,
             ];
         } catch (\Exception $e) {
             Log::error('Hashtag search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
@@ -298,7 +302,7 @@ class SearchService
                     'limit' => 5,
                     'attributesToRetrieve' => ['username', 'name'],
                 ]);
-                $suggestions['users'] = $userResults['hits'];
+                $suggestions['users'] = $userResults->getHits();
             }
 
             if ($type === 'all' || $type === 'hashtags') {
@@ -306,7 +310,7 @@ class SearchService
                     'limit' => 5,
                     'attributesToRetrieve' => ['name', 'slug'],
                 ]);
-                $suggestions['hashtags'] = $hashtagResults['hits'];
+                $suggestions['hashtags'] = $hashtagResults->getHits();
             }
 
             return $suggestions;

@@ -127,5 +127,9 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Bookmark::class, \App\Policies\BookmarkPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\Report::class, \App\Policies\ReportPolicy::class);
         \Illuminate\Support\Facades\Gate::policy(\App\Models\DeviceToken::class, \App\Policies\DevicePolicy::class);
+        
+        // Register SearchPolicy
+        \Illuminate\Support\Facades\Gate::define('search', [\App\Policies\SearchPolicy::class, 'search']);
+        \Illuminate\Support\Facades\Gate::define('advanced', [\App\Policies\SearchPolicy::class, 'advanced']);
     }
 }

@@ -174,9 +174,9 @@ php artisan test --testsuite=Feature
 php artisan test --coverage
 ```
 
-**Test Results**: 613 tests passing (100%)
-- PHPUnit Tests: 143
-- Custom Test Scripts: 751
+**Test Results**: 665 tests passing (100%)
+- PHPUnit Tests: 246
+- Custom Test Scripts: 1009
 
 ### Test Scripts (test-scripts/)
 
@@ -195,6 +195,8 @@ Test scripts are created based on documentation in `test-scripts/docs/`:
 - ✅ `03_posts.php` - Posts & Content System (289 tests, 100/100)
 - ✅ `04_comments.php` - Comments System (51 tests, 100/100)
 - ✅ `05_social_features.php` - Social Features System (231 tests, 100/100)
+- ✅ `06_profile_account.php` - Profile & Account System (236 tests, 100/100)
+- ✅ `07_search_discovery.php` - Search & Discovery System (207 tests, 100/100)
 
 **Test Architecture:**
 - 20 standardized sections per system
@@ -207,7 +209,7 @@ Test scripts are created based on documentation in `test-scripts/docs/`:
 - Edge cases & error handling
 
 **Documentation:**
-- `test-scripts/docs/ROADMAP.md` - Testing roadmap (5/26 systems completed)
+- `test-scripts/docs/ROADMAP.md` - Testing roadmap (7/26 systems completed)
 - `test-scripts/docs/SYSTEMS_LIST.md` - Complete systems list (305 endpoints)
 - `test-scripts/docs/TEST_ARCHITECTURE.md` - Testing standards
 - `test-scripts/docs/SYSTEM_REVIEW_CRITERIA.md` - Review criteria

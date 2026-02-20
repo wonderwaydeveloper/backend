@@ -140,6 +140,10 @@ class PermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'mention.view', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'mention.create', 'guard_name' => 'sanctum']);
 
+        // Search
+        Permission::firstOrCreate(['name' => 'search.basic', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'search.advanced', 'guard_name' => 'sanctum']);
+
         // Media
         Permission::firstOrCreate(['name' => 'media.upload', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'media.delete', 'guard_name' => 'sanctum']);
@@ -163,6 +167,7 @@ class PermissionSeeder extends Seeder
             'post.like', 'post.repost', 'post.bookmark',
             'poll.create', 'poll.vote', 'poll.delete.own',
             'mention.view', 'mention.create',
+            'search.basic',
             'media.upload', 'media.delete', 'media.view',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
@@ -180,6 +185,7 @@ class PermissionSeeder extends Seeder
             'space.join', 'space.leave',
             'poll.create', 'poll.vote', 'poll.delete.own',
             'mention.view', 'mention.create',
+            'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view',
             'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
@@ -200,6 +206,7 @@ class PermissionSeeder extends Seeder
             'space.create', 'space.host', 'space.speak', 'space.join', 'space.leave', 'space.manage.own', 'space.delete.own', 'space.update.own', 'space.manage.roles', 'space.end.own',
             'poll.create', 'poll.vote', 'poll.delete.own',
             'mention.view', 'mention.create',
+            'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view', 'media.upload.hd',
             'community.create', 'community.moderate.own', 'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',

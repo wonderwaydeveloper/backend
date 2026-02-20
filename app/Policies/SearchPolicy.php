@@ -18,12 +18,15 @@ class SearchPolicy
 
     public function advanced(?User $user): bool
     {
-        if (!$user) {
+        if (!$user || !$user->email_verified_at) {
             return false;
         }
         
-        return $user->email_verified_at !== null && 
-               ($user->hasPermissionTo('search.advanced') || !\Schema::hasTable('permissions'));
+        try {
+            return $user->hasPermissionTo('search.advanced');
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function viewTrending(?User $user): bool

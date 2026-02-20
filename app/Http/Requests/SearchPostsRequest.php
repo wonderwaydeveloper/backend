@@ -16,6 +16,7 @@ class SearchPostsRequest extends FormRequest
         return [
             'q' => 'required|string|min:' . config('validation.search.query.min_length') . '|max:' . config('validation.search.query.max_length'),
             'page' => 'nullable|integer|min:1',
+            'per_page' => 'nullable|integer|min:1|max:' . config('validation.search.posts.max_per_page'),
             'user_id' => 'nullable|integer|exists:users,id',
             'has_media' => 'nullable|boolean',
             'date_from' => 'nullable|date',

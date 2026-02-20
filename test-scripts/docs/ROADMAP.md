@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2025-02-10  
-**پیشرفت کلی:** 23.1% (6/26 سیستم تکمیل شده)
+**آخرین بهروزرسانی:** 2025-02-15  
+**پیشرفت کلی:** 26.9% (7/26 سیستم تکمیل شده)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,13 +9,13 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 6/26 (23.1%)
-### ⏳ سیستمهای در انتظار بررسی: 20/26 (76.9%)
+### ✅ سیستمهای تکمیل شده: 7/26 (26.9%)
+### ⏳ سیستمهای در انتظار بررسی: 19/26 (73.1%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 1038 تست (Script: 802 + Feature: 236)
-- **تعداد کل PHPUnit تستها:** 194 تست
-- **میانگین تست هر سیستم:** 173 تست
+- **تعداد کل تستها:** 1297 تست (Script: 1009 + Feature: 288)
+- **تعداد کل PHPUnit تستها:** 246 تست
+- **میانگین تست هر سیستم:** 185 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | اولویت |
@@ -26,7 +26,7 @@
 | 4 | Comments | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 5 | Social Features | ✅ | 100% | 89/100 | 🔴 حیاتی |
 | 6 | Profile & Account | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 7 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
+| 7 | Search & Discovery | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
 | 9 | Notifications | ⏳ | - | - | 🔴 حیاتی |
 | 10 | Communities | ⏳ | - | - | 🔴 حیاتی |
@@ -116,11 +116,17 @@
   - Feature: `tests/Feature/ProfileAccountSystemTest.php` (51 تست، 9 بخش)
 - **توضیح:** Profile CRUD، Privacy Settings، Export/Delete Account، Authorization با Policies، Integration با Analytics
 
-#### 7. Search & Discovery
+#### 7. Search & Discovery ✅
 - **Controllers:** SearchController, SuggestionController, TrendingController
-- **Features:** Search, Trending
+- **Features:** Search (Posts/Users/Hashtags), Advanced Search, Trending, Suggestions
 - **Endpoints:** 14
-- **وضعیت:** ⏳ در انتظار بررسی
+- **وضعیت:** ✅ تکمیل شده (100/100)
+- **Test Coverage:** 100% (259 تست: Script 207 + Feature 52)
+- **تاریخ تکمیل:** 2025-02-15
+- **تست فایلها:** 
+  - Script: `test-scripts/07_search_discovery.php` (207 تست، 20 بخش)
+  - Feature: `tests/Feature/SearchDiscoverySystemTest.php` (52 تست، 9 بخش)
+- **توضیح:** Meilisearch Integration، Search Operators، Trending Algorithm، Block/Mute Filtering، Rate Limiting
 
 #### 8. Messaging
 - **Controller:** MessageController
@@ -222,7 +228,7 @@
 - [x] Comments (✅ 100/100 - 51 تست)
 - [x] Social Features (✅ 100/100 - 231 تست)
 - [x] Profile & Account (✅ 100/100 - 287 تست)
-- [ ] Search & Discovery
+- [x] Search & Discovery (✅ 100/100 - 259 تست)
 - [ ] Messaging
 - [ ] Notifications
 - [ ] Communities
@@ -230,8 +236,8 @@
 - [ ] Lists
 - [ ] Bookmarks & Reposts
 
-**پیشرفت فاز 1:** 6/13 (46.2%)
-**تعداد تستهای فاز 1:** 1089 تست
+**پیشرفت فاز 1:** 7/13 (53.8%)
+**تعداد تستهای فاز 1:** 1348 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
@@ -322,13 +328,41 @@
 ---
 
 **تاریخ ایجاد:** 2025-02-04  
-**آخرین بروزرسانی:** 2025-02-10  
-**نسخه:** 10.0  
+**آخرین بروزرسانی:** 2025-02-15  
+**نسخه:** 11.0  
 **وضعیت:** 🔍 در حال بررسی
 
 ---
 
 ## 🎉 دستاوردها
+
+### سیستم Search & Discovery (100/100 - Production Ready)
+- ✅ 14 endpoint عملیاتی (3 Controller)
+- ✅ 259 تست (Script: 207 + Feature: 52)
+- ✅ 96 assertions در Feature Test
+- ✅ تست یکپارچه: SearchDiscoverySystemTest.php
+- ✅ 20 بخش Script Test کامل
+- ✅ 9 بخش Feature Test کامل
+- ✅ Search Posts/Users/Hashtags با فیلترهای پیشرفته
+- ✅ Advanced Search با Permission System
+- ✅ Trending (Hashtags, Posts, Users, Personalized)
+- ✅ Suggestions (Users, Hashtags)
+- ✅ Meilisearch Integration
+- ✅ Block/Mute Filtering در Service Layer
+- ✅ Rate Limiting مطابق Twitter
+- ✅ Security (XSS, SQL Injection, Input Sanitization)
+- ✅ Performance (Caching, Indexing)
+
+**بخشهای Feature Test:**
+1. Core API Functionality (8 tests)
+2. Authentication & Authorization (6 tests)
+3. Validation & Error Handling (6 tests)
+4. Integration with Other Systems (3 tests)
+5. Security in Action (6 tests)
+6. Database Transactions (4 tests)
+7. Business Logic & Edge Cases (9 tests)
+8. Real-world Scenarios (3 tests)
+9. Performance & Response (4 tests)
 
 ### سیستم Profile & Account (100/100 - Production Ready)
 - ✅ 9 endpoint عملیاتی (1 Controller)

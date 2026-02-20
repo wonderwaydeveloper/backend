@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
 
 class Hashtag extends Model
 {
-    use HasFactory;
-    protected $guarded = ['id'];
+    use HasFactory, Searchable;
 
     protected $fillable = ['name', 'slug', 'posts_count'];
 
