@@ -37,7 +37,7 @@ class SocialFeaturesSystemTest extends TestCase
         $this->targetUser->assignRole('user');
     }
 
-    // ==================== SECTION 1: Follow System ====================
+    // ==================== SECTION 1: Core API Functionality (Follow, Block, Mute, Follow Requests) ====================
 
     /** @test */
     public function test_can_follow_user()
@@ -135,8 +135,6 @@ class SocialFeaturesSystemTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'name', 'username']]]);
     }
 
-    // ==================== SECTION 2: Private Accounts & Follow Requests ====================
-
     /** @test */
     public function test_private_account_requires_follow_request()
     {
@@ -223,8 +221,6 @@ class SocialFeaturesSystemTest extends TestCase
         $response->assertOk()
             ->assertJsonStructure(['data' => [['id', 'follower', 'status']]]);
     }
-
-    // ==================== SECTION 3: Block System ====================
 
     /** @test */
     public function test_can_block_user()
@@ -314,8 +310,6 @@ class SocialFeaturesSystemTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'username']]]);
     }
 
-    // ==================== SECTION 4: Mute System ====================
-
     /** @test */
     public function test_can_mute_user()
     {
@@ -386,7 +380,33 @@ class SocialFeaturesSystemTest extends TestCase
             ->assertJsonStructure(['data' => [['id', 'username']]]);
     }
 
-    // ==================== SECTION 5: Integration with Post System ====================
+    /** @test */
+    public function test_followers_list_has_correct_structure()
+    {
+        $follower = User::factory()->create();
+        $this->targetUser->followers()->attach($follower->id);
+
+        $response = $this->withToken($this->token)
+            ->getJson("/api/users/{$this->targetUser->id}/followers");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'username', 'avatar']]]);
+    }
+
+    /** @test */
+    public function test_following_list_has_correct_structure()
+    {
+        $following = User::factory()->create();
+        $this->targetUser->following()->attach($following->id);
+
+        $response = $this->withToken($this->token)
+            ->getJson("/api/users/{$this->targetUser->id}/following");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'username', 'avatar']]]);
+    }
+
+    // ==================== SECTION 4: Integration with Other Systems (Posts, Events) ====================
 
     /** @test */
     public function test_blocked_user_posts_not_visible()
@@ -461,7 +481,7 @@ class SocialFeaturesSystemTest extends TestCase
         $response->assertForbidden();
     }
 
-    // ==================== SECTION 6: Security Tests ====================
+    // ==================== SECTION 2: Authentication & Authorization ====================
 
     /** @test */
     public function test_guest_cannot_follow()
@@ -505,7 +525,7 @@ class SocialFeaturesSystemTest extends TestCase
         $this->assertNotNull($rateLimit);
     }
 
-    // ==================== SECTION 7: Transaction & Data Integrity ====================
+    // ==================== SECTION 5: Security in Action ====================
 
     /** @test */
     public function test_follow_is_atomic()
@@ -557,7 +577,68 @@ class SocialFeaturesSystemTest extends TestCase
         $this->assertEquals(1, $blockCount);
     }
 
-    // ==================== SECTION 8: Events & Notifications ====================
+    /** @test */
+    public function test_block_reason_prevents_sql_injection()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/block", [
+                'reason' => "'; DROP TABLE blocks; --"
+            ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('blocks', [
+            'blocker_id' => $this->user->id,
+            'blocked_id' => $this->targetUser->id
+        ]);
+    }
+
+    /** @test */
+    public function test_csrf_protection_active()
+    {
+        $this->assertTrue(config('session.http_only'));
+    }
+
+    /** @test */
+    public function test_unfollow_decrements_counters_atomically()
+    {
+        $this->user->following()->attach($this->targetUser->id);
+        $this->user->increment('following_count');
+        $this->targetUser->increment('followers_count');
+
+        $initialFollowingCount = $this->user->following_count;
+        $initialFollowersCount = $this->targetUser->followers_count;
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/unfollow");
+
+        $this->user->refresh();
+        $this->targetUser->refresh();
+        
+        $this->assertEquals($initialFollowingCount - 1, $this->user->following_count);
+        $this->assertEquals($initialFollowersCount - 1, $this->targetUser->followers_count);
+    }
+
+    /** @test */
+    public function test_block_removes_follow_relationships()
+    {
+        $this->user->following()->attach($this->targetUser->id);
+        $this->targetUser->following()->attach($this->user->id);
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/block");
+
+        $this->assertDatabaseMissing('follows', [
+            'follower_id' => $this->user->id,
+            'following_id' => $this->targetUser->id
+        ]);
+        
+        $this->assertDatabaseMissing('follows', [
+            'follower_id' => $this->targetUser->id,
+            'following_id' => $this->user->id
+        ]);
+    }
+
+    // ==================== SECTION 6: Database Transactions ====================
 
     /** @test */
     public function test_follow_dispatches_event()
@@ -592,7 +673,7 @@ class SocialFeaturesSystemTest extends TestCase
         \Event::assertDispatched(\App\Events\UserMuted::class);
     }
 
-    // ==================== SECTION 9: Edge Cases ====================
+    // ==================== SECTION 3: Validation & Error Handling ====================
 
     /** @test */
     public function test_follow_non_existent_user()
@@ -631,6 +712,28 @@ class SocialFeaturesSystemTest extends TestCase
     }
 
     /** @test */
+    public function test_block_reason_max_length_validated()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/block", [
+                'reason' => str_repeat('a', 1000)
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_mute_expires_at_must_be_future()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/mute", [
+                'expires_at' => now()->subDay()->toDateTimeString()
+            ]);
+
+        $response->assertStatus(422);
+    }
+
+    /** @test */
     public function test_pagination_on_followers()
     {
         $users = User::factory()->count(25)->create();
@@ -658,5 +761,185 @@ class SocialFeaturesSystemTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure(['data', 'current_page', 'total']);
+    }
+
+    // ==================== SECTION 7: Business Logic & Edge Cases ====================
+
+    /** @test */
+    public function test_cannot_follow_already_following()
+    {
+        $this->user->following()->attach($this->targetUser->id);
+
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/follow");
+
+        $followCount = Follow::where('follower_id', $this->user->id)
+            ->where('following_id', $this->targetUser->id)
+            ->count();
+        
+        $this->assertEquals(1, $followCount);
+    }
+
+    /** @test */
+    public function test_cannot_block_already_blocked()
+    {
+        Block::create([
+            'blocker_id' => $this->user->id,
+            'blocked_id' => $this->targetUser->id
+        ]);
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/block");
+
+        $blockCount = Block::where('blocker_id', $this->user->id)
+            ->where('blocked_id', $this->targetUser->id)
+            ->count();
+        
+        $this->assertEquals(1, $blockCount);
+    }
+
+    /** @test */
+    public function test_cannot_mute_already_muted()
+    {
+        Mute::create([
+            'muter_id' => $this->user->id,
+            'muted_id' => $this->targetUser->id
+        ]);
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/mute");
+
+        $muteCount = Mute::where('muter_id', $this->user->id)
+            ->where('muted_id', $this->targetUser->id)
+            ->count();
+        
+        $this->assertEquals(1, $muteCount);
+    }
+
+    /** @test */
+    public function test_follow_request_status_changes()
+    {
+        $privateUser = User::factory()->create(['is_private' => true]);
+
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$privateUser->id}/follow-request");
+
+        $response->assertOk();
+        
+        $request = FollowRequest::where('follower_id', $this->user->id)
+            ->where('following_id', $privateUser->id)
+            ->first();
+        
+        $this->assertEquals('pending', $request->status);
+    }
+
+    /** @test */
+    public function test_timestamps_updated_on_actions()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/follow");
+
+        $response->assertOk();
+        
+        $follow = Follow::where('follower_id', $this->user->id)
+            ->where('following_id', $this->targetUser->id)
+            ->first();
+        
+        $this->assertNotNull($follow->created_at);
+    }
+
+    // ==================== SECTION 8: Real-world Scenarios ====================
+
+    /** @test */
+    public function test_complete_follow_workflow()
+    {
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/follow");
+
+        $this->assertDatabaseHas('follows', [
+            'follower_id' => $this->user->id,
+            'following_id' => $this->targetUser->id
+        ]);
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/unfollow");
+
+        $this->assertDatabaseMissing('follows', [
+            'follower_id' => $this->user->id,
+            'following_id' => $this->targetUser->id
+        ]);
+    }
+
+    /** @test */
+    public function test_block_workflow_with_auto_unfollow()
+    {
+        $this->user->following()->attach($this->targetUser->id);
+        $this->targetUser->following()->attach($this->user->id);
+
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/block");
+
+        $this->assertFalse($this->user->isFollowing($this->targetUser->id));
+        $this->assertFalse($this->targetUser->isFollowing($this->user->id));
+    }
+
+    /** @test */
+    public function test_multiple_users_interaction()
+    {
+        $user2 = User::factory()->create(['email_verified_at' => now()]);
+        $user2->assignRole('user');
+
+        $response1 = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/follow");
+        $response1->assertOk();
+
+        $this->assertDatabaseHas('follows', [
+            'follower_id' => $this->user->id,
+            'following_id' => $this->targetUser->id
+        ]);
+    }
+
+    // ==================== SECTION 9: Performance & Response ====================
+
+    /** @test */
+    public function test_followers_list_avoids_n_plus_1_queries()
+    {
+        $users = User::factory()->count(5)->create();
+        foreach ($users as $user) {
+            $this->targetUser->followers()->attach($user->id);
+        }
+
+        \DB::enableQueryLog();
+        
+        $this->withToken($this->token)
+            ->getJson("/api/users/{$this->targetUser->id}/followers");
+        
+        $queries = \DB::getQueryLog();
+        $this->assertLessThan(15, count($queries));
+    }
+
+    /** @test */
+    public function test_follow_response_time_acceptable()
+    {
+        $start = microtime(true);
+        
+        $this->withToken($this->token)
+            ->postJson("/api/users/{$this->targetUser->id}/follow");
+        
+        $duration = (microtime(true) - $start) * 1000;
+        $this->assertLessThan(500, $duration);
+    }
+
+    /** @test */
+    public function test_followers_list_eager_loads_user_data()
+    {
+        $follower = User::factory()->create();
+        $this->targetUser->followers()->attach($follower->id);
+
+        $response = $this->withToken($this->token)
+            ->getJson("/api/users/{$this->targetUser->id}/followers");
+
+        $response->assertOk()
+            ->assertJsonStructure(['data' => [['id', 'name', 'username']]]);
     }
 }

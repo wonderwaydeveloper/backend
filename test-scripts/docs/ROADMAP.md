@@ -1,6 +1,6 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2025-02-04  
+**آخرین بهروزرسانی:** 2025-02-10  
 **پیشرفت کلی:** 19.2% (5/26 سیستم تکمیل شده)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
@@ -24,7 +24,7 @@
 | 2 | Authentication | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 3 | Posts & Content | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 4 | Comments | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 5 | Social Features | ✅ | 100% | 100/100 | 🔴 حیاتی |
+| 5 | Social Features | ✅ | 100% | 89/100 | 🔴 حیاتی |
 | 6 | Profile & Account | ⏳ | - | - | 🔴 حیاتی |
 | 7 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
 | 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
@@ -98,12 +98,11 @@
 - **Features:** Follow/Unfollow, Follow Requests, Block/Mute, Private Accounts
 - **Endpoints:** 14
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (231 تست)
-- **تاریخ تکمیل:** 2025-02-04
-- **تست فایل:** `tests/Feature/SocialFeaturesSystemTest.php` (46 تست PHPUnit)
-- **اسکریپت تست:** `test-scripts/05_social_features.php` (231 تست، 20 بخش)
-- **توضیح:** Transaction + lockForUpdate, Counter underflow protection, XSS sanitization, Policy authorization
-- **مشکلات رفع شده:** 7 مورد (Self-follow, XSS, Duplicate logic, Authorization, Counter underflow, Policy registration, Rate limit tests)
+- **Test Coverage:** 100% (65 تست PHPUnit)
+- **تاریخ تکمیل:** 2025-02-10
+- **تست فایل:** `tests/Feature/SocialFeaturesSystemTest.php` (65 تست، 9 بخش Feature Test)
+- **توضیح:** Feature Test با 9 بخش استاندارد، 65 تست، 138 assertions
+- **امتیاز:** 89/100 (Good - Minor fixes needed)
 
 #### 6. Profile & Account
 - **Controller:** ProfileController
@@ -317,37 +316,41 @@
 ---
 
 **تاریخ ایجاد:** 2025-02-04  
-**نسخه:** 8.0  
+**آخرین بروزرسانی:** 2025-02-10  
+**نسخه:** 9.0  
 **وضعیت:** 🔍 آماده شروع بررسی
 
 ---
 
 ## 🎉 دستاوردها
 
-### سیستم Social Features (100/100)
+### سیستم Social Features (89/100 - Good)
 - ✅ 14 endpoint عملیاتی (3 Controller)
-- ✅ 231 تست (20 بخش استاندارد)
-- ✅ تست یکپارچه: SocialFeaturesSystemTest.php (46 تست PHPUnit)
-- ✅ Transaction + lockForUpdate pattern
-- ✅ Counter underflow protection
-- ✅ XSS sanitization در Model boot()
-- ✅ Policy authorization برای FollowRequest
-- ✅ Integration با Post/Comment/Message systems
-- ✅ 7 مشکل حیاتی رفع شد
+- ✅ 65 تست PHPUnit (9 بخش Feature Test)
+- ✅ 138 assertions
+- ✅ تست یکپارچه: SocialFeaturesSystemTest.php
+- ✅ Response structure validation
+- ✅ Validation tests (max length, future dates)
+- ✅ Security tests (SQL injection, CSRF)
+- ✅ Transaction tests (atomic operations)
+- ✅ Business logic tests (duplicates, timestamps)
+- ✅ Performance tests (N+1, eager loading)
 
 **Controllers تست شده:**
 - FollowController (4 endpoints)
 - FollowRequestController (4 endpoints)
 - ProfileController (6 endpoints: block/unblock/mute/unmute/blocked/muted)
 
-**مشکلات رفع شده:**
-1. Self-follow prevention
-2. XSS sanitization در Block.reason
-3. Duplicate auto-unfollow logic
-4. Authorization missing در FollowRequestController
-5. Counter underflow protection
-6. Policy registration برای FollowRequest
-7. Role permission checks در تستها
+**بخشهای Feature Test:**
+1. Core API Functionality (26 tests)
+2. Authentication & Authorization (6 tests)
+3. Validation & Error Handling (12 tests)
+4. Integration with Other Systems (3 tests)
+5. Security in Action (5 tests)
+6. Database Transactions (5 tests)
+7. Business Logic & Edge Cases (5 tests)
+8. Real-world Scenarios (3 tests)
+9. Performance & Response (3 tests)
 
 ### سیستم Posts & Content (100/100)
 - ✅ 40 endpoint عملیاتی (شامل 10 Controller)

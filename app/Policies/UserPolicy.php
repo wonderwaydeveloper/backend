@@ -16,6 +16,10 @@ class UserPolicy
     {
         // Public profiles
         if (!$model->is_private) {
+            // Check if blocked
+            if ($user && $model->hasBlocked($user->id)) {
+                return false;
+            }
             return true;
         }
 
