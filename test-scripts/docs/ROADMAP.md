@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-10  
-**پیشرفت کلی:** 19.2% (5/26 سیستم تکمیل شده)
+**پیشرفت کلی:** 23.1% (6/26 سیستم تکمیل شده)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,13 +9,13 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 5/26 (19.2%)
-### ⏳ سیستمهای در انتظار بررسی: 21/26 (80.8%)
+### ✅ سیستمهای تکمیل شده: 6/26 (23.1%)
+### ⏳ سیستمهای در انتظار بررسی: 20/26 (76.9%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 751 تست
-- **تعداد کل PHPUnit تستها:** 143 تست
-- **میانگین تست هر سیستم:** 150 تست
+- **تعداد کل تستها:** 1038 تست (Script: 802 + Feature: 236)
+- **تعداد کل PHPUnit تستها:** 194 تست
+- **میانگین تست هر سیستم:** 173 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | امتیاز | اولویت |
@@ -25,7 +25,7 @@
 | 3 | Posts & Content | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 4 | Comments | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 5 | Social Features | ✅ | 100% | 89/100 | 🔴 حیاتی |
-| 6 | Profile & Account | ⏳ | - | - | 🔴 حیاتی |
+| 6 | Profile & Account | ✅ | 100% | 100/100 | 🔴 حیاتی |
 | 7 | Search & Discovery | ⏳ | - | - | 🔴 حیاتی |
 | 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
 | 9 | Notifications | ⏳ | - | - | 🔴 حیاتی |
@@ -104,11 +104,17 @@
 - **توضیح:** Feature Test با 9 بخش استاندارد، 65 تست، 138 assertions
 - **امتیاز:** 89/100 (Good - Minor fixes needed)
 
-#### 6. Profile & Account
+#### 6. Profile & Account ✅
 - **Controller:** ProfileController
-- **Features:** Profile Management, Settings
+- **Features:** Profile Management, Settings, Privacy, Export Data, Delete Account
 - **Endpoints:** 9
-- **وضعیت:** ⏳ در انتظار بررسی
+- **وضعیت:** ✅ تکمیل شده (100/100)
+- **Test Coverage:** 100% (287 تست: Script 236 + Feature 51)
+- **تاریخ تکمیل:** 2025-02-10
+- **تست فایلها:** 
+  - Script: `test-scripts/06_profile_account.php` (236 تست، 20 بخش)
+  - Feature: `tests/Feature/ProfileAccountSystemTest.php` (51 تست، 9 بخش)
+- **توضیح:** Profile CRUD، Privacy Settings، Export/Delete Account، Authorization با Policies، Integration با Analytics
 
 #### 7. Search & Discovery
 - **Controllers:** SearchController, SuggestionController, TrendingController
@@ -215,7 +221,7 @@
 - [x] Posts & Content (✅ 100/100 - 289 تست)
 - [x] Comments (✅ 100/100 - 51 تست)
 - [x] Social Features (✅ 100/100 - 231 تست)
-- [ ] Profile & Account
+- [x] Profile & Account (✅ 100/100 - 287 تست)
 - [ ] Search & Discovery
 - [ ] Messaging
 - [ ] Notifications
@@ -224,8 +230,8 @@
 - [ ] Lists
 - [ ] Bookmarks & Reposts
 
-**پیشرفت فاز 1:** 5/13 (38.5%)
-**تعداد تستهای فاز 1:** 802 تست
+**پیشرفت فاز 1:** 6/13 (46.2%)
+**تعداد تستهای فاز 1:** 1089 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
@@ -317,12 +323,39 @@
 
 **تاریخ ایجاد:** 2025-02-04  
 **آخرین بروزرسانی:** 2025-02-10  
-**نسخه:** 9.0  
-**وضعیت:** 🔍 آماده شروع بررسی
+**نسخه:** 10.0  
+**وضعیت:** 🔍 در حال بررسی
 
 ---
 
 ## 🎉 دستاوردها
+
+### سیستم Profile & Account (100/100 - Production Ready)
+- ✅ 9 endpoint عملیاتی (1 Controller)
+- ✅ 287 تست (Script: 236 + Feature: 51)
+- ✅ 121 assertions در Feature Test
+- ✅ تست یکپارچه: ProfileAccountSystemTest.php
+- ✅ 20 بخش Script Test کامل
+- ✅ 9 بخش Feature Test کامل
+- ✅ Profile CRUD (view, update, posts, media)
+- ✅ Privacy Settings (get, update)
+- ✅ Account Management (export data, delete account)
+- ✅ Authorization با UserPolicy
+- ✅ Integration با Analytics
+- ✅ Validation (name, bio, location, website, username)
+- ✅ Security (XSS, SQL injection, Mass assignment)
+- ✅ Performance (N+1 prevention, Eager loading)
+
+**بخشهای Feature Test:**
+1. Core API Functionality (10 tests)
+2. Authentication & Authorization (6 tests)
+3. Validation & Error Handling (10 tests)
+4. Integration with Other Systems (5 tests)
+5. Security in Action (5 tests)
+6. Database Transactions (4 tests)
+7. Business Logic & Edge Cases (5 tests)
+8. Real-world Scenarios (3 tests)
+9. Performance & Response (3 tests)
 
 ### سیستم Social Features (89/100 - Good)
 - ✅ 14 endpoint عملیاتی (3 Controller)
