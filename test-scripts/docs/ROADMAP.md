@@ -327,6 +327,152 @@
 
 ---
 
+## ⚙️ استاندارد Config Files
+
+### 📁 ساختار Config Directory
+
+**فایلهای اصلی پروژه (5 فایل):**
+1. `security.php` (380 خط) - امنیت، احراز هویت، مدیریت
+2. `limits.php` (230 خط) - محدودیتها، نقشها، صفحهبندی
+3. `content.php` (158 خط) - اعتبارسنجی، مدیا
+4. `performance.php` (50 خط) - کش، بهینهسازی
+5. `status.php` (51 خط) - ثابتهای وضعیت
+
+**فایلهای پیشفرض Laravel (نگهداری شده):**
+- `app.php`, `auth.php`, `broadcasting.php`, `cache.php`, `cors.php`
+- `database.php`, `filesystems.php`, `logging.php`, `mail.php`
+- `permission.php`, `queue.php`, `reverb.php`, `sanctum.php`
+- `scout.php`, `services.php`, `session.php`
+
+**فایلهای اختصاصی:**
+- `enhancements.php` - Elasticsearch, CDN, GraphQL
+
+---
+
+### 1. security.php (380 خط)
+**محتوا:**
+- Authentication (password, tokens, session, email, device, social, age_restrictions)
+- Security (threat_detection, bot_detection, monitoring, rate_limiting, captcha, file_security, waf)
+- Moderation (spam thresholds, penalties, limits)
+
+**استفاده:**
+```php
+config('security.password.security.min_length')
+config('security.rate_limiting.auth.login')
+config('security.spam.thresholds.post')
+```
+
+### 2. limits.php (230 خط)
+**محتوا:**
+- Rate Limits (auth, social, search, trending, messaging, polls, moderation)
+- Trending Thresholds
+- Roles (6 نقش: user, verified, premium, organization, moderator, admin)
+- Creator Fund
+- Advertisements
+- Pagination (all resources)
+- Polls (limits)
+- Posts (limits)
+
+**استفاده:**
+```php
+config('limits.roles.user.media_per_post')
+config('limits.pagination.posts')
+config('limits.polls.max_options')
+```
+
+### 3. content.php (158 خط)
+**محتوا:**
+- Validation (user, password, search, trending, content, file_upload, max, min)
+- Media (max_file_size, allowed_mime_types, dimensions, variants, qualities)
+
+**استفاده:**
+```php
+config('content.validation.user.name.max_length')
+config('content.media.max_file_size.video')
+```
+
+### 4. performance.php (50 خط)
+**محتوا:**
+- Cache TTL (timeline, trending, user, post, search, etc.)
+- Monitoring (delays)
+- Email (rate limits)
+
+**استفاده:**
+```php
+config('performance.cache.timeline')
+config('performance.monitoring.simulation_delay_seconds')
+```
+
+### 5. status.php (51 خط)
+**محتوا:**
+- Status Constants (ab_test, community_join_request, report, scheduled_post, space, subscription)
+
+**استفاده:**
+```php
+config('status.ab_test.active')
+config('status.subscription.cancelled')
+```
+
+---
+
+## 🎯 قوانین توسعه سیستمهای جدید
+
+### ✅ الزامات Config
+
+1. **هیچ مقدار ثابتی در کد نباشد** - همه باید در config باشند
+2. **از ساختار موجود پیروی کنید:**
+   - برای مقادیر امنیتی → `security.php`
+   - برای محدودیتها → `limits.php`
+   - برای اعتبارسنجی/مدیا → `content.php`
+   - برای کش → `performance.php`
+   - برای ثابتهای وضعیت → `status.php`
+   - برای تنظیمات Laravel → فایلهای پیشفرض
+3. **نامگذاری استاندارد** - از نامگذاری واضح و توصیفی استفاده کنید
+4. **مستندسازی** - هر config جدید باید مستند شود
+5. **یکپارچگی** - تغییرات باید با ساختار موجود هماهنگ باشد
+
+### 📍 راهنمای انتخاب فایل Config
+
+**security.php** → امنیت، احراز هویت، مدیریت، spam  
+**limits.php** → محدودیتها، نقشها، صفحهبندی، rate limits  
+**content.php** → اعتبارسنجی، مدیا، محتوا  
+**performance.php** → کش، بهینهسازی، مانیتورینگ  
+**status.php** → ثابتهای وضعیت  
+**فایلهای Laravel** → تنظیمات پیشفرض framework  
+
+### ❌ ممنوعیتها
+
+- ❌ ایجاد فایل config جدید بدون مشورت
+- ❌ تکرار config در چند فایل
+- ❌ استفاده از مقادیر ثابت در کد
+- ❌ نادیده گرفتن ساختار موجود
+- ❌ تغییر فایلهای پیشفرض Laravel بدون دلیل
+
+### ✅ مثال صحیح
+
+```php
+// ❌ اشتباه
+public function getMaxItems() {
+    return 100;
+}
+
+// ✅ صحیح
+public function getMaxItems() {
+    return config('limits.pagination.items');
+}
+
+// ✅ استفاده از config پیشفرض Laravel
+public function getCacheTTL() {
+    return config('cache.default'); // از cache.php Laravel
+}
+```
+
+---
+
+**مرجع کامل:** `docs/CONFIG_CONSOLIDATION_SUMMARY.md`
+
+---
+
 **تاریخ ایجاد:** 2025-02-04  
 **آخرین بروزرسانی:** 2025-02-15  
 **نسخه:** 11.0  
