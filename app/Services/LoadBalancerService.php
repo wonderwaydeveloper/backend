@@ -63,7 +63,7 @@ class LoadBalancerService
 
     private function getServerStats(): array
     {
-        return Cache::remember('server_stats', config('cache_ttl.ttl.server_stats'), function () {
+        return Cache::remember('server_stats', config('performance.cache.server_stats'), function () {
             return [
                 'primary' => ['cpu' => 45, 'memory' => 60, 'connections' => 150],
                 'secondary' => ['cpu' => 30, 'memory' => 40, 'connections' => 80]

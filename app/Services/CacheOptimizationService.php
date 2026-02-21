@@ -11,10 +11,10 @@ class CacheOptimizationService
     private function getCacheTags(): array
     {
         return [
-            'timeline' => config('cache_ttl.ttl.timeline'),
-            'user' => config('performance.cache.user_ttl', 600),
-            'post' => config('performance.cache.post_ttl', 1800),
-            'trending' => config('cache_ttl.ttl.trending')
+            'timeline' => config('performance.cache.timeline'),
+            'user' => config('performance.cache.user'),
+            'post' => config('performance.cache.post'),
+            'trending' => config('performance.cache.trending')
         ];
     }
 

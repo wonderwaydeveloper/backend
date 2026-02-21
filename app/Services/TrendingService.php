@@ -22,7 +22,7 @@ class TrendingService
         try {
             $cacheKey = "trending_hashtags_{$limit}_{$timeframe}";
 
-            return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
+            return Cache::remember($cacheKey, config('performance.cache.trending'), function () use ($limit, $timeframe) {
                 $cutoffTime = Carbon::now()->subHours($timeframe);
 
                 return DB::table('hashtags')
@@ -55,7 +55,7 @@ class TrendingService
     {
         $cacheKey = "trending_posts_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
+        return Cache::remember($cacheKey, config('performance.cache.trending'), function () use ($limit, $timeframe) {
             $cutoffTime = Carbon::now()->subHours($timeframe);
 
             return Post::select([
@@ -86,7 +86,7 @@ class TrendingService
     {
         $cacheKey = "trending_users_{$limit}_{$timeframe}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($limit, $timeframe) {
+        return Cache::remember($cacheKey, config('performance.cache.trending'), function () use ($limit, $timeframe) {
             $cutoffTime = Carbon::now()->subHours($timeframe);
 
             return User::select([
@@ -124,7 +124,7 @@ class TrendingService
     {
         $cacheKey = "personalized_trending_{$userId}_{$limit}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.trending'), function () use ($userId, $limit) {
+        return Cache::remember($cacheKey, config('performance.cache.trending'), function () use ($userId, $limit) {
             // Get user's followed hashtags and users
             $userHashtags = DB::table('hashtag_post')
                 ->join('posts', 'hashtag_post.post_id', '=', 'posts.id')
@@ -187,7 +187,7 @@ class TrendingService
     {
         $cacheKey = "trend_velocity_{$type}_{$id}_{$hours}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.engagement'), function () use ($type, $id, $hours) {
+        return Cache::remember($cacheKey, config('performance.cache.engagement'), function () use ($type, $id, $hours) {
             $intervals = [];
 
             for ($i = 0; $i < $hours; $i++) {

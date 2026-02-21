@@ -34,7 +34,7 @@ class ConversionTrackingService
     {
         $startDate = Carbon::now()->subDays($dateRange);
 
-        return Cache::remember("conversion_funnel_{$dateRange}", config('cache_ttl.ttl.conversion_funnel'), function () use ($startDate) {
+        return Cache::remember("conversion_funnel_{$dateRange}", config('performance.cache.conversion_funnel'), function () use ($startDate) {
             return [
                 'visitors' => $this->getUniqueVisitors($startDate),
                 'signups' => $this->getConversions('registration', $startDate),
@@ -75,7 +75,7 @@ class ConversionTrackingService
     {
         $cacheKey = "cohort_analysis_{$period}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.conversion_rate'), function () use ($period) {
+        return Cache::remember($cacheKey, config('performance.cache.conversion_rate'), function () use ($period) {
             // Simplified cohort analysis
             $cohorts = [];
             $startDate = Carbon::now()->subMonths(6);

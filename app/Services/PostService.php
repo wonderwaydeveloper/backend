@@ -52,7 +52,7 @@ class PostService implements PostServiceInterface
 
     public function findById(int $id): ?Post
     {
-        return Cache::remember("post:{$id}", config('cache_ttl.ttl.post'), function () use ($id) {
+        return Cache::remember("post:{$id}", config('performance.cache.post'), function () use ($id) {
             return Post::with([
                 'user:id,name,username,avatar',
                 'hashtags:id,name,slug',
@@ -106,7 +106,7 @@ class PostService implements PostServiceInterface
     {
         $cacheKey = "timeline:{$userId}:{$limit}";
 
-        return Cache::remember($cacheKey, config('cache_ttl.ttl.user_posts'), function () use ($userId, $limit) {
+        return Cache::remember($cacheKey, config('performance.cache.user_posts'), function () use ($userId, $limit) {
             $followingIds = $this->getFollowingIds($userId);
             $user = User::find($userId);
             $blockedIds = $user->blockedUsers()->pluck('users.id')->toArray();
@@ -424,7 +424,7 @@ class PostService implements PostServiceInterface
 
     private function getFollowingIds(int $userId): array
     {
-        return Cache::remember("following:{$userId}", config('cache_ttl.ttl.following'), function () use ($userId) {
+        return Cache::remember("following:{$userId}", config('performance.cache.following'), function () use ($userId) {
             return DB::table('follows')
                 ->where('follower_id', $userId)
                 ->pluck('following_id')

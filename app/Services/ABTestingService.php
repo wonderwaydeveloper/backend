@@ -125,7 +125,7 @@ class ABTestingService
 
     private function getActiveTest(string $testName): ?ABTest
     {
-        return Cache::remember("ab_test_{$testName}", config('cache_ttl.ttl.ab_test'), function () use ($testName) {
+        return Cache::remember("ab_test_{$testName}", config('performance.cache.ab_test'), function () use ($testName) {
             return ABTest::where('name', $testName)
                 ->where('status', config('status.ab_test.active'))
                 ->where('starts_at', '<=', now())
