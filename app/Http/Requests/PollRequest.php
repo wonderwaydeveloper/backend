@@ -15,10 +15,10 @@ class PollRequest extends FormRequest
     {
         return [
             'post_id' => 'required|exists:posts,id',
-            'question' => 'required|string|max:' . config('polls.max_question_length', 200),
-            'options' => 'required|array|min:' . config('polls.min_options', 2) . '|max:' . config('polls.max_options', 4),
-            'options.*' => 'required|string|max:' . config('polls.max_option_length', 100),
-            'duration_hours' => 'required|integer|min:' . config('polls.min_duration_hours', 1) . '|max:' . config('polls.max_duration_hours', 168),
+            'question' => 'required|string|max:' . config('limits.polls.max_question_length', 200),
+            'options' => 'required|array|min:' . config('limits.polls.min_options', 2) . '|max:' . config('limits.polls.max_options', 4),
+            'options.*' => 'required|string|max:' . config('limits.polls.max_option_length', 100),
+            'duration_hours' => 'required|integer|min:' . config('limits.polls.min_duration_hours', 1) . '|max:' . config('limits.polls.max_duration_hours', 168),
             'multiple_choice' => 'boolean'
         ];
     }

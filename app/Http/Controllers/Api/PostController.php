@@ -115,7 +115,7 @@ class PostController extends Controller
 
     public function likes(Post $post): JsonResponse
     {
-        $likes = $post->likes()->with('user:id,name,username,avatar')->paginate(config('pagination.likes'));
+        $likes = $post->likes()->with('user:id,name,username,avatar')->paginate(config('limits.pagination.likes'));
         return response()->json($likes);
     }
 

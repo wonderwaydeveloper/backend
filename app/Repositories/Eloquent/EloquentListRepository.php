@@ -36,7 +36,7 @@ class EloquentListRepository implements ListRepositoryInterface
         return UserList::where('user_id', $userId)
             ->withCount(['members', 'subscribers'])
             ->latest()
-            ->paginate($perPage ?? config('pagination.lists'));
+            ->paginate($perPage ?? config('limits.pagination.lists'));
     }
 
     public function getPublicLists(int $perPage = null): LengthAwarePaginator
@@ -45,7 +45,7 @@ class EloquentListRepository implements ListRepositoryInterface
             ->with(['owner:id,name,username,avatar'])
             ->withCount(['members', 'subscribers'])
             ->orderBy('subscribers_count', 'desc')
-            ->paginate($perPage ?? config('pagination.lists'));
+            ->paginate($perPage ?? config('limits.pagination.lists'));
     }
 
     public function subscribe(UserList $list, int $userId): array

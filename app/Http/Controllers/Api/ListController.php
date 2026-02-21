@@ -136,7 +136,7 @@ class ListController extends Controller
             $posts = $list->posts()
                 ->with(['user:id,name,username,avatar', 'hashtags:id,name,slug'])
                 ->withCount(['likes', 'comments', 'quotes'])
-                ->paginate(config('pagination.lists'));
+                ->paginate(config('limits.pagination.lists'));
 
             return response()->json($posts);
         } catch (\Exception $e) {

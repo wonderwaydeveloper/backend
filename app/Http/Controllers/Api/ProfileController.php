@@ -50,7 +50,7 @@ class ProfileController extends Controller
             ->whereHas('media')
             ->with(['media', 'user:id,name,username,avatar'])
             ->orderBy('created_at', 'desc')
-            ->paginate(config('pagination.posts'));
+            ->paginate(config('limits.pagination.posts'));
             
         return response()->json($mediaPosts);
     }
@@ -220,7 +220,7 @@ class ProfileController extends Controller
             ->blockedUsers()
             ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
             ->withPivot('reason', 'created_at')
-            ->paginate(config('pagination.activities'));
+            ->paginate(config('limits.pagination.activities'));
         
         return response()->json($blockedUsers);
     }
@@ -231,7 +231,7 @@ class ProfileController extends Controller
             ->mutedUsers()
             ->select(['users.id', 'users.username', 'users.name', 'users.avatar'])
             ->withPivot('expires_at', 'created_at')
-            ->paginate(config('pagination.activities'));
+            ->paginate(config('limits.pagination.activities'));
         
         return response()->json($mutedUsers);
     }

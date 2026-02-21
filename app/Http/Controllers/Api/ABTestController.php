@@ -21,7 +21,7 @@ class ABTestController extends Controller
         
         $tests = ABTest::select(['id', 'name', 'description', 'status', 'traffic_percentage', 'starts_at', 'ends_at'])
             ->orderBy('created_at', 'desc')
-            ->paginate(config('pagination.default'));
+            ->paginate(config('limits.pagination.default'));
 
         return response()->json(ABTestResource::collection($tests));
     }

@@ -81,7 +81,7 @@ class ModerationController extends Controller
         $reports = Report::where('reporter_id', auth()->id())
             ->with('reportable')
             ->orderBy('created_at', 'desc')
-            ->paginate(config('pagination.reports'));
+            ->paginate(config('limits.pagination.reports'));
 
         return response()->json($reports);
     }
@@ -105,7 +105,7 @@ class ModerationController extends Controller
             $query->where('reportable_type', $request->type);
         }
 
-        return response()->json($query->paginate($request->per_page ?? config('pagination.reports')));
+        return response()->json($query->paginate($request->per_page ?? config('limits.pagination.reports')));
     }
 
     public function showReport(Report $report)

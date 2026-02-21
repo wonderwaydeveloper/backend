@@ -61,7 +61,7 @@ class CommunityController extends Controller
     public function show(Community $community)
     {
         $community->load(['creator', 'members' => function($query) {
-            $query->limit(config('pagination.suggestions'));
+            $query->limit(config('limits.pagination.suggestions'));
         }])->loadCount('members', 'posts');
 
         return new CommunityResource($community);
@@ -154,7 +154,7 @@ class CommunityController extends Controller
                 $query->pinned();
             })
             ->latest()
-            ->paginate(config('pagination.posts'));
+            ->paginate(config('limits.pagination.posts'));
 
         return PostResource::collection($posts);
     }
@@ -165,7 +165,7 @@ class CommunityController extends Controller
             ->when($request->role, function($query, $role) {
                 $query->wherePivot('role', $role);
             })
-            ->paginate(config('pagination.users'));
+            ->paginate(config('limits.pagination.users'));
 
         return response()->json($members);
     }
@@ -178,7 +178,7 @@ class CommunityController extends Controller
             ->with('user')
             ->pending()
             ->latest()
-            ->paginate(config('pagination.default'));
+            ->paginate(config('limits.pagination.default'));
 
         return response()->json($requests);
     }

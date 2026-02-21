@@ -47,8 +47,8 @@ class CreatorFund extends Model
             return 0;
         }
 
-        $baseRate = config('monetization.creator_fund.base_rate');
-        $engagementMultiplier = min($this->total_engagement / $this->total_views, config('monetization.creator_fund.max_engagement_multiplier'));
+        $baseRate = config('limits.creator_fund.base_rate');
+        $engagementMultiplier = min($this->total_engagement / $this->total_views, config('limits.creator_fund.max_engagement_multiplier'));
         $qualityMultiplier = $this->quality_score / 100;
 
         return $this->total_views * $baseRate * (1 + $engagementMultiplier) * $qualityMultiplier;
@@ -56,8 +56,8 @@ class CreatorFund extends Model
 
     public function isEligible(): bool
     {
-        return $this->total_views >= config('monetization.creator_fund.min_views')
-            && $this->quality_score >= config('monetization.creator_fund.min_quality_score')
-            && $this->creator->followers()->count() >= config('monetization.creator_fund.min_followers');
+        return $this->total_views >= config('limits.creator_fund.min_views')
+            && $this->quality_score >= config('limits.creator_fund.min_quality_score')
+            && $this->creator->followers()->count() >= config('limits.creator_fund.min_followers');
     }
 }

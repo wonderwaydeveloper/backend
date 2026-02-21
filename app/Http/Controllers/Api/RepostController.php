@@ -64,7 +64,7 @@ class RepostController extends Controller
 
     public function reposts(Post $post)
     {
-        $reposts = $post->reposts()->with('user:id,name,username,avatar')->paginate(config('pagination.reposts'));
+        $reposts = $post->reposts()->with('user:id,name,username,avatar')->paginate(config('limits.pagination.reposts'));
         return response()->json($reposts);
     }
 
@@ -74,7 +74,7 @@ class RepostController extends Controller
             ->reposts()
             ->with('post.user:id,name,username,avatar')
             ->latest()
-            ->paginate(config('pagination.reposts'));
+            ->paginate(config('limits.pagination.reposts'));
 
         return response()->json($reposts);
     }

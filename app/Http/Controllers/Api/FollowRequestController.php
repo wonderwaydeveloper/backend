@@ -53,7 +53,7 @@ class FollowRequestController extends Controller
             ->where('status', 'pending')
             ->with('follower')
             ->latest()
-            ->paginate(config('pagination.default'));
+            ->paginate(config('limits.pagination.default'));
 
         return response()->json($requests);
     }

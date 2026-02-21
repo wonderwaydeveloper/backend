@@ -21,14 +21,14 @@ class TrendingController extends Controller
     public function hashtags(TrendingRequest $request)
     {
         $hashtags = $this->trendingService->getTrendingHashtags(
-            $request->input('limit', config('pagination.trending')),
+            $request->input('limit', config('limits.pagination.trending')),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($hashtags),
             'meta' => [
-                'limit' => $request->input('limit', config('pagination.trending')),
+                'limit' => $request->input('limit', config('limits.pagination.trending')),
                 'timeframe_hours' => $request->input('timeframe', 24),
                 'generated_at' => now(),
             ],
@@ -38,14 +38,14 @@ class TrendingController extends Controller
     public function posts(TrendingRequest $request)
     {
         $posts = $this->trendingService->getTrendingPosts(
-            $request->input('limit', config('pagination.default')),
+            $request->input('limit', config('limits.pagination.default')),
             $request->input('timeframe', 24)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($posts),
             'meta' => [
-                'limit' => $request->input('limit', config('pagination.default')),
+                'limit' => $request->input('limit', config('limits.pagination.default')),
                 'timeframe_hours' => $request->input('timeframe', 24),
                 'generated_at' => now(),
             ],
@@ -55,14 +55,14 @@ class TrendingController extends Controller
     public function users(TrendingRequest $request)
     {
         $users = $this->trendingService->getTrendingUsers(
-            $request->input('limit', config('pagination.trending')),
+            $request->input('limit', config('limits.pagination.trending')),
             $request->input('timeframe', 168)
         );
 
         return response()->json([
             'data' => TrendingResource::collection($users),
             'meta' => [
-                'limit' => $request->input('limit', config('pagination.trending')),
+                'limit' => $request->input('limit', config('limits.pagination.trending')),
                 'timeframe_hours' => $request->input('timeframe', 168),
                 'generated_at' => now(),
             ],
@@ -77,13 +77,13 @@ class TrendingController extends Controller
 
         $content = $this->trendingService->getPersonalizedTrending(
             $request->user()->id,
-            $request->input('limit', config('pagination.trending'))
+            $request->input('limit', config('limits.pagination.trending'))
         );
 
         return response()->json([
             'data' => $content,
             'meta' => [
-                'limit' => $request->input('limit', config('pagination.trending')),
+                'limit' => $request->input('limit', config('limits.pagination.trending')),
                 'user_id' => $request->user()->id,
                 'generated_at' => now(),
             ],

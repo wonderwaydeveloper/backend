@@ -250,14 +250,14 @@ class Post extends Model
 
     public function canBeEdited(): bool
     {
-        $editTimeoutMinutes = config('posts.edit_timeout_minutes', 60);
+        $editTimeoutMinutes = config('limits.posts.edit_timeout_minutes', 60);
         return $this->created_at->diffInMinutes(now()) <= $editTimeoutMinutes;
     }
 
     public function canBeEditedForTesting(): bool
     {
         if (app()->environment('testing')) {
-            $editTimeoutMinutes = config('posts.edit_timeout_minutes', 60);
+            $editTimeoutMinutes = config('limits.posts.edit_timeout_minutes', 60);
             return $this->created_at->diffInMinutes(now()) <= $editTimeoutMinutes;
         }
         return $this->canBeEdited();

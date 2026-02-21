@@ -9,7 +9,7 @@ class SubscriptionLimitService
     public function getUserLimits(User $user): array
     {
         $role = $this->getUserHighestRole($user);
-        return config("monetization.roles.{$role}", config('monetization.roles.user'));
+        return config("limits.roles.{$role}", config('limits.roles.user'));
     }
     
     public function getUserHighestRole(User $user): string
