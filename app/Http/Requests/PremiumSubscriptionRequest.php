@@ -17,7 +17,7 @@ class PremiumSubscriptionRequest extends FormRequest
             'plan_id' => 'required|string|in:basic,pro,enterprise',
             'payment_method' => 'required|string|in:card,paypal,bank_transfer',
             'billing_cycle' => 'required|string|in:monthly,yearly',
-            'coupon_code' => 'nullable|string|max:' . config('validation.max.coupon'),
+            'coupon_code' => 'nullable|string|max:' . config('content.validation.max.coupon'),
             'auto_renew' => 'boolean'
         ];
     }

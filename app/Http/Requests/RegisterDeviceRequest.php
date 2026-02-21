@@ -14,9 +14,9 @@ class RegisterDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'token' => 'required|string|max:' . config('validation.max.token'),
+            'token' => 'required|string|max:' . config('content.validation.max.token'),
             'platform' => 'required|in:ios,android,web',
-            'device_name' => 'nullable|string|max:' . config('validation.max.url'),
+            'device_name' => 'nullable|string|max:' . config('content.validation.max.url'),
         ];
     }
 }

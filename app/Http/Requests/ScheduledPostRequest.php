@@ -17,11 +17,11 @@ class ScheduledPostRequest extends FormRequest
         return [
             'content' => ['required', new ContentLength('post')],
             'scheduled_at' => 'required|date|after:now',
-            'media' => 'nullable|array|max:' . config('validation.max.media'),
+            'media' => 'nullable|array|max:' . config('content.validation.max.media'),
             'media.*' => ['file', new FileUpload('media_general')],
             'poll' => 'nullable|array',
-            'poll.question' => 'required_with:poll|string|max:' . config('validation.max.text_long'),
-            'poll.options' => 'required_with:poll|array|min:' . config('validation.min.poll_options') . '|max:' . config('validation.max.poll_options'),
+            'poll.question' => 'required_with:poll|string|max:' . config('content.validation.max.text_long'),
+            'poll.options' => 'required_with:poll|array|min:' . config('content.validation.min.poll_options') . '|max:' . config('content.validation.max.poll_options'),
             'visibility' => 'nullable|string|in:public,followers,private'
         ];
     }

@@ -15,13 +15,13 @@ class StoreCommunityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:' . config('validation.content.community.name_max_length', 100) . '|unique:communities,name',
-            'description' => 'required|string|max:' . config('validation.content.community.description_max_length', 500),
+            'name' => 'required|string|max:' . config('content.validation.content.community.name_max_length', 100) . '|unique:communities,name',
+            'description' => 'required|string|max:' . config('content.validation.content.community.description_max_length', 500),
             'privacy' => 'required|in:public,private,restricted',
             'avatar' => ['nullable', new FileUpload('avatar')],
             'banner' => ['nullable', new FileUpload('image')],
-            'rules' => 'nullable|array|max:' . config('validation.max.rules'),
-            'rules.*' => 'string|max:' . config('validation.max.text_long'),
+            'rules' => 'nullable|array|max:' . config('content.validation.max.rules'),
+            'rules.*' => 'string|max:' . config('content.validation.max.text_long'),
             'settings' => 'nullable|array',
         ];
     }

@@ -49,7 +49,7 @@ class CommentService
         if (empty($content)) {
             throw new \Exception('Content cannot be empty');
         }
-        if (strlen($content) > config('validation.content.comment.max_length')) {
+        if (strlen($content) > config('content.validation.content.comment.max_length')) {
             throw new \Exception('Content too long');
         }
 

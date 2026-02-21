@@ -45,8 +45,8 @@ class ContentLength implements ValidationRule
     
     private function validatePostSpecific(string $value, Closure $fail): void
     {
-        $maxLinks = config('validation.content.post.max_links', 2);
-        $maxMentions = config('validation.content.post.max_mentions', 5);
+        $maxLinks = config('content.validation.content.post.max_links', 2);
+        $maxMentions = config('content.validation.content.post.max_mentions', 5);
         
         $linkCount = preg_match_all('/https?:\/\/[^\s]+/', $value);
         if ($linkCount > $maxLinks) {

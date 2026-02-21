@@ -26,7 +26,7 @@ class ResponseCompressionService
             $optimized[] = [
                 'id' => $post['id'],
                 'uid' => $post['user_id'],
-                'txt' => $this->truncateText($post['content'] ?? '', config('validation.content.post.max_length')),
+                'txt' => $this->truncateText($post['content'] ?? '', config('content.validation.content.post.max_length')),
                 'img' => $post['image'] ?? null,
                 'ts' => $post['created_at'],
                 'u' => [

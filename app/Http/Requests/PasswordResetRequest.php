@@ -18,7 +18,7 @@ class PasswordResetRequest extends FormRequest
             'email' => 'required|email', // Removed exists validation to prevent enumeration
             'token' => 'sometimes|required|string',
             'code' => 'sometimes|required|string|size:6',
-            'password' => ['sometimes', 'required', 'string', 'min:' . config('validation.password.min_length', 8), 'confirmed', new StrongPassword()]
+            'password' => ['sometimes', 'required', 'string', 'min:' . config('content.validation.password.min_length', 8), 'confirmed', new StrongPassword()]
         ];
     }
 }

@@ -58,7 +58,7 @@ class ProcessVideoJob implements ShouldQueue
             $video = $ffmpeg->open($videoPath);
             
             $duration = (int) $ffmpeg->getFFProbe()->format($videoPath)->get('duration');
-            $maxDuration = config('media.video_dimensions.max_duration');
+            $maxDuration = config('content.media.video_dimensions.max_duration');
             
             if ($duration > $maxDuration) {
                 Log::warning('Video duration exceeds limit', [
@@ -71,7 +71,7 @@ class ProcessVideoJob implements ShouldQueue
             }
             
             $qualities = [];
-            $resolutions = config('media.video_qualities');
+            $resolutions = config('content.media.video_qualities');
             $totalQualities = count($resolutions);
             $currentQuality = 0;
 

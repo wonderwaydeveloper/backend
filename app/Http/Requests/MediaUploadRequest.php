@@ -20,7 +20,7 @@ class MediaUploadRequest extends FormRequest
         
         return [
             'image' => ['required', 'file', 'mimes:jpeg,png,gif,webp', "max:{$maxFileSizeKB}"],
-            'alt_text' => 'nullable|string|max:' . config('validation.max.alt_text'),
+            'alt_text' => 'nullable|string|max:' . config('content.validation.max.alt_text'),
             'type' => 'nullable|in:post,story,avatar,cover',
         ];
     }

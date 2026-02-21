@@ -16,9 +16,9 @@ class StorePostRequest extends FormRequest
     {
         return [
             'content' => ['required', new ContentLength('post')],
-            'media_ids' => 'nullable|array|max:' . config('validation.max.media'),
+            'media_ids' => 'nullable|array|max:' . config('content.validation.max.media'),
             'media_ids.*' => 'exists:media,id',
-            'gif_url' => 'nullable|url|max:' . config('validation.max.token'),
+            'gif_url' => 'nullable|url|max:' . config('content.validation.max.token'),
             'reply_settings' => 'nullable|in:everyone,following,mentioned,none',
             'quoted_post_id' => 'nullable|exists:posts,id',
             'is_draft' => 'nullable|boolean',

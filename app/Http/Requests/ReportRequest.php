@@ -15,7 +15,7 @@ class ReportRequest extends FormRequest
     {
         return [
             'reason' => 'required|string|in:spam,harassment,hate_speech,violence,nudity,other',
-            'description' => 'nullable|string|max:' . config('validation.max.description'),
+            'description' => 'nullable|string|max:' . config('content.validation.max.description'),
         ];
     }
 }

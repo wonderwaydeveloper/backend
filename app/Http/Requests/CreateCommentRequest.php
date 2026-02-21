@@ -25,7 +25,7 @@ class CreateCommentRequest extends FormRequest
         return [
             'content' => ['required', new ContentLength('comment')],
             'media' => "nullable|file|mimes:jpeg,jpg,png,gif,webp|max:{$maxFileSizeKB}",
-            'gif_url' => 'nullable|url|max:' . config('validation.max.token'),
+            'gif_url' => 'nullable|url|max:' . config('content.validation.max.token'),
         ];
     }
 

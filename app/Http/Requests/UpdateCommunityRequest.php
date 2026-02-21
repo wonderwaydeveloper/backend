@@ -19,15 +19,15 @@ class UpdateCommunityRequest extends FormRequest
             'name' => [
                 'sometimes',
                 'string',
-                'max:' . config('validation.max.name'),
+                'max:' . config('content.validation.max.name'),
                 Rule::unique('communities', 'name')->ignore($this->community->id)
             ],
-            'description' => 'sometimes|string|max:' . config('validation.max.description'),
+            'description' => 'sometimes|string|max:' . config('content.validation.max.description'),
             'privacy' => 'sometimes|in:public,private,restricted',
             'avatar' => ['nullable', new FileUpload('avatar')],
             'banner' => ['nullable', new FileUpload('image')],
-            'rules' => 'nullable|array|max:' . config('validation.max.rules'),
-            'rules.*' => 'string|max:' . config('validation.max.text_long'),
+            'rules' => 'nullable|array|max:' . config('content.validation.max.rules'),
+            'rules.*' => 'string|max:' . config('content.validation.max.text_long'),
             'settings' => 'nullable|array',
         ];
     }

@@ -38,7 +38,7 @@ class Comment extends Model
             throw new \InvalidArgumentException('Content cannot be empty');
         }
         
-        $maxLength = config('validation.content.comment.max_length', 280);
+        $maxLength = config('content.validation.content.comment.max_length', 280);
         if (strlen($value) > $maxLength) {
             throw new \InvalidArgumentException("Content exceeds {$maxLength} characters");
         }

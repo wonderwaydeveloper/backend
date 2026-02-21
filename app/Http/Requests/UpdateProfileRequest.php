@@ -16,14 +16,14 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:' . config('validation.user.name.max_length', 50) . '|min:1',
+            'name' => 'sometimes|string|max:' . config('content.validation.user.name.max_length', 50) . '|min:1',
             'username' => ['sometimes', new ValidUsername(auth()->id())],
-            'bio' => 'sometimes|nullable|string|max:' . config('validation.user.bio.max_length', 500),
+            'bio' => 'sometimes|nullable|string|max:' . config('content.validation.user.bio.max_length', 500),
             'avatar' => ['sometimes', 'nullable', new FileUpload('avatar')],
             'cover' => ['sometimes', 'nullable', new FileUpload('image')],
-            'location' => 'sometimes|nullable|string|max:' . config('validation.user.location.max_length', 100),
-            'website' => 'sometimes|nullable|url|max:' . config('validation.user.website.max_length', 255),
-            'date_of_birth' => ['sometimes', 'nullable', 'date', config('validation.date.before_rule', 'before:today'), new MinimumAge()],
+            'location' => 'sometimes|nullable|string|max:' . config('content.validation.user.location.max_length', 100),
+            'website' => 'sometimes|nullable|url|max:' . config('content.validation.user.website.max_length', 255),
+            'date_of_birth' => ['sometimes', 'nullable', 'date', config('content.validation.date.before_rule', 'before:today'), new MinimumAge()],
         ];
     }
 

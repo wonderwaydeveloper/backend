@@ -14,13 +14,13 @@ class ConversionTrackRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'event_type' => 'required|string|max:' . config('validation.max.text_medium'),
+            'event_type' => 'required|string|max:' . config('content.validation.max.text_medium'),
             'event_data' => 'nullable|array',
             'conversion_value' => 'nullable|numeric|min:0',
             'value' => 'nullable|numeric|min:0',
             'currency' => 'nullable|string|size:3',
-            'source' => 'nullable|string|max:' . config('validation.max.text_short'),
-            'campaign' => 'nullable|string|max:' . config('validation.max.text_medium'),
+            'source' => 'nullable|string|max:' . config('content.validation.max.text_short'),
+            'campaign' => 'nullable|string|max:' . config('content.validation.max.text_medium'),
             'properties' => 'nullable|array'
         ];
     }

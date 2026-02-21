@@ -20,7 +20,7 @@ class SendMessageRequest extends FormRequest
         
         return [
             'content' => ['required_without_all:attachments,gif_url', 'nullable', new ContentLength('message')],
-            'attachments' => 'required_without_all:content,gif_url|nullable|array|max:' . config('validation.max.attachments'),
+            'attachments' => 'required_without_all:content,gif_url|nullable|array|max:' . config('content.validation.max.attachments'),
             'attachments.*' => "file|max:{$maxFileSizeKB}",
             'gif_url' => 'required_without_all:content,attachments|nullable|url',
         ];

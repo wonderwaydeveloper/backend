@@ -46,8 +46,8 @@ class GenerateImageVariantsJob implements ShouldQueue
             }
             
             $variants = [];
-            $sizes = config('media.image_variants');
-            $quality = config('media.quality.image');
+            $sizes = config('content.media.image_variants');
+            $quality = config('content.media.quality.image');
 
             foreach ($sizes as $name => $width) {
                 try {

@@ -196,8 +196,8 @@ class UnifiedAuthController extends Controller
     public function multiStepStep1(Request $request): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|max:' . config('validation.user.name.max_length', 50),
-            'date_of_birth' => ['required', 'date', config('validation.date.before_rule', 'before:today'), new MinimumAge()],
+            'name' => 'required|string|max:' . config('content.validation.user.name.max_length', 50),
+            'date_of_birth' => ['required', 'date', config('content.validation.date.before_rule', 'before:today'), new MinimumAge()],
             'contact' => 'required|string',
             'contact_type' => 'required|in:email,phone'
         ]);
@@ -276,7 +276,7 @@ class UnifiedAuthController extends Controller
         $request->validate([
             'session_id' => 'required|uuid',
             'username' => ['nullable', new ValidUsername()],
-            'password' => ['required', 'string', 'min:' . config('validation.password.min_length', 8), 'confirmed', new StrongPassword()]
+            'password' => ['required', 'string', 'min:' . config('content.validation.password.min_length', 8), 'confirmed', new StrongPassword()]
         ]);
 
         $session = Cache::get("registration:{$request->session_id}");

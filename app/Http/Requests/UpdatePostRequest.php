@@ -16,9 +16,9 @@ class UpdatePostRequest extends FormRequest
     {
         return [
             'content' => ['required', new ContentLength('post')],
-            'edit_reason' => 'nullable|string|max:' . config('validation.max.text_medium'),
+            'edit_reason' => 'nullable|string|max:' . config('content.validation.max.text_medium'),
             'image' => ['nullable', new FileUpload('avatar')],
-            'gif_url' => 'nullable|url|max:' . config('validation.max.token'),
+            'gif_url' => 'nullable|url|max:' . config('content.validation.max.token'),
         ];
     }
 

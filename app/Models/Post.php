@@ -281,9 +281,9 @@ class Post extends Model
             );
         }
         
-        if (strlen($newContent) > config('validation.content.post.max_length')) {
+        if (strlen($newContent) > config('content.validation.content.post.max_length')) {
             throw new \App\Exceptions\BusinessLogicException(
-                'Content exceeds ' . config('validation.content.post.max_length') . ' characters',
+                'Content exceeds ' . config('content.validation.content.post.max_length') . ' characters',
                 'CONTENT_TOO_LONG'
             );
         }

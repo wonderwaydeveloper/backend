@@ -14,8 +14,8 @@ class TrendingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'limit' => 'nullable|integer|min:1|max:' . config('validation.trending.limit.max'),
-            'timeframe' => 'nullable|integer|min:1|max:' . config('validation.trending.timeframe.max'),
+            'limit' => 'nullable|integer|min:1|max:' . config('content.validation.trending.limit.max'),
+            'timeframe' => 'nullable|integer|min:1|max:' . config('content.validation.trending.timeframe.max'),
         ];
     }
 }
