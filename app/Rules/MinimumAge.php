@@ -13,7 +13,7 @@ class MinimumAge implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $minimumAge = config('authentication.age_restrictions.minimum_age', 15);
+        $minimumAge = config('security.age_restrictions.minimum_age', 15);
         
         try {
             $birthDate = Carbon::parse($value);

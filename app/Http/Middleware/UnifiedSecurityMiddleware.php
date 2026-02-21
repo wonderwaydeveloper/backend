@@ -24,7 +24,7 @@ class UnifiedSecurityMiddleware
         $ip = $request->ip();
         
         // Check IP whitelist
-        if (in_array($ip, config('authentication.waf.admin_allowed_ips', []))) {
+        if (in_array($ip, config('security.waf.admin_allowed_ips', []))) {
             return $next($request);
         }
         

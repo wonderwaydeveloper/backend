@@ -51,7 +51,7 @@ class SocialAuthController extends Controller
                     'name' => $socialUser->getName(),
                     'email' => $socialUser->getEmail(),
                     'username' => $this->generateUsername($socialUser->getName()),
-                    'password' => Hash::make(Str::random(config('authentication.social.password_length'))),
+                    'password' => Hash::make(Str::random(config('security.social.password_length'))),
                     'password_changed_at' => now(),
                     'email_verified_at' => now(),
                     'avatar' => $socialUser->getAvatar(),
@@ -74,7 +74,7 @@ class SocialAuthController extends Controller
             if ($isNewUser) {
                 // Create trusted device for new user
                 $user->devices()->create([
-                    'token' => 'device_' . Str::random(config('authentication.device.token_length')),
+                    'token' => 'device_' . Str::random(config('security.device.token_length')),
                     'fingerprint' => $fingerprint,
                     'device_name' => $this->getDeviceNameFromUserAgent($request->userAgent()),
                     'device_type' => $this->getDeviceTypeFromUserAgent($request->userAgent()),

@@ -70,7 +70,7 @@ class DeviceController extends Controller
                 'fingerprint' => $fingerprint,
             ],
             [
-                'token' => 'device_' . Str::random(config('authentication.device.token_length')),
+                'token' => 'device_' . Str::random(config('security.device.token_length')),
                 'device_name' => $request->name,
                 'device_type' => $request->type,
                 'browser' => $request->browser,
@@ -259,7 +259,7 @@ class DeviceController extends Controller
                 $device = $user->devices()->updateOrCreate(
                     ['fingerprint' => $fingerprint],
                     [
-                        'token' => 'device_' . Str::random(config('authentication.device.token_length')),
+                        'token' => 'device_' . Str::random(config('security.device.token_length')),
                         'device_name' => $this->getDeviceNameFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'device_type' => $this->getDeviceTypeFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
                         'browser' => $this->getBrowserFromUserAgent($verificationData['device_info']['user_agent'] ?? 'Unknown'),
@@ -366,7 +366,7 @@ class DeviceController extends Controller
             'message' => 'New verification code sent to your email',
             'code_expires_at' => $verificationData['expires_at'],
             'resend_available_at' => $resendAvailableAt,
-            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
+            'expires_in' => config('security.email.verification_expire_minutes', 15) . ' minutes',
             'resend_cooldown' => 60
         ]);
     }

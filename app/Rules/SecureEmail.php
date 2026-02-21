@@ -19,7 +19,7 @@ class SecureEmail implements ValidationRule
         }
 
         // Check against blacklisted domains
-        $blacklist = config('authentication.email.blacklist_domains', []);
+        $blacklist = config('security.email.blacklist_domains', []);
         $domain = substr(strrchr($value, '@'), 1);
         
         if (in_array($domain, $blacklist)) {

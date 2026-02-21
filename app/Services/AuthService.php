@@ -187,7 +187,7 @@ class AuthService implements AuthServiceInterface
         }
 
         $newToken = $this->timeoutService->createTokenWithExpiry($user, 'auth_token')->plainTextToken;
-        $newRefreshToken = Str::random(config('authentication.tokens.refresh_token_length', 60));
+        $newRefreshToken = Str::random(config('security.tokens.refresh_token_length', 60));
         
         $user->update([
             'refresh_token' => Hash::make($newRefreshToken)
@@ -356,7 +356,7 @@ class AuthService implements AuthServiceInterface
             return false;
         }
 
-        $token = Str::random(config('authentication.email.verification_token_length', 60));
+        $token = Str::random(config('security.email.verification_token_length', 60));
         
         $user->update([
             'email_verification_token' => Hash::make($token)

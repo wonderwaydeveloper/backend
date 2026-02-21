@@ -20,7 +20,7 @@ class DeviceFingerprintService
      */
     public static function generate(Request $request): string
     {
-        $fingerprintComponents = config('authentication.device.fingerprint_components', [
+        $fingerprintComponents = config('security.device.fingerprint_components', [
             'user_agent', 'accept_language', 'ip_address'
         ]);
         

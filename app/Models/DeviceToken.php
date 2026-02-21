@@ -44,7 +44,7 @@ class DeviceToken extends Model
     public function scopeInactive(Builder $query): Builder
     {
         return $query->where('active', false)
-                    ->orWhere('last_used_at', '<', now()->subDays(config('authentication.device.max_inactivity_days', 30)));
+                    ->orWhere('last_used_at', '<', now()->subDays(config('security.device.max_inactivity_days', 30)));
     }
 
     public function scopeTrusted(Builder $query): Builder
@@ -78,6 +78,6 @@ class DeviceToken extends Model
      */
     public function isStale(): bool
     {
-        return $this->last_used_at < now()->subDays(config('authentication.device.max_inactivity_days', 30));
+        return $this->last_used_at < now()->subDays(config('security.device.max_inactivity_days', 30));
     }
 }

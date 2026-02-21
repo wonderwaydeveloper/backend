@@ -31,7 +31,7 @@ class EmailService
             'email' => $this->maskEmail($user->email),
             'name' => $user->name ?? 'Unknown',
             'code' => '******',
-            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
+            'expires_in' => config('security.email.verification_expire_minutes', 15) . ' minutes',
             'timestamp' => now()->toDateTimeString()
         ]);
         
@@ -71,7 +71,7 @@ class EmailService
             'email' => $this->maskEmail($user->email),
             'name' => $user->name ?? 'Unknown',
             'code' => '******',
-            'expires_in' => config('authentication.password.reset.expire_minutes', 15) . ' minutes',
+            'expires_in' => config('security.password.reset.expire_minutes', 15) . ' minutes',
             'timestamp' => now()->toDateTimeString()
         ]);
         
@@ -106,7 +106,7 @@ class EmailService
             'device' => 'Unknown Device',
             'ip' => $this->maskIp($deviceInfo['ip'] ?? 'Unknown IP'),
             'location' => $deviceInfo['location'] ?? 'Unknown Location',
-            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
+            'expires_in' => config('security.email.verification_expire_minutes', 15) . ' minutes',
             'timestamp' => now()->toDateTimeString()
         ]);
         
@@ -178,7 +178,7 @@ class EmailService
     private function validateEmailSecurity(string $email): bool
     {
         // Check against blacklisted domains
-        $blacklist = config('authentication.email.blacklist_domains', []);
+        $blacklist = config('security.email.blacklist_domains', []);
         $domain = substr(strrchr($email, '@'), 1);
         
         if (in_array($domain, $blacklist)) {

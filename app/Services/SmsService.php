@@ -62,7 +62,7 @@ class SmsService
                     $phoneNumber,
                     [
                         'from' => $this->fromNumber,
-                        'body' => "Your verification code is: {$code}. Valid for " . config('authentication.email.verification_expire_minutes', 15) . " minutes."
+                        'body' => "Your verification code is: {$code}. Valid for " . config('security.email.verification_expire_minutes', 15) . " minutes."
                     ]
                 );
                 Log::info('SMS verification code sent', ['phone' => $phoneNumber]);
@@ -78,7 +78,7 @@ class SmsService
             'type' => 'SMS_VERIFICATION',
             'phone' => $phoneNumber,
             'code' => '******',
-            'expires_in' => config('authentication.email.verification_expire_minutes', 15) . ' minutes',
+            'expires_in' => config('security.email.verification_expire_minutes', 15) . ' minutes',
             'timestamp' => now()->toDateTimeString(),
             'note' => 'SMS service not configured - code logged for development'
         ]);
@@ -94,7 +94,7 @@ class SmsService
                     $phoneNumber,
                     [
                         'from' => $this->fromNumber,
-                        'body' => "Your login code is: {$code}. Valid for " . (config('authentication.tokens.auto_refresh_threshold', 300) / 60) . " minutes."
+                        'body' => "Your login code is: {$code}. Valid for " . (config('security.tokens.auto_refresh_threshold', 300) / 60) . " minutes."
                     ]
                 );
                 Log::info('SMS login code sent', ['phone' => $phoneNumber]);
@@ -110,7 +110,7 @@ class SmsService
             'type' => 'SMS_LOGIN',
             'phone' => $phoneNumber,
             'code' => '******',
-            'expires_in' => (config('authentication.tokens.auto_refresh_threshold', 300) / 60) . ' minutes',
+            'expires_in' => (config('security.tokens.auto_refresh_threshold', 300) / 60) . ' minutes',
             'timestamp' => now()->toDateTimeString(),
             'note' => 'SMS service not configured - code logged for development'
         ]);

@@ -9,8 +9,8 @@ class VerificationCodeService
     public function generateCode(): int
     {
         return random_int(
-            config('authentication.email.code_min', 100000),
-            config('authentication.email.code_max', 999999)
+            config('security.email.code_min', 100000),
+            config('security.email.code_max', 999999)
         );
     }
 
@@ -21,7 +21,7 @@ class VerificationCodeService
 
     public function getExpiryMinutes(): int
     {
-        return config('authentication.email.verification_expire_minutes', 15);
+        return config('security.email.verification_expire_minutes', 15);
     }
 
     public function getCodeExpiryTimestamp(): int

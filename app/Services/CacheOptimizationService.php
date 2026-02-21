@@ -12,8 +12,8 @@ class CacheOptimizationService
     {
         return [
             'timeline' => config('cache_ttl.ttl.timeline'),
-            'user' => config('authentication.cache.user_ttl', 600),
-            'post' => config('authentication.cache.post_ttl', 1800),
+            'user' => config('performance.cache.user_ttl', 600),
+            'post' => config('performance.cache.post_ttl', 1800),
             'trending' => config('cache_ttl.ttl.trending')
         ];
     }

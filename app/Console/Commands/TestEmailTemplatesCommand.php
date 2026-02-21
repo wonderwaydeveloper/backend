@@ -54,8 +54,8 @@ class TestEmailTemplatesCommand extends Command
                 $this->table(
                     ['Feature', 'Status'],
                     [
-                        ['Rate Limiting', config('authentication.rate_limiting.email_verification.max_attempts') ? '✅ Enabled' : '❌ Disabled'],
-                        ['Domain Blacklist', count(config('authentication.email.blacklist_domains', [])) . ' domains'],
+                        ['Rate Limiting', config('security.rate_limiting.email_verification.max_attempts') ? '✅ Enabled' : '❌ Disabled'],
+                        ['Domain Blacklist', count(config('security.email.blacklist_domains', [])) . ' domains'],
                         ['Content Security Policy', '✅ Enabled in templates'],
                         ['XSS Protection', '✅ Enabled (HTML escaping)'],
                         ['Email Masking in Logs', '✅ Enabled'],
