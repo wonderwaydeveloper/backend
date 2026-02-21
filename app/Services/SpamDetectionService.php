@@ -41,7 +41,7 @@ class SpamDetectionService
         $score += $frequencyScore['score'];
         $reasons = array_merge($reasons, $frequencyScore['reasons']);
 
-        $isSpam = $score >= config('moderation.spam.thresholds.post');
+        $isSpam = $score >= config('security.spam.thresholds.post');
 
         if ($isSpam) {
             $this->handleSpamDetection($post, $score, $reasons);
@@ -69,7 +69,7 @@ class SpamDetectionService
         $score += $userScore['score'];
         $reasons = array_merge($reasons, $userScore['reasons']);
 
-        $isSpam = $score >= config('moderation.spam.thresholds.comment');
+        $isSpam = $score >= config('security.spam.thresholds.comment');
 
         if ($isSpam) {
             $this->handleSpamComment($comment, $score, $reasons);
@@ -90,42 +90,42 @@ class SpamDetectionService
         // Check for spam keywords
         foreach ($this->spamKeywords as $keyword) {
             if (stripos($content, $keyword) !== false) {
-                $score += config('moderation.spam.penalties.spam_keyword');
+                $score += config('security.spam.penalties.spam_keyword');
                 $reasons[] = "Contains spam keyword: {$keyword}";
             }
         }
 
         // Check for multiple URLs (more strict)
         $urlCount = preg_match_all('/https?:\/\/[^\s]+/', $content);
-        if ($urlCount >= config('moderation.spam.limits.url_count_high')) {
-            $score += config('moderation.spam.penalties.multiple_links_high');
+        if ($urlCount >= config('security.spam.limits.url_count_high')) {
+            $score += config('security.spam.penalties.multiple_links_high');
             $reasons[] = "Too many links detected ({$urlCount} links)";
-        } elseif ($urlCount >= config('moderation.spam.limits.url_count_medium')) {
-            $score += config('moderation.spam.penalties.multiple_links_medium');
+        } elseif ($urlCount >= config('security.spam.limits.url_count_medium')) {
+            $score += config('security.spam.penalties.multiple_links_medium');
             $reasons[] = "Multiple links detected";
         } elseif ($urlCount >= 1) {
-            $score += config('moderation.spam.penalties.single_link');
+            $score += config('security.spam.penalties.single_link');
             $reasons[] = "Contains URL";
         }
 
         // Check other suspicious patterns
         foreach ($this->suspiciousPatterns as $pattern) {
             if ($pattern !== '/https?:\/\/[^\s]+/' && preg_match($pattern, $content)) {
-                $score += config('moderation.spam.penalties.suspicious_pattern');
+                $score += config('security.spam.penalties.suspicious_pattern');
                 $reasons[] = "Matches suspicious pattern";
             }
         }
 
         // Check content length
-        if (strlen($content) < config('moderation.spam.limits.min_content_length')) {
-            $score += config('moderation.spam.penalties.short_content');
+        if (strlen($content) < config('security.spam.limits.min_content_length')) {
+            $score += config('security.spam.penalties.short_content');
             $reasons[] = "Content too short";
         }
 
         // Check for excessive emojis
         $emojiCount = preg_match_all('/[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]/u', $content);
-        if ($emojiCount > config('moderation.spam.limits.max_emoji_count')) {
-            $score += config('moderation.spam.penalties.excessive_emoji');
+        if ($emojiCount > config('security.spam.limits.max_emoji_count')) {
+            $score += config('security.spam.penalties.excessive_emoji');
             $reasons[] = "Excessive emoji usage";
         }
 
@@ -138,22 +138,22 @@ class SpamDetectionService
         $reasons = [];
 
         // New user check - handle null created_at
-        if ($user->created_at && $user->created_at->diffInDays(now()) < config('moderation.spam.limits.new_user_days')) {
-            $score += config('moderation.spam.penalties.new_account');
+        if ($user->created_at && $user->created_at->diffInDays(now()) < config('security.spam.limits.new_user_days')) {
+            $score += config('security.spam.penalties.new_account');
             $reasons[] = "Very new user account";
         }
 
         // Check user reputation
         $reportCount = \DB::table('reports')->where('reportable_type', 'user')
             ->where('reportable_id', $user->id)->count();
-        if ($reportCount > config('moderation.spam.limits.report_threshold')) {
-            $score += config('moderation.spam.penalties.multiple_reports');
+        if ($reportCount > config('security.spam.limits.report_threshold')) {
+            $score += config('security.spam.penalties.multiple_reports');
             $reasons[] = "User has multiple reports";
         }
 
         // Check if user is already flagged
         if (isset($user->is_flagged) && $user->is_flagged) {
-            $score += config('moderation.spam.penalties.flagged_user');
+            $score += config('security.spam.penalties.flagged_user');
             $reasons[] = "User is flagged";
         }
 
@@ -161,8 +161,8 @@ class SpamDetectionService
         $followers = $user->followers()->count();
         $following = $user->following()->count();
 
-        if ($following > config('moderation.spam.limits.following_threshold') && $followers < config('moderation.spam.limits.follower_threshold')) {
-            $score += config('moderation.spam.penalties.suspicious_follower_ratio');
+        if ($following > config('security.spam.limits.following_threshold') && $followers < config('security.spam.limits.follower_threshold')) {
+            $score += config('security.spam.penalties.suspicious_follower_ratio');
             $reasons[] = "Suspicious follower ratio";
         }
 
@@ -179,11 +179,11 @@ class SpamDetectionService
             ->where('created_at', '>=', now()->subHour())
             ->count();
 
-        if ($recentPosts > config('moderation.spam.limits.posts_per_hour_high')) {
-            $score += config('moderation.spam.penalties.high_frequency');
+        if ($recentPosts > config('security.spam.limits.posts_per_hour_high')) {
+            $score += config('security.spam.penalties.high_frequency');
             $reasons[] = "Too many posts in short time";
-        } elseif ($recentPosts > config('moderation.spam.limits.posts_per_hour_medium')) {
-            $score += config('moderation.spam.penalties.medium_frequency');
+        } elseif ($recentPosts > config('security.spam.limits.posts_per_hour_medium')) {
+            $score += config('security.spam.penalties.medium_frequency');
             $reasons[] = "High posting frequency";
         }
 
@@ -196,7 +196,7 @@ class SpamDetectionService
                 ->count();
 
             if ($similarPosts > 0) {
-                $score += config('moderation.spam.penalties.duplicate_content');
+                $score += config('security.spam.penalties.duplicate_content');
                 $reasons[] = "Duplicate or similar content detected";
             }
         }
@@ -277,7 +277,7 @@ class SpamDetectionService
         Cache::put($cacheKey, $newScore, now()->addDays(7));
 
         // Create user report if spam score is too high (let Moderation handle suspension)
-        if ($newScore >= config('moderation.spam.thresholds.user')) {
+        if ($newScore >= config('security.spam.thresholds.user')) {
             \App\Models\Report::create([
                 'reporter_id' => null, // System-generated
                 'reportable_type' => 'App\\Models\\User',
