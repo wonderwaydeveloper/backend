@@ -14,7 +14,15 @@ class SubscriptionLimitService
     
     public function getUserHighestRole(User $user): string
     {
-        // Priority order: organization > premium > verified > user
+        // Priority order: admin > moderator > organization > premium > verified > user
+        if ($user->hasRole('admin')) {
+            return 'admin';
+        }
+        
+        if ($user->hasRole('moderator')) {
+            return 'moderator';
+        }
+        
         if ($user->hasRole('organization')) {
             return 'organization';
         }
@@ -70,5 +78,11 @@ class SubscriptionLimitService
     {
         $limits = $this->getUserLimits($user);
         return $limits['rate_limit_per_minute'] ?? 60;
+    }
+    
+    public function getPostsPerDayLimit(User $user): int
+    {
+        $limits = $this->getUserLimits($user);
+        return $limits['posts_per_day'] ?? 100;
     }
 }

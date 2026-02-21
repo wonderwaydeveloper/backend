@@ -19,6 +19,7 @@ class SearchDiscoverySystemTest extends TestCase
     {
         parent::setUp();
         
+        // Create permissions
         $permissions = ['search.basic', 'search.advanced'];
         foreach ($permissions as $permission) {
             \Spatie\Permission\Models\Permission::firstOrCreate(
@@ -26,9 +27,26 @@ class SearchDiscoverySystemTest extends TestCase
             );
         }
         
-        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'sanctum']);
-        $role->syncPermissions($permissions);
+        // Create roles with proper permissions (matching PermissionSeeder)
+        $userRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'user', 'guard_name' => 'sanctum']);
+        $userRole->syncPermissions(['search.basic']); // Only basic
         
+        $verifiedRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'verified', 'guard_name' => 'sanctum']);
+        $verifiedRole->syncPermissions(['search.basic', 'search.advanced']); // Both
+        
+        $premiumRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'premium', 'guard_name' => 'sanctum']);
+        $premiumRole->syncPermissions(['search.basic', 'search.advanced']); // Both
+        
+        $organizationRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'organization', 'guard_name' => 'sanctum']);
+        $organizationRole->syncPermissions(['search.basic', 'search.advanced']); // Both
+        
+        $moderatorRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'moderator', 'guard_name' => 'sanctum']);
+        $moderatorRole->syncPermissions(['search.basic', 'search.advanced']); // Both
+        
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $adminRole->syncPermissions(['search.basic', 'search.advanced']); // Both
+        
+        // Default test user with 'user' role (basic only)
         $this->user = User::factory()->create(['email_verified_at' => now()]);
         $this->user->assignRole('user');
         $this->token = $this->user->createToken('test')->plainTextToken;
@@ -85,7 +103,12 @@ class SearchDiscoverySystemTest extends TestCase
     /** @test */
     public function test_can_advanced_search()
     {
-        $response = $this->withToken($this->token)
+        // Create verified user for advanced search
+        $verified = User::factory()->create(['email_verified_at' => now()]);
+        $verified->assignRole('verified');
+        $token = $verified->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($token)
             ->getJson('/api/search/advanced?q=test&type=posts');
 
         $response->assertOk();
@@ -175,15 +198,22 @@ class SearchDiscoverySystemTest extends TestCase
     /** @test */
     public function test_user_without_permission_cannot_advanced_search()
     {
-        // Skip: Permission system works correctly, verified by test_user_with_permission_can_advanced_search
-        // This test requires complex role/permission setup that is already validated in other tests
-        $this->markTestSkipped('Permission enforcement validated in other tests');
+        // User role has only search.basic (not search.advanced)
+        $response = $this->withToken($this->token)
+            ->getJson('/api/search/advanced?q=test');
+
+        $response->assertForbidden();
     }
 
     /** @test */
     public function test_user_with_permission_can_advanced_search()
     {
-        $response = $this->withToken($this->token)
+        // Create verified user with advanced permission
+        $verifiedUser = User::factory()->create(['email_verified_at' => now()]);
+        $verifiedUser->assignRole('verified');
+        $verifiedToken = $verifiedUser->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($verifiedToken)
             ->getJson('/api/search/advanced?q=test&type=posts');
 
         $response->assertOk();
@@ -242,7 +272,12 @@ class SearchDiscoverySystemTest extends TestCase
     /** @test */
     public function test_invalid_search_type_rejected()
     {
-        $response = $this->withToken($this->token)
+        // Create verified user for advanced search
+        $verified = User::factory()->create(['email_verified_at' => now()]);
+        $verified->assignRole('verified');
+        $token = $verified->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($token)
             ->getJson('/api/search/advanced?q=test&type=invalid');
 
         $response->assertStatus(422);
@@ -635,5 +670,116 @@ class SearchDiscoverySystemTest extends TestCase
         
         $duration = (microtime(true) - $start) * 1000;
         $this->assertLessThan(200, $duration);
+    }
+
+    // ==================== SECTION 10: Role-Based Access Control ====================
+
+    /** @test */
+    public function test_user_role_has_only_basic_search()
+    {
+        // User role: only basic search
+        $this->assertTrue($this->user->hasPermissionTo('search.basic'));
+        $this->assertFalse($this->user->hasPermissionTo('search.advanced'));
+    }
+
+    /** @test */
+    public function test_verified_role_has_advanced_search()
+    {
+        $verified = User::factory()->create(['email_verified_at' => now()]);
+        $verified->assignRole('verified');
+        
+        $this->assertTrue($verified->hasPermissionTo('search.basic'));
+        $this->assertTrue($verified->hasPermissionTo('search.advanced'));
+    }
+
+    /** @test */
+    public function test_premium_role_has_advanced_search()
+    {
+        $premium = User::factory()->create(['email_verified_at' => now()]);
+        $premium->assignRole('premium');
+        
+        $this->assertTrue($premium->hasPermissionTo('search.basic'));
+        $this->assertTrue($premium->hasPermissionTo('search.advanced'));
+    }
+
+    /** @test */
+    public function test_all_roles_can_basic_search()
+    {
+        $roles = ['user', 'verified', 'premium'];
+        
+        foreach ($roles as $roleName) {
+            $user = User::factory()->create(['email_verified_at' => now()]);
+            $user->assignRole($roleName);
+            $token = $user->createToken('test')->plainTextToken;
+            
+            $response = $this->withToken($token)
+                ->getJson('/api/search/posts?q=test');
+            
+            $response->assertOk();
+        }
+    }
+
+    /** @test */
+    public function test_only_verified_and_premium_can_advanced_search()
+    {
+        // Verified can access
+        $verified = User::factory()->create(['email_verified_at' => now()]);
+        $verified->assignRole('verified');
+        $verifiedToken = $verified->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($verifiedToken)
+            ->getJson('/api/search/advanced?q=test');
+        $response->assertOk();
+        
+        // Premium can access
+        $premium = User::factory()->create(['email_verified_at' => now()]);
+        $premium->assignRole('premium');
+        $premiumToken = $premium->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($premiumToken)
+            ->getJson('/api/search/advanced?q=test');
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_organization_role_has_advanced_search()
+    {
+        $organization = User::factory()->create(['email_verified_at' => now()]);
+        $organization->assignRole('organization');
+        
+        $this->assertTrue($organization->hasPermissionTo('search.basic'));
+        $this->assertTrue($organization->hasPermissionTo('search.advanced'));
+        
+        $token = $organization->createToken('test')->plainTextToken;
+        $response = $this->withToken($token)->getJson('/api/search/advanced?q=test');
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_moderator_role_has_advanced_search()
+    {
+        $moderator = User::factory()->create(['email_verified_at' => now()]);
+        $moderator->assignRole('moderator');
+        
+        $this->assertTrue($moderator->hasPermissionTo('search.basic'));
+        $this->assertTrue($moderator->hasPermissionTo('search.advanced'));
+        
+        $token = $moderator->createToken('test')->plainTextToken;
+        $response = $this->withToken($token)->getJson('/api/search/advanced?q=test');
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_admin_role_has_advanced_search()
+    {
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $admin->assignRole('admin');
+        
+        $this->assertTrue($admin->hasPermissionTo('search.basic'));
+        $this->assertTrue($admin->hasPermissionTo('search.advanced'));
+        
+        $token = $admin->createToken('test')->plainTextToken;
+        $response = $this->withToken($token)->getJson('/api/search/advanced?q=test');
+        $response->assertOk();
     }
 }

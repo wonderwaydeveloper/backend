@@ -26,8 +26,8 @@
 ### 4️⃣ Security (20%)
 - Authentication (auth:sanctum)
 - Authorization (Policies)
-- Permissions (Spatie)
-- Roles (Spatie)
+- Permissions (Spatie) - تست همه 6 نقش: user, verified, premium, organization, moderator, admin
+- Roles (Spatie) - تست همه 6 نقش: user, verified, premium, organization, moderator, admin
 - XSS Protection
 - SQL Injection Protection
 - Mass Assignment Protection
@@ -77,6 +77,7 @@
 - Authorization policies enforced (403)
 - Self-actions blocked (follow self, block self)
 - Ownership verified (only owner can delete)
+- Role-based access tested for all 6 roles: user, verified, premium, organization, moderator, admin
 
 ### 3️⃣ Validation & Error Handling (15%)
 - Required fields validated
@@ -153,7 +154,7 @@
 - [ ] Proper error handling
 - [ ] Database indexes
 - [ ] Integration با Block/Mute
-- [ ] Permissions & Roles configured
+- [ ] Permissions & Roles configured - همه 6 نقش: user, verified, premium, organization, moderator, admin
 
 ### Script Tests - Advanced Requirements (Nice to Have)
 - [ ] DTOs
@@ -168,6 +169,7 @@
 - [ ] All endpoints tested with HTTP requests
 - [ ] Authentication tested (401 for guests)
 - [ ] Authorization tested (403 for unauthorized)
+- [ ] All 6 roles tested: user, verified, premium, organization, moderator, admin
 - [ ] Validation tested (422 for invalid data)
 - [ ] Success responses tested (200/201)
 - [ ] Integration with Block/Mute tested
@@ -218,8 +220,8 @@ Score: __/15
 ## 4. Security (20%)
 - [ ] Authentication
 - [ ] Authorization (Policies)
-- [ ] Permissions (Spatie)
-- [ ] Roles (Spatie)
+- [ ] Permissions (Spatie) - همه 6 نقش: user, verified, premium, organization, moderator, admin
+- [ ] Roles (Spatie) - همه 6 نقش: user, verified, premium, organization, moderator, admin
 - [ ] XSS/SQL protection
 - [ ] Rate limiting
 Score: __/20
@@ -270,6 +272,7 @@ Score: __/20
 - [ ] Policies enforced (403)
 - [ ] Self-actions blocked
 - [ ] Ownership verified
+- [ ] All 6 roles tested: user, verified, premium, organization, moderator, admin
 Score: __/20
 
 ## 3. Validation & Error Handling (15%)
@@ -361,3 +364,134 @@ Score: __/2
 **تاریخ ایجاد:** 2026-02-10  
 **آخرین بروزرسانی:** 2026-02-10  
 **نسخه:** 2.0
+
+
+---
+
+## ⚠️ نکته مهم: تست نقش‌ها (Roles)
+
+**الزامی:** در تمام تست‌ها (Script Tests و Feature Tests)، باید همه 6 نقش سیستم تست شوند:
+
+1. **user** - کاربر عادی
+2. **verified** - کاربر تایید شده
+3. **premium** - کاربر پرمیوم
+4. **organization** - سازمان
+5. **moderator** - مدیر
+6. **admin** - ادمین
+
+### در Script Tests (بخش 6 و 18):
+```php
+// بخش 6: Security & Authorization
+test("Role user has permission", fn() => Role::findByName('user')->hasPermissionTo('permission.name'));
+test("Role verified has permission", fn() => Role::findByName('verified')->hasPermissionTo('permission.name'));
+test("Role premium has permission", fn() => Role::findByName('premium')->hasPermissionTo('permission.name'));
+test("Role organization has permission", fn() => Role::findByName('organization')->hasPermissionTo('permission.name'));
+test("Role moderator has permission", fn() => Role::findByName('moderator')->hasPermissionTo('permission.name'));
+test("Role admin has permission", fn() => Role::findByName('admin')->hasPermissionTo('permission.name'));
+
+// بخش 18: Roles & Permissions Database
+test("Role user exists", fn() => Role::where('name', 'user')->exists());
+test("Role verified exists", fn() => Role::where('name', 'verified')->exists());
+test("Role premium exists", fn() => Role::where('name', 'premium')->exists());
+test("Role organization exists", fn() => Role::where('name', 'organization')->exists());
+test("Role moderator exists", fn() => Role::where('name', 'moderator')->exists());
+test("Role admin exists", fn() => Role::where('name', 'admin')->exists());
+```
+
+### در Feature Tests (بخش 2 و 10):
+```php
+// بخش 2: Authentication & Authorization
+public function test_user_role_can_access()
+public function test_verified_role_can_access()
+public function test_premium_role_can_access()
+public function test_organization_role_can_access()
+public function test_moderator_role_can_access()
+public function test_admin_role_can_access()
+
+// بخش 10: Role-Based Access Control (اختیاری اما توصیه می‌شود)
+public function test_all_roles_permissions()
+```
+
+**هیچ تستی نباید کمتر از 6 نقش را بررسی کند.**
+
+---
+
+**آخرین بروزرسانی:** 2026-02-10  
+**نسخه:** 2.1
+
+
+## 🔐 الزام تست سطوح دسترسی (Access Levels)
+
+**بسیار مهم:** علاوه بر تست وجود 6 نقش، باید سطوح دسترسی هر نقش به دقت بررسی شود.
+
+### 3 نوع تست الزامی:
+
+#### 1️⃣ تست مثبت (Can Access) - 200/201
+نقش باید بتواند به endpoint هایی که permission دارد دسترسی پیدا کند.
+
+```php
+// Script Test
+test("Role verified has search.advanced", fn() => Role::findByName('verified')->hasPermissionTo('search.advanced'));
+
+// Feature Test
+public function test_verified_role_can_advanced_search()
+{
+    $verified = User::factory()->create();
+    $verified->assignRole('verified');
+    $response = $this->actingAs($verified)->getJson('/api/search/advanced?q=test');
+    $response->assertOk(); // 200
+}
+```
+
+#### 2️⃣ تست منفی (Cannot Access) - 403
+نقش نباید بتواند به endpoint هایی که permission ندارد دسترسی پیدا کند.
+
+```php
+// Script Test
+test("Role user does NOT have search.advanced", fn() => !Role::findByName('user')->hasPermissionTo('search.advanced'));
+
+// Feature Test
+public function test_user_role_cannot_advanced_search()
+{
+    $user = User::factory()->create();
+    $user->assignRole('user');
+    $response = $this->actingAs($user)->getJson('/api/search/advanced?q=test');
+    $response->assertForbidden(); // 403
+}
+```
+
+#### 3️⃣ تست تفاوت سطوح (Level Difference)
+نقش های پایین تر نباید بتوانند کارهای نقش های بالاتر را انجام دهند.
+
+```php
+// مثال: user نمی تواند advanced search کند، اما verified می تواند
+test("User cannot but Verified can", function() {
+    $userRole = Role::findByName('user');
+    $verifiedRole = Role::findByName('verified');
+    
+    return !$userRole->hasPermissionTo('search.advanced') 
+        && $verifiedRole->hasPermissionTo('search.advanced');
+});
+```
+
+### جدول سطوح دسترسی (مثال):
+
+| Permission | user | verified | premium | organization | moderator | admin |
+|------------|------|----------|---------|--------------|-----------|-------|
+| basic      | ✅   | ✅       | ✅      | ✅           | ✅        | ✅    |
+| advanced   | ❌   | ✅       | ✅      | ✅           | ✅        | ✅    |
+| moderate   | ❌   | ❌       | ❌      | ❌           | ✅        | ✅    |
+| admin      | ❌   | ❌       | ❌      | ❌           | ❌        | ✅    |
+
+### چکلیست تست سطوح دسترسی:
+
+برای هر permission در سیستم:
+- [ ] تست مثبت برای نقش هایی که permission دارند (200)
+- [ ] تست منفی برای نقش هایی که permission ندارند (403)
+- [ ] تست تفاوت بین نقش پایین تر و بالاتر
+- [ ] همه 6 نقش بررسی شده اند
+
+---
+
+**آخرین بروزرسانی:** 2026-02-10  
+**نسخه:** 2.2

@@ -612,7 +612,7 @@ echo "\n";
 echo "1️⃣6️⃣ بخش 16: User Flows\n" . str_repeat("─", 65) . "\n";
 
 test("Flow: Search → Results", function() use (&$testUsers, &$testPosts) {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['email' => 'flow_search_' . uniqid() . '@test.com']);
     $testUsers[] = $user;
     return true;
 });
@@ -688,6 +688,21 @@ test("Role verified has search.advanced", function() {
 
 test("Role premium has search.advanced", function() {
     $role = Role::findByName('premium', 'sanctum');
+    return $role->hasPermissionTo('search.advanced');
+});
+
+test("Role organization has search.advanced", function() {
+    $role = Role::findByName('organization', 'sanctum');
+    return $role->hasPermissionTo('search.advanced');
+});
+
+test("Role moderator has search.advanced", function() {
+    $role = Role::findByName('moderator', 'sanctum');
+    return $role->hasPermissionTo('search.advanced');
+});
+
+test("Role admin has search.advanced", function() {
+    $role = Role::findByName('admin', 'sanctum');
     return $role->hasPermissionTo('search.advanced');
 });
 

@@ -253,7 +253,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/users', [SearchController::class, 'users'])->middleware('throttle:' . config('limits.rate_limits.search.users'));
         Route::get('/hashtags', [SearchController::class, 'hashtags'])->middleware('throttle:' . config('limits.rate_limits.search.hashtags'));
         Route::get('/all', [SearchController::class, 'all'])->middleware('throttle:' . config('limits.rate_limits.search.all'));
-        Route::get('/advanced', [SearchController::class, 'advanced'])->middleware(['throttle:' . config('limits.rate_limits.search.advanced'), 'can:advanced']);
+        Route::get('/advanced', [SearchController::class, 'advanced'])->middleware(['throttle:' . config('limits.rate_limits.search.advanced'), 'permission:search.advanced']);
         Route::get('/suggestions', [SearchController::class, 'suggestions'])->middleware('throttle:' . config('limits.rate_limits.search.suggestions'));
     });
     

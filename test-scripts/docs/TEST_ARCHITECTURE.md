@@ -512,3 +512,138 @@ test("Integration: Post → Notification → Block Filter", function() {
 **بروزرسانی:** 2025-02-04  
 **نسخه:** 1.1  
 **تغییرات:** افزودن بخش Integration Testing
+
+
+---
+
+## ⚠️ نکته بسیار مهم: تست همه 6 نقش
+
+**الزامی برای تمام سیستمها:**
+
+سیستم دارای 6 نقش است که باید در تمام تستها بررسی شوند:
+1. **user** - کاربر عادی
+2. **verified** - کاربر تایید شده  
+3. **premium** - کاربر پرمیوم
+4. **organization** - سازمان
+5. **moderator** - مدیر
+6. **admin** - ادمین
+
+### در بخش 6 (Security & Authorization):
+```php
+// تست permissions برای همه 6 نقش
+test("Role user has permission", fn() => Role::findByName('user')->hasPermissionTo('permission.name'));
+test("Role verified has permission", fn() => Role::findByName('verified')->hasPermissionTo('permission.name'));
+test("Role premium has permission", fn() => Role::findByName('premium')->hasPermissionTo('permission.name'));
+test("Role organization has permission", fn() => Role::findByName('organization')->hasPermissionTo('permission.name'));
+test("Role moderator has permission", fn() => Role::findByName('moderator')->hasPermissionTo('permission.name'));
+test("Role admin has permission", fn() => Role::findByName('admin')->hasPermissionTo('permission.name'));
+```
+
+### در بخش 18 (Roles & Permissions Database):
+```php
+// تست وجود همه 6 نقش
+test("Role user exists", fn() => Role::where('name', 'user')->exists());
+test("Role verified exists", fn() => Role::where('name', 'verified')->exists());
+test("Role premium exists", fn() => Role::where('name', 'premium')->exists());
+test("Role organization exists", fn() => Role::where('name', 'organization')->exists());
+test("Role moderator exists", fn() => Role::where('name', 'moderator')->exists());
+test("Role admin exists", fn() => Role::where('name', 'admin')->exists());
+
+// تست permissions برای همه 6 نقش
+test("Role user has permission", fn() => Role::findByName('user')->hasPermissionTo('permission.name'));
+test("Role verified has permission", fn() => Role::findByName('verified')->hasPermissionTo('permission.name'));
+test("Role premium has permission", fn() => Role::findByName('premium')->hasPermissionTo('permission.name'));
+test("Role organization has permission", fn() => Role::findByName('organization')->hasPermissionTo('permission.name'));
+test("Role moderator has permission", fn() => Role::findByName('moderator')->hasPermissionTo('permission.name'));
+test("Role admin has permission", fn() => Role::findByName('admin')->hasPermissionTo('permission.name'));
+```
+
+**هیچ تستی نباید کمتر از 6 نقش را بررسی کند. این یک الزام است نه یک پیشنهاد.**
+
+---
+
+**آخرین بروزرسانی:** 2026-02-10  
+**نسخه:** 1.2
+
+
+## 🔐 الزام تست سطوح دسترسی (Access Levels)
+
+**بسیار مهم:** علاوه بر تست وجود 6 نقش، سطوح دسترسی هر نقش باید به دقت بررسی شود.
+
+### 3 نوع تست الزامی برای هر permission:
+
+#### 1️⃣ تست مثبت (Can Access)
+```php
+// نقش باید بتواند به endpoint دسترسی پیدا کند
+test("Role verified CAN advanced search", fn() => Role::findByName('verified')->hasPermissionTo('search.advanced'));
+```
+
+#### 2️⃣ تست منفی (Cannot Access)
+```php
+// نقش نباید بتواند به endpoint دسترسی پیدا کند
+test("Role user CANNOT advanced search", fn() => !Role::findByName('user')->hasPermissionTo('search.advanced'));
+```
+
+#### 3️⃣ تست تفاوت سطوح
+```php
+// نقش پایین تر نباید بتواند کار نقش بالاتر را انجام دهد
+test("User cannot but Verified can", function() {
+    return !Role::findByName('user')->hasPermissionTo('search.advanced')
+        && Role::findByName('verified')->hasPermissionTo('search.advanced');
+});
+```
+
+### مثال کامل در بخش 6 و 18:
+
+```php
+// بخش 6: Security & Authorization
+echo "6️⃣ بخش 6: Security & Authorization\n" . str_repeat("─", 65) . "\n";
+
+// تست مثبت: نقش هایی که باید دسترسی داشته باشند
+test("Role verified has search.advanced", fn() => Role::findByName('verified')->hasPermissionTo('search.advanced'));
+test("Role premium has search.advanced", fn() => Role::findByName('premium')->hasPermissionTo('search.advanced'));
+test("Role organization has search.advanced", fn() => Role::findByName('organization')->hasPermissionTo('search.advanced'));
+test("Role moderator has search.advanced", fn() => Role::findByName('moderator')->hasPermissionTo('search.advanced'));
+test("Role admin has search.advanced", fn() => Role::findByName('admin')->hasPermissionTo('search.advanced'));
+
+// تست منفی: نقش هایی که نباید دسترسی داشته باشند
+test("Role user does NOT have search.advanced", fn() => !Role::findByName('user')->hasPermissionTo('search.advanced'));
+
+// تست تفاوت سطوح
+test("Only verified+ can advanced search", function() {
+    $user = Role::findByName('user');
+    $verified = Role::findByName('verified');
+    return !$user->hasPermissionTo('search.advanced') && $verified->hasPermissionTo('search.advanced');
+});
+
+// بخش 18: Roles & Permissions Database
+echo "\n1️⃣1️⃣8️⃣ بخش 18: Roles & Permissions Database\n" . str_repeat("─", 65) . "\n";
+
+// تست همه 6 نقش با سطوح دسترسی دقیق
+$roles = ['user', 'verified', 'premium', 'organization', 'moderator', 'admin'];
+foreach ($roles as $roleName) {
+    test("Role {$roleName} exists", fn() => Role::where('name', $roleName)->exists());
+}
+
+// تست سطوح دسترسی برای هر permission
+test("Role user: basic only", function() {
+    $role = Role::findByName('user');
+    return $role->hasPermissionTo('search.basic') && !$role->hasPermissionTo('search.advanced');
+});
+
+test("Role verified: basic + advanced", function() {
+    $role = Role::findByName('verified');
+    return $role->hasPermissionTo('search.basic') && $role->hasPermissionTo('search.advanced');
+});
+```
+
+### چکلیست الزامی:
+- [ ] تست مثبت برای همه نقش هایی که permission دارند
+- [ ] تست منفی برای همه نقش هایی که permission ندارند
+- [ ] تست تفاوت سطوح بین نقش های مختلف
+- [ ] همه 6 نقش بررسی شده اند
+
+---
+
+**آخرین بروزرسانی:** 2026-02-10  
+**نسخه:** 1.3
