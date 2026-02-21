@@ -18,7 +18,7 @@ class ContentLength implements ValidationRule
     {
         if (!is_string($value)) return;
         
-        $maxLength = config("validation.content.{$this->type}.max_length");
+        $maxLength = config("content.validation.content.{$this->type}.max_length");
         
         if (!$maxLength) {
             $fail("Invalid content type: {$this->type}");

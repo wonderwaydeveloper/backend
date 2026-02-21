@@ -230,38 +230,38 @@ class MediaSystemTest extends TestCase
 
     public function test_image_max_size_is_5mb(): void
     {
-        $maxSize = config('media.max_file_size.image');
+        $maxSize = config('content.media.max_file_size.image');
         $this->assertEquals(5 * 1024 * 1024, $maxSize);
     }
 
     public function test_video_max_size_is_2gb(): void
     {
-        $maxSize = config('media.max_file_size.video');
+        $maxSize = config('content.media.max_file_size.video');
         $this->assertEquals(2 * 1024 * 1024 * 1024, $maxSize);
     }
 
     public function test_gif_max_size_is_15mb(): void
     {
-        $maxSize = config('media.max_file_size.gif');
+        $maxSize = config('content.media.max_file_size.gif');
         $this->assertEquals(15 * 1024 * 1024, $maxSize);
     }
 
     public function test_image_max_dimensions_are_4096x4096(): void
     {
-        $dimensions = config('media.image_dimensions.post');
+        $dimensions = config('content.media.image_dimensions.post');
         $this->assertEquals(4096, $dimensions['max_width']);
         $this->assertEquals(4096, $dimensions['max_height']);
     }
 
     public function test_video_max_duration_is_140_seconds(): void
     {
-        $maxDuration = config('media.video_dimensions.max_duration');
+        $maxDuration = config('content.media.video_dimensions.max_duration');
         $this->assertEquals(140, $maxDuration);
     }
 
     public function test_image_variants_config_has_three_sizes(): void
     {
-        $variants = config('media.image_variants');
+        $variants = config('content.media.image_variants');
         $this->assertArrayHasKey('small', $variants);
         $this->assertArrayHasKey('medium', $variants);
         $this->assertArrayHasKey('large', $variants);
@@ -272,7 +272,7 @@ class MediaSystemTest extends TestCase
 
     public function test_video_qualities_config_has_five_resolutions(): void
     {
-        $qualities = config('media.video_qualities');
+        $qualities = config('content.media.video_qualities');
         $this->assertArrayHasKey('240p', $qualities);
         $this->assertArrayHasKey('360p', $qualities);
         $this->assertArrayHasKey('480p', $qualities);

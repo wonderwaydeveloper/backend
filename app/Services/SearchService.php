@@ -132,7 +132,13 @@ class SearchService
         } catch (\Exception $e) {
             Log::error('Post search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
 
-            return ['data' => [], 'total' => 0, 'error' => 'Search failed'];
+            return [
+                'data' => [], 
+                'total' => 0, 
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'error' => 'Search failed'
+            ];
         }
     }
 
@@ -218,7 +224,13 @@ class SearchService
         } catch (\Exception $e) {
             Log::error('User search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
 
-            return ['data' => [], 'total' => 0, 'error' => 'Search failed'];
+            return [
+                'data' => [], 
+                'total' => 0, 
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'error' => 'Search failed'
+            ];
         }
     }
 
@@ -269,7 +281,13 @@ class SearchService
         } catch (\Exception $e) {
             Log::error('Hashtag search failed', ['error' => $e->getMessage(), 'filters' => $filters]);
 
-            return ['data' => [], 'total' => 0, 'error' => 'Search failed'];
+            return [
+                'data' => [], 
+                'total' => 0, 
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'error' => 'Search failed'
+            ];
         }
     }
 

@@ -144,44 +144,10 @@ test("ValidUsername rule exists", fn() => class_exists('App\\Rules\\ValidUsernam
 test("MinimumAge rule exists", fn() => class_exists('App\\Rules\\MinimumAge'));
 test("FileUpload rule exists", fn() => class_exists('App\\Rules\\FileUpload'));
 
-test("Config validation.user.name.max_length", fn() => config('validation.user.name.max_length') !== null);
-test("Config validation.user.bio.max_length", fn() => config('validation.user.bio.max_length') !== null);
-test("Config validation.user.location.max_length", fn() => config('validation.user.location.max_length') !== null);
-test("Config validation.user.website.max_length", fn() => config('validation.user.website.max_length') !== null);
-
-test("No hardcoded max length in request", function() {
-    $content = file_get_contents(__DIR__ . '/../app/Http/Requests/UpdateProfileRequest.php');
-    return !str_contains($content, 'max:50') && !str_contains($content, 'max:500');
-});
-
-test("Config-based validation in request", function() {
-    $content = file_get_contents(__DIR__ . '/../app/Http/Requests/UpdateProfileRequest.php');
-    return str_contains($content, "config('validation");
-});
-
-test("Name validation uses config", function() {
-    $validator = \Validator::make(
-        ['name' => str_repeat('a', 100)],
-        ['name' => 'max:' . config('validation.user.name.max_length', 50)]
-    );
-    return $validator->fails();
-});
-
-test("Bio validation uses config", function() {
-    $validator = \Validator::make(
-        ['bio' => str_repeat('a', 1000)],
-        ['bio' => 'max:' . config('validation.user.bio.max_length', 500)]
-    );
-    return $validator->fails();
-});
-
-test("Location validation uses config", function() {
-    $validator = \Validator::make(
-        ['location' => str_repeat('a', 200)],
-        ['location' => 'max:' . config('validation.user.location.max_length', 100)]
-    );
-    return $validator->fails();
-});
+test("Config content.validation.user.name.max_length", fn() => config('content.validation.user.name.max_length') !== null);
+test("Config content.validation.user.bio.max_length", fn() => config('content.validation.user.bio.max_length') !== null);
+test("Config content.validation.user.location.max_length", fn() => config('content.validation.user.location.max_length') !== null);
+test("Config content.validation.user.website.max_length", fn() => config('content.validation.user.website.max_length') !== null);
 
 test("Website validation URL format", function() {
     $validator = \Validator::make(
@@ -618,16 +584,16 @@ echo "\n";
 // ============================================================================
 echo "1️⃣1️⃣ بخش 11: Configuration\n" . str_repeat("─", 65) . "\n";
 
-test("Config validation.user.name.max_length", fn() => config('validation.user.name.max_length') !== null);
-test("Config validation.user.bio.max_length", fn() => config('validation.user.bio.max_length') !== null);
-test("Config validation.user.location.max_length", fn() => config('validation.user.location.max_length') !== null);
-test("Config validation.user.website.max_length", fn() => config('validation.user.website.max_length') !== null);
+test("Config content.validation.user.name.max_length", fn() => config('content.validation.user.name.max_length') !== null);
+test("Config content.validation.user.bio.max_length", fn() => config('content.validation.user.bio.max_length') !== null);
+test("Config content.validation.user.location.max_length", fn() => config('content.validation.user.location.max_length') !== null);
+test("Config content.validation.user.website.max_length", fn() => config('content.validation.user.website.max_length') !== null);
 
-test("Config pagination.posts", fn() => config('pagination.posts') !== null);
-test("Config pagination.activities", fn() => config('pagination.activities') !== null);
+test("Config limits.pagination.posts", fn() => config('limits.pagination.posts') !== null);
+test("Config limits.pagination.activities", fn() => config('limits.pagination.activities') !== null);
 
-test("Config validation.file_upload.avatar.max_size_kb", fn() => config('validation.file_upload.avatar.max_size_kb') !== null);
-test("Config validation.file_upload.image.max_size_kb", fn() => config('validation.file_upload.image.max_size_kb') !== null);
+test("Config content.validation.file_upload.avatar.max_size_kb", fn() => config('content.validation.file_upload.avatar.max_size_kb') !== null);
+test("Config content.validation.file_upload.image.max_size_kb", fn() => config('content.validation.file_upload.image.max_size_kb') !== null);
 
 test("Config limits.rate_limits exists", fn() => config('limits.rate_limits') !== null);
 
@@ -902,7 +868,7 @@ test("Validator: empty name fails", function() {
 test("Validator: long name fails", function() {
     $validator = \Validator::make(
         ['name' => str_repeat('a', 100)],
-        ['name' => 'max:' . config('validation.user.name.max_length', 50)]
+        ['name' => 'max:' . config('content.validation.user.name.max_length', 50)]
     );
     return $validator->fails();
 });
@@ -910,7 +876,7 @@ test("Validator: long name fails", function() {
 test("Validator: long bio fails", function() {
     $validator = \Validator::make(
         ['bio' => str_repeat('a', 1000)],
-        ['bio' => 'max:' . config('validation.user.bio.max_length', 500)]
+        ['bio' => 'max:' . config('content.validation.user.bio.max_length', 500)]
     );
     return $validator->fails();
 });

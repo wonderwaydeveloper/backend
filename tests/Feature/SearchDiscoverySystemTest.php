@@ -564,6 +564,12 @@ class SearchDiscoverySystemTest extends TestCase
     public function test_complete_search_workflow()
     {
         $post = Post::factory()->create(['content' => 'Laravel testing']);
+        
+        // Force synchronous indexing in tests
+        $post->searchable();
+        
+        // Give Meilisearch time to index
+        sleep(1);
 
         $response = $this->withToken($this->token)
             ->getJson('/api/search/posts?q=Laravel');

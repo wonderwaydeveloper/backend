@@ -654,7 +654,7 @@ test("UserResource has followers_count", fn() => strpos(file_get_contents(__DIR_
 
 test("NotifyFollowersJob exists", fn() => class_exists('App\Jobs\NotifyFollowersJob'));
 
-test("Config pagination.follows", fn() => config('pagination.follows') !== null);
+test("Config limits.pagination.follows", fn() => config('limits.pagination.follows') !== null);
 test("Config rate_limits.social.follow", fn() => config('limits.rate_limits.social.follow') !== null);
 test("Config rate_limits.social.block", fn() => config('limits.rate_limits.social.block') !== null);
 test("Config rate_limits.social.mute", fn() => config('limits.rate_limits.social.mute') !== null);
@@ -803,8 +803,8 @@ test("NOT NULL constraints", function() {
 // ============================================================================
 echo "\n🔟 بخش 10: Configuration\n" . str_repeat("─", 65) . "\n";
 
-test("Config pagination.follows exists", fn() => config('pagination.follows') !== null);
-test("Config pagination.follows value", fn() => config('pagination.follows') == 20);
+test("Config limits.pagination.follows exists", fn() => config('limits.pagination.follows') !== null);
+test("Config limits.pagination.follows value", fn() => config('limits.pagination.follows') == 20);
 
 test("Config rate_limits.social.follow exists", fn() => config('limits.rate_limits.social.follow') !== null);
 test("Config rate_limits.social.follow value", fn() => config('limits.rate_limits.social.follow') == '400,1440');
@@ -815,7 +815,7 @@ test("Config rate_limits.social.block value", fn() => config('limits.rate_limits
 test("Config rate_limits.social.mute exists", fn() => config('limits.rate_limits.social.mute') !== null);
 test("Config rate_limits.social.mute value", fn() => config('limits.rate_limits.social.mute') == '20,1');
 
-test("Config pagination.activities exists", fn() => config('pagination.activities') !== null);
+test("Config limits.pagination.activities exists", fn() => config('limits.pagination.activities') !== null);
 
 test("No hardcoded values in controllers", function() {
     $controller = file_get_contents(__DIR__ . '/../app/Http/Controllers/Api/FollowController.php');
@@ -1365,7 +1365,7 @@ test("Eager loading in followers", function() {
     return str_contains($content, 'select(');
 });
 
-test("Pagination configured", fn() => config('pagination.follows') == 20);
+test("Pagination configured", fn() => config('limits.pagination.follows') == 20);
 
 test("Query optimization with select", function() {
     $user = User::factory()->create();

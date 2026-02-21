@@ -116,17 +116,17 @@ test("SearchUsersRequest.rules() method", fn() => method_exists('App\\Http\\Requ
 test("SearchHashtagsRequest.rules() method", fn() => method_exists('App\\Http\\Requests\\SearchHashtagsRequest', 'rules'));
 test("TrendingRequest.rules() method", fn() => method_exists('App\\Http\\Requests\\TrendingRequest', 'rules'));
 
-test("Config validation.search exists", fn() => config('validation.search.query.min_length') !== null);
-test("Config validation.trending exists", fn() => config('validation.trending.limit.max') !== null);
+test("Config validation.search exists", fn() => config('content.validation.search.query.min_length') !== null);
+test("Config validation.trending exists", fn() => config('content.validation.trending.limit.max') !== null);
 
 test("No hardcoded validation in SearchPostsRequest", function() {
     $content = file_get_contents(__DIR__ . '/../app/Http/Requests/SearchPostsRequest.php');
-    return str_contains($content, "config('validation");
+    return str_contains($content, "config('content.validation");
 });
 
 test("Config-based validation in TrendingRequest", function() {
     $content = file_get_contents(__DIR__ . '/../app/Http/Requests/TrendingRequest.php');
-    return str_contains($content, "config('validation");
+    return str_contains($content, "config('content.validation");
 });
 
 echo "\n";
@@ -377,7 +377,7 @@ test("Cache support in TrendingService", function() {
     return str_contains($content, 'Cache::remember');
 });
 
-test("Cache TTL configured", fn() => config('cache_ttl.ttl.trending') !== null);
+test("Cache TTL configured", fn() => config('performance.cache.trending') !== null);
 
 test("Pagination support", function() {
     $content = file_get_contents(__DIR__ . '/../app/Services/SearchService.php');
@@ -465,14 +465,14 @@ echo "\n";
 // ============================================================================
 echo "1️⃣1️⃣ بخش 11: Configuration\n" . str_repeat("─", 65) . "\n";
 
-test("Config validation.search exists", fn() => config('validation.search.query.min_length') !== null);
-test("Config validation.trending exists", fn() => config('validation.trending.limit.max') !== null);
+test("Config content.validation.search exists", fn() => config('content.validation.search.query.min_length') !== null);
+test("Config content.validation.trending exists", fn() => config('content.validation.trending.limit.max') !== null);
 test("Config limits.rate_limits.search exists", fn() => config('limits.rate_limits.search') !== null);
 test("Config limits.rate_limits.trending exists", fn() => config('limits.rate_limits.trending') !== null);
-test("Config cache_ttl.ttl.trending exists", fn() => config('cache_ttl.ttl.trending') !== null);
+test("Config performance.cache.trending exists", fn() => config('performance.cache.trending') !== null);
 test("Config scout.driver exists", fn() => config('scout.driver') !== null);
 test("Config scout.meilisearch.host exists", fn() => config('scout.meilisearch.host') !== null);
-test("Config pagination exists", fn() => config('pagination.default') !== null);
+test("Config limits.pagination exists", fn() => config('limits.pagination.default') !== null);
 
 echo "\n";
 
@@ -640,7 +640,7 @@ test("Validator: empty query fails", function() {
 test("Validator: long query fails", function() {
     $validator = \Validator::make(
         ['q' => str_repeat('a', 200)],
-        ['q' => 'max:' . config('validation.search.query.max_length', 100)]
+        ['q' => 'max:' . config('content.validation.search.query.max_length', 100)]
     );
     return $validator->fails();
 });
@@ -661,7 +661,7 @@ test("Validator: negative limit fails", function() {
 test("Validator: excessive limit fails", function() {
     $validator = \Validator::make(
         ['limit' => 1000],
-        ['limit' => 'integer|lte:' . config('validation.trending.limit.max', 100)]
+        ['limit' => 'integer|lte:' . config('content.validation.trending.limit.max', 100)]
     );
     return $validator->fails();
 });

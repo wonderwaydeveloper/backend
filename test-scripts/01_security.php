@@ -287,8 +287,8 @@ test("Request TrustDeviceRequest", fn() => class_exists('App\Http\Requests\Trust
 test("Config security", fn() => config('security') !== null);
 test("Config security.threat_detection", fn() => config('security.threat_detection') !== null);
 test("Config security.monitoring", fn() => config('security.monitoring') !== null);
-test("Config authentication.device", fn() => config('authentication.device') !== null);
-test("Config authentication.rate_limiting", fn() => config('authentication.rate_limiting') !== null);
+test("Config security.device", fn() => config('security.device') !== null);
+test("Config security.rate_limiting", fn() => config('security.rate_limiting') !== null);
 
 test("RegisterDeviceRequest rules", function() {
     $request = new \App\Http\Requests\RegisterDeviceRequest();
@@ -297,7 +297,7 @@ test("RegisterDeviceRequest rules", function() {
 });
 
 test("Config-based validation", function() {
-    $maxDevices = config('authentication.device.max_devices');
+    $maxDevices = config('security.device.max_devices');
     return is_numeric($maxDevices) && $maxDevices > 0;
 });
 

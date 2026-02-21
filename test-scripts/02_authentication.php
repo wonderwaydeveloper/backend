@@ -321,13 +321,13 @@ test("ValidUsername rule", function() {
     return method_exists($rule, 'validate');
 });
 
-test("Config authentication.password", fn() => config('authentication.password') !== null);
-test("Config authentication.rate_limiting", fn() => config('authentication.rate_limiting') !== null);
-test("Config authentication.tokens", fn() => config('authentication.tokens') !== null);
-test("Config authentication.session", fn() => config('authentication.session') !== null);
-test("Config authentication.email", fn() => config('authentication.email') !== null);
-test("Config authentication.device", fn() => config('authentication.device') !== null);
-test("Config authentication.social", fn() => config('authentication.social') !== null);
+test("Config security.password", fn() => config('security.password') !== null);
+test("Config security.rate_limiting", fn() => config('security.rate_limiting') !== null);
+test("Config security.tokens", fn() => config('security.tokens') !== null);
+test("Config security.session", fn() => config('security.session') !== null);
+test("Config security.email", fn() => config('security.email') !== null);
+test("Config security.device", fn() => config('security.device') !== null);
+test("Config security.social", fn() => config('security.social') !== null);
 
 endSection($s5);
 

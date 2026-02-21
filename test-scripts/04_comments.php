@@ -295,8 +295,8 @@ test("Validation rules content", function() {
     return isset($rules['content']);
 });
 
-test("Config validation exists", fn() => config('validation.content.comment') !== null);
-test("Config max_length", fn() => config('validation.content.comment.max_length') !== null);
+test("Config validation exists", fn() => config('content.validation.content.comment') !== null);
+test("Config max_length", fn() => config('content.validation.content.comment.max_length') !== null);
 
 test("No hardcoded validation", function() {
     $requestFile = file_get_contents(__DIR__ . '/../app/Http/Requests/CreateCommentRequest.php');
@@ -652,9 +652,9 @@ endSection($s10);
 // ═══════════════════════════════════════════════════════════════
 $s11 = section("1️⃣1️⃣ Configuration", 3);
 
-test("Config validation.content.comment exists", fn() => config('validation.content.comment') !== null);
-test("Config max_length defined", fn() => config('validation.content.comment.max_length') !== null);
-test("Config min_length defined", fn() => config('validation.content.comment.min_length') !== null);
+test("Config content.validation.content.comment exists", fn() => config('content.validation.content.comment') !== null);
+test("Config max_length defined", fn() => config('content.validation.content.comment.max_length') !== null);
+test("Config min_length defined", fn() => config('content.validation.content.comment.min_length') !== null);
 
 endSection($s11);
 
