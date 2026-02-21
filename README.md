@@ -226,9 +226,11 @@ Test scripts are created based on documentation in `test-scripts/docs/`:
 ## 🔧 Configuration
 
 Key configuration files:
-- `config/authentication.php` - Auth & security settings
-- `config/limits.php` - Rate limiting configuration
-- `config/security.php` - Security policies
+- `config/security.php` - Authentication, security policies, spam detection
+- `config/limits.php` - Rate limiting, role-based limits, pagination
+- `config/content.php` - Validation rules, media settings
+- `config/performance.php` - Cache TTL, monitoring
+- `config/status.php` - Status constants
 - `config/cors.php` - CORS settings
 
 ## 📝 API Endpoints
@@ -267,7 +269,7 @@ Total: 305 endpoints across 25 systems
 - ~~GraphQL~~ (1 endpoint removed)
 - ~~Organization Management~~ (1 endpoint removed)
 
-See [SYSTEMS_LIST.md](docs/SYSTEMS_LIST.md) for complete system documentation.
+See [SYSTEMS_LIST.md](test-scripts/docs/SYSTEMS_LIST.md) for complete system documentation.
 
 ## 🤝 Contributing
 
