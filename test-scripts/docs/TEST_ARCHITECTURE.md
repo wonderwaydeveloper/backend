@@ -88,7 +88,7 @@ echo "\\n3️⃣ بخش 3: Validation Integration\\n" . str_repeat("─", 65) . 
 
 test("Custom rule exists", fn() => class_exists('App\\Rules\\ContentLength'));
 test("Request class exists", fn() => class_exists('App\\Http\\Requests\\StorePostRequest'));
-test("Config-based validation", fn() => config('validation.content.post.max_length') !== null);
+test("Config-based validation", fn() => config('content.validation.content.post.max_length') !== null);
 test("No hardcoded values", fn() => strpos(file_get_contents(__DIR__ . '/app/Http/Requests/StorePostRequest.php'), 'max:280') === false);
 ```
 
@@ -193,8 +193,8 @@ test("POST /api/posts", fn() => $routes->contains(fn($r) => in_array('POST', $r-
 ```php
 echo "\\n1️⃣1️⃣ بخش 11: Configuration\\n" . str_repeat("─", 65) . "\\n";
 
-test("Config file exists", fn() => file_exists(__DIR__ . '/config/posts.php'));
-test("Config values", fn() => config('posts.max_length') !== null);
+test("Config file exists", fn() => file_exists(__DIR__ . '/config/limits.php'));
+test("Config values", fn() => config('limits.posts.max_thread_posts') !== null);
 ```
 
 ### بخش 12: Advanced Features
