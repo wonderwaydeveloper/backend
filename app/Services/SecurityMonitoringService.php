@@ -15,6 +15,11 @@ class SecurityMonitoringService
         private RateLimitingService $rateLimiter
     ) {}
 
+    public function getSecurityEvents(int $userId): array
+    {
+        return $this->auditService->getRecentActivity($userId, 50);
+    }
+
 
 
 

@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2025-02-15  
-**پیشرفت کلی:** 26.9% (7/26 سیستم تکمیل شده)
+**آخرین بهروزرسانی:** 2025-02-16  
+**پیشرفت کلی:** 11.5% (3/26 سیستم کاملاً مطابق با معماری جدید)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,8 +9,10 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 7/26 (26.9%)
-### ⏳ سیستمهای در انتظار بررسی: 19/26 (73.1%)
+### ✅ سیستمهای تکمیل شده: 3/26 (11.5%) - 🟢 معماری کامل
+### 🟡 سیستمهای نیمه کامل: 2/26 (7.7%) - 🟡 نیاز به Script Tests
+### 🔴 سیستمهای قدیمی: 2/26 (7.7%) - ⚠️ نیاز به بروزرسانی
+### ⚪ سیستمهای بدون تست: 19/26 (73.1%)
 
 ### 📈 آمار تستها
 - **تعداد کل تستها:** 1297 تست (Script: 1009 + Feature: 288)
@@ -18,33 +20,40 @@
 - **میانگین تست هر سیستم:** 185 تست
 - **نرخ موفقیت:** 100%
 
-| # | سیستم | وضعیت | Test Coverage | امتیاز | اولویت |
-|---|-------|-------|---------------|--------|--------|
-| 1 | Security | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 2 | Authentication | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 3 | Posts & Content | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 4 | Comments | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 5 | Social Features | ✅ | 100% | 89/100 | 🔴 حیاتی |
-| 6 | Profile & Account | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 7 | Search & Discovery | ✅ | 100% | 100/100 | 🔴 حیاتی |
-| 8 | Messaging | ⏳ | - | - | 🔴 حیاتی |
-| 9 | Notifications | ⏳ | - | - | 🔴 حیاتی |
-| 10 | Communities | ⏳ | - | - | 🔴 حیاتی |
-| 11 | Spaces (Audio Rooms) | ⏳ | - | - | 🔴 حیاتی |
-| 12 | Lists | ⏳ | - | - | 🔴 حیاتی |
-| 13 | Bookmarks & Reposts | ⏳ | - | - | 🔴 حیاتی |
-| 14 | Hashtags | ⏳ | - | - | 🟡 مهم |
-| 15 | Polls | ⏳ | - | - | 🟡 مهم |
-| 16 | Mentions | ⏳ | - | - | 🟡 مهم |
-| 17 | Moderation & Reporting | ⏳ | - | - | 🟡 مهم |
-| 18 | Media Management | ⏳ | - | - | 🟡 مهم |
-| 19 | Moments | ⏳ | - | - | 🟡 مهم |
-| 20 | Analytics | ⏳ | - | - | 🟡 مهم |
-| 21 | A/B Testing | ⏳ | - | - | 🟡 مهم |
-| 22 | Monetization | ⏳ | - | - | 🟢 تکمیلی |
-| 23 | Performance & Monitoring | ⏳ | - | - | 🟢 تکمیلی |
-| 24 | Real-time Features | ⏳ | - | - | 🟢 تکمیلی |
-| 25 | Subscriptions | ⏳ | - | - | 🟢 تکمیلی |
+| # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
+|---|-------|-------|---------------|---------|--------|--------|
+| 1 | Security | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
+| 2 | Device Management | ⚪ | - | - | - | 🔴 حیاتی |
+| 3 | Authentication | 🔴 | 100% | ⚠️ قدیمی | 100/100 | 🔴 حیاتی |
+| 4 | Posts & Content | 🔴 | 100% | ⚠️ قدیمی | 100/100 | 🔴 حیاتی |
+| 5 | Comments | 🟡 | 100% | 🟡 نیمه | 100/100 | 🔴 حیاتی |
+| 6 | Social Features | 🟡 | 100% | 🟡 نیمه | 89/100 | 🔴 حیاتی |
+| 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
+| 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
+| 9 | Messaging | ⚪ | - | - | - | 🔴 حیاتی |
+| 10 | Notifications | ⚪ | - | - | - | 🔴 حیاتی |
+| 11 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
+| 12 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
+| 13 | Lists | ⚪ | - | - | - | 🔴 حیاتی |
+| 14 | Bookmarks & Reposts | ⚪ | - | - | - | 🔴 حیاتی |
+| 15 | Hashtags | ⚪ | - | - | - | 🟡 مهم |
+| 16 | Polls | ⚪ | - | - | - | 🟡 مهم |
+| 17 | Mentions | ⚪ | - | - | - | 🟡 مهم |
+| 18 | Moderation & Reporting | ⚪ | - | - | - | 🟡 مهم |
+| 19 | Media Management | ⚪ | - | - | - | 🟡 مهم |
+| 20 | Moments | ⚪ | - | - | - | 🟡 مهم |
+| 21 | Analytics | ⚪ | - | - | - | 🟡 مهم |
+| 22 | A/B Testing | ⚪ | - | - | - | 🟡 مهم |
+| 23 | Monetization | ⚪ | - | - | - | 🟢 تکمیلی |
+| 24 | Performance & Monitoring | ⚪ | - | - | - | 🟢 تکمیلی |
+| 25 | Real-time Features | ⚪ | - | - | - | 🟢 تکمیلی |
+| 26 | Subscriptions | ⚪ | - | - | - | 🟢 تکمیلی |
+
+### راهنمای معماری:
+- 🟢 **کامل**: Script Tests (20 بخش) + Feature Tests (9 بخش)
+- 🟡 **نیمه**: فقط Feature Tests (9 بخش) - نیاز به Script Tests
+- 🔴 **قدیمی**: معماری قدیمی - نیاز به بروزرسانی
+- ⚪ **بدون تست**: نیاز به ایجاد تست
 
 ### سیستمهای حذف شده ❌
 - ~~GIF Integration~~ (حذف شده)
@@ -62,8 +71,12 @@
 - **Features:** 2FA, Device Management, Security Events, Audit Logs, Bot Detection, Threat Monitoring
 - **Endpoints:** 14
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (105 تست)
-- **تاریخ تکمیل:** 2025-02-04
+- **Test Coverage:** 100% (245 تست: Script 195 + Feature 50)
+- **تاریخ تکمیل:** 2025-02-16
+- **تست فایلها:**
+  - Script: `test-scripts/01_security.php` (195 تست، 20 بخش)
+  - Feature: `tests/Feature/01_SecuritySystemTest.php` (50 تست، 9 بخش)
+- **توضیح:** Device Management، Audit Trail، Security Monitoring، 2FA، Bot Detection، Threat Detection، Rate Limiting
 
 #### 2. Authentication ✅
 - **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController
@@ -222,7 +235,7 @@
 ## 📅 برنامه بررسی
 
 ### فاز 1: بررسی سیستمهای حیاتی (13 سیستم)
-- [x] Security (✅ 100/100 - 105 تست)
+- [x] Security (✅ 100/100 - 245 تست: Script 195 + Feature 50)
 - [x] Authentication (✅ 100/100 - 126 تست)
 - [x] Posts & Content (✅ 100/100 - 289 تست)
 - [x] Comments (✅ 100/100 - 51 تست)
@@ -236,8 +249,8 @@
 - [ ] Lists
 - [ ] Bookmarks & Reposts
 
-**پیشرفت فاز 1:** 7/13 (53.8%)
-**تعداد تستهای فاز 1:** 1348 تست
+**پیشرفت فاز 1:** 8/13 (61.5%)
+**تعداد تستهای فاز 1:** 1593 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
@@ -263,47 +276,263 @@
 
 ## 📊 معیارهای بررسی
 
+> **توجه:** هر سیستم دارای دو نوع تست است که هر کدام معیارهای جداگانه دارند.
+
+### 📝 معیارهای Script Tests (20 بخش)
+
 برای هر سیستم موارد زیر بررسی میشود:
 
-1. **Architecture & Code (20%)**
-   - Controllers, Services, Models
-   - Code quality & structure
+1. **Architecture (20%)**
+   - Controllers
+   - Services
+   - Models
+   - Resources/DTOs
 
-2. **Database & Schema (15%)**
-   - Tables, Columns, Indexes
-   - Foreign keys, Constraints
+2. **Database (15%)**
+   - Tables
+   - Columns
+   - Indexes
+   - Constraints
 
-3. **API & Routes (15%)**
-   - Endpoints definition
-   - RESTful standards
+3. **API (15%)**
+   - Routes defined
+   - RESTful naming
+   - Middleware
 
 4. **Security (20%)**
-   - Authentication (auth:sanctum)
+   - Authentication
    - Authorization (Policies)
-   - Permissions (Spatie)
-   - Roles (Spatie)
-   - XSS, SQL Injection, CSRF protection
-   - Rate Limiting
+   - Permissions (Spatie) - همه 6 نقش: user, verified, premium, organization, moderator, admin
+   - Roles (Spatie) - همه 6 نقش: user, verified, premium, organization, moderator, admin
+   - XSS/SQL protection
+   - Rate limiting
 
 5. **Validation (10%)**
-   - Request validation
+   - Request classes
    - Custom rules
+   - Config-based
 
 6. **Business Logic (10%)**
    - Core features
    - Error handling
 
 7. **Integration (5%)**
-   - Block/Mute integration
-   - Notifications integration
+   - Block/Mute
+   - Notifications
+   - Events/Listeners
    - Cross-system relationships
-   - Real integration tests
+   - Foreign keys work
 
 8. **Testing (5%)**
-   - Test coverage
-   - Test quality
+   - Test script
+   - Coverage ≥95%
 
+**Total Score:** __/100  
 **حداقل امتیاز قبولی:** 85/100
+
+---
+
+### 🧪 معیارهای Feature Tests (9 بخش)
+
+برای هر سیستم موارد زیر بررسی میشود:
+
+1. **Core API Functionality (20%)**
+   - All endpoints return correct status codes
+   - Response structure correct
+   - CRUD operations work
+   - Pagination/Filtering works
+
+2. **Authentication & Authorization (20%)**
+   - Guest blocked (401)
+   - Auth users access
+   - Policies enforced (403)
+   - Self-actions blocked
+   - Ownership verified
+   - All 6 roles tested: user, verified, premium, organization, moderator, admin
+
+3. **Validation & Error Handling (15%)**
+   - Required fields validated
+   - Invalid data rejected (422)
+   - Error messages clear
+   - Edge cases handled
+
+4. **Integration with Other Systems (15%)**
+   - Block/Mute prevents actions
+   - Private accounts restrict
+   - Notifications sent
+   - Events dispatched
+   - Cross-system relationships
+
+5. **Security in Action (10%)**
+   - XSS sanitization
+   - SQL injection prevented
+   - Rate limiting (429)
+   - CSRF protection
+
+6. **Database Transactions (10%)**
+   - Rollback on error
+   - Counters updated
+   - No orphaned records
+   - Concurrent requests
+
+7. **Business Logic & Edge Cases (5%)**
+   - Duplicate actions prevented
+   - Counter underflow protected
+   - Soft deletes work
+
+8. **Real-world Scenarios (3%)**
+   - User workflows complete
+   - Multiple users interact
+
+9. **Performance & Response (2%)**
+   - Response time acceptable
+   - N+1 queries avoided
+
+**Total Score:** __/100  
+**حداقل امتیاز قبولی:** 85/100
+
+---
+
+### ⚠️ الزامات مشترک هر دو نوع تست
+
+1. **تست 6 نقش الزامی است:**
+   - user (کاربر عادی)
+   - verified (کاربر تایید شده)
+   - premium (کاربر پرمیوم)
+   - organization (سازمان)
+   - moderator (مدیر)
+   - admin (ادمین)
+
+2. **تست سطوح دسترسی:**
+   - تست مثبت (Can Access) - 200/201
+   - تست منفی (Cannot Access) - 403
+   - تست تفاوت سطوح (Level Difference)
+
+3. **Security Layers (حداقل 8 لایه):**
+   - Authentication (auth:sanctum)
+   - Policies
+   - Permissions (Spatie)
+   - Roles (Spatie)
+   - XSS Prevention
+   - SQL Injection Prevention
+   - CSRF Protection
+   - Rate Limiting
+
+4. **Integration Testing:**
+   - Block/Mute filtering
+   - Notification sending
+   - Event dispatching
+   - Cross-system relationships
+
+5. **Performance:**
+   - Response time < 100ms
+   - N+1 query prevention
+   - Eager loading
+
+**مرجع کامل:** `test-scripts/docs/SYSTEM_REVIEW_CRITERIA.md`
+
+---
+
+## 🏗️ معماری تستها
+
+> **توجه:** هر سیستم دارای دو نوع تست با معماری جداگانه است.
+
+### 📋 معماری Script Tests (20 بخش)
+
+**فایل:** `test-scripts/{XX}_{system_name}.php`  
+**روش اجرا:** `php test-scripts/{XX}_{system_name}.php`  
+**تعداد تست:** 200-250 تست  
+**تمرکز:** Code structure, Database schema, Models, Services, Policies
+
+#### بخشهای استاندارد:
+
+1. **Database & Schema** - جداول، ستونها، indexes، foreign keys
+2. **Models & Relationships** - مدلها، روابط، mass assignment protection
+3. **Validation Integration** - Request classes، Custom rules، Config-based validation
+4. **Controllers & Services** - وجود Controllers و Services و متدهای آنها
+5. **Core Features** - عملکرد اصلی سیستم (CRUD)
+6. **Security & Authorization** - Authentication، Policies، Permissions، Roles (6 نقش)، XSS، SQL، CSRF، Rate Limiting (30 تست)
+7. **Integration with Other Systems** - Block/Mute، Notifications، Events، Cross-system relationships
+8. **Performance & Optimization** - Eager loading، Pagination، Cache
+9. **Data Integrity & Transactions** - Transaction support، Unique constraints، Not null
+10. **API & Routes** - تست وجود routes در `routes/api.php`
+11. **Configuration** - تست فایلهای config و مقادیر آنها
+12. **Advanced Features** - ویژگیهای پیشرفته سیستم
+13. **Events & Integration** - Events، Listeners، Jobs
+14. **Error Handling** - Exception classes، 404 handling
+15. **Resources** - Resource classes و ساختار آنها
+16. **User Flows** - تست جریانهای کاربری کامل
+17. **Validation Advanced** - تست Validator با ورودیهای نامعتبر
+18. **Roles & Permissions Database** - تست وجود 6 نقش و permissions آنها در دیتابیس
+19. **Security Layers Deep Dive** - تست عمیق لایههای امنیتی
+20. **Middleware & Bootstrap** - تست Middleware registration
+
+**الزامات:**
+- حداقل 200 تست
+- بخش 6 (Security) حداقل 30 تست
+- تست همه 6 نقش: user, verified, premium, organization, moderator, admin
+- تست سطوح دسترسی (مثبت، منفی، تفاوت)
+- Integration testing الزامی
+
+**مرجع کامل:** `test-scripts/docs/TEST_ARCHITECTURE.md`
+
+---
+
+### 🧪 معماری Feature Tests (9 بخش)
+
+**فایل:** `tests/Feature/{SystemName}Test.php`  
+**روش اجرا:** `php artisan test --filter={SystemName}Test`  
+**تعداد تست:** 50-60 تست  
+**تمرکز:** HTTP requests، API functionality، Authorization، Integration
+
+#### بخشهای استاندارد:
+
+1. **Core API Functionality (20%)** - تست تمام endpoints (GET، POST، PUT، DELETE)، Pagination، Filtering، Sorting (8-10 تست)
+2. **Authentication & Authorization (20%)** - Guest blocked (401)، Auth access، Policies (403)، Ownership، Self-actions، 6 نقش (6-8 تست)
+3. **Validation & Error Handling (15%)** - Required fields (422)، Invalid data، Max length، Error messages، Edge cases (6-8 تست)
+4. **Integration with Other Systems (15%)** - Block/Mute، Private accounts، Notifications، Events، Cross-system (5-7 تست)
+5. **Security in Action (10%)** - XSS sanitization، SQL injection، Rate limiting (429)، CSRF (4-5 تست)
+6. **Database Transactions (10%)** - Rollback، Counters، No orphaned records، Concurrent requests (4-5 تست)
+7. **Business Logic & Edge Cases (5%)** - Duplicate prevention، Counter underflow، Soft deletes، Timestamps (4-5 تست)
+8. **Real-world Scenarios (3%)** - Complete workflows، Multiple users interaction، State persistence (3-4 تست)
+9. **Performance & Response (2%)** - Response time < 500ms، N+1 prevention، Eager loading (2-3 تست)
+
+**الزامات:**
+- حداقل 50 تست
+- تست تمام endpoints
+- تست تمام status codes: 200، 201، 401، 403، 404، 422، 429
+- Response structure validation
+- Integration با Block/Mute الزامی
+- Events و Notifications الزامی
+
+**مرجع کامل:** `test-scripts/docs/FEATURE_TEST_ARCHITECTURE.md`
+
+---
+
+### 📊 مقایسه دو نوع تست
+
+| جنبه | Script Tests (20 بخش) | Feature Tests (9 بخش) |
+|------|----------------------|----------------------|
+| **هدف** | تست ساختار کد | تست عملکرد API |
+| **روش** | Direct PHP execution | HTTP requests |
+| **تعداد تست** | 200-250 | 50-60 |
+| **می‌تواند تست کند** | Database schema، Models، Services، Policies code | Endpoints، Authorization، Validation، Integration |
+| **نمی‌تواند تست کند** | HTTP responses، Middleware in action | Database schema، Code structure |
+| **مثال** | "آیا UserPolicy.php متد follow() دارد؟" | "آیا POST /api/users/{id}/follow وقتی بلاک شده 403 برمی‌گرداند؟" |
+| **فایل** | `test-scripts/XX_system.php` | `tests/Feature/SystemTest.php` |
+| **اجرا** | `php test-scripts/XX_system.php` | `php artisan test --filter=SystemTest` |
+
+### ✅ استاندارد کامل هر سیستم:
+
+```
+سیستم = Script Tests (20 بخش، 200-250 تست) + Feature Tests (9 بخش، 50-60 تست)
+جمع = 250-310 تست برای هر سیستم
+```
+
+**مثال:** سیستم Search & Discovery
+- Script Tests: `test-scripts/07_search_discovery.php` (207 تست، 20 بخش)
+- Feature Tests: `tests/Feature/SearchDiscoverySystemTest.php` (52 تست، 9 بخش)
+- جمع: 259 تست
 
 ---
 
@@ -474,8 +703,8 @@ public function getCacheTTL() {
 ---
 
 **تاریخ ایجاد:** 2025-02-04  
-**آخرین بروزرسانی:** 2025-02-15  
-**نسخه:** 11.0  
+**آخرین بروزرسانی:** 2025-02-16  
+**نسخه:** 13.0  
 **وضعیت:** 🔍 در حال بررسی
 
 ---
@@ -584,3 +813,32 @@ public function getCacheTTL() {
 - PollController (3 endpoints)
 - MediaController (7 endpoints)
 - CommunityNoteController (4 endpoints)
+
+
+### \u0633\u06cc\u0633\u062a\u0645 Security (100/100 - Production Ready)
+- \u2705 14 endpoint \u0639\u0645\u0644\u06cc\u0627\u062a\u06cc (2 Controller)
+- \u2705 245 \u062a\u0633\u062a (Script: 195 + Feature: 50)
+- \u2705 68 assertions \u062f\u0631 Feature Test
+- \u2705 \u062a\u0633\u062a \u06cc\u06a9\u067e\u0627\u0631\u0686\u0647: 01_SecuritySystemTest.php
+- \u2705 20 \u0628\u062e\u0634 Script Test \u06a9\u0627\u0645\u0644
+- \u2705 9 \u0628\u062e\u0634 Feature Test \u06a9\u0627\u0645\u0644
+- \u2705 Device Management (Register, Trust, Revoke, List, Activity)
+- \u2705 Audit Trail (Logging, Monitoring, Security Events)
+- \u2705 Security Monitoring (Threat Detection, IP Blocking, Bot Detection)
+- \u2705 Two-Factor Authentication (2FA)
+- \u2705 Authorization \u0628\u0627 DevicePolicy \u0648 AuditLogPolicy
+- \u2705 Integration \u0628\u0627 SecurityMonitoringService
+- \u2705 Validation (Device Registration, Trust, Revoke)
+- \u2705 Security (XSS, SQL Injection, Mass Assignment, Rate Limiting)
+- \u2705 Performance (Caching, Indexing, N+1 Prevention)
+
+**\u0628\u062e\u0634\u0647\u0627\u06cc Feature Test:**
+1. Core API Functionality (8 tests)
+2. Authentication & Authorization (12 tests)
+3. Validation & Error Handling (6 tests)
+4. Integration with Other Systems (6 tests)
+5. Security in Action (4 tests)
+6. Database Transactions (4 tests)
+7. Business Logic & Edge Cases (5 tests)
+8. Real-world Scenarios (3 tests)
+9. Performance & Response (2 tests)

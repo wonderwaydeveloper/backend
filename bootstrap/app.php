@@ -21,15 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Global Security Headers for ALL requests
-        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
         $middleware->api(append: [
-            // UnifiedSecurityMiddleware removed from global - applied per route
             \App\Http\Middleware\CSRFProtection::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\PerformanceMonitoring::class,
@@ -38,7 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
-            'security' => \App\Http\Middleware\UnifiedSecurityMiddleware::class,
+            'security' => \App\Http\Middleware\SecurityMiddleware::class,
             'check.reply.permission' => \App\Http\Middleware\CheckReplyPermission::class,
             'csrf.protection' => \App\Http\Middleware\CSRFProtection::class,
             'set.locale' => \App\Http\Middleware\SetLocale::class,

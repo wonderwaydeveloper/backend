@@ -127,6 +127,15 @@ class AuditTrailService
         return $query->orderBy('timestamp', 'desc')->get();
     }
 
+    public function getRecentActivity(int $userId, int $limit = 50): array
+    {
+        return AuditLog::where('user_id', $userId)
+            ->orderBy('timestamp', 'desc')
+            ->limit($limit)
+            ->get()
+            ->toArray();
+    }
+
     public function getSecurityEvents(int $days = 7): Collection
     {
         return AuditLog::where('action', 'like', 'security.%')

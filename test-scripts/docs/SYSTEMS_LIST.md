@@ -3,7 +3,6 @@
 ## 1. Security 🛡️
 
 ### Controllers
-- `DeviceController`
 - `AuditController`
 
 ### Features
@@ -17,20 +16,27 @@
   - GET `/auth/audit/high-risk` - فعالیتهای پرخطر
   - GET `/auth/audit/statistics` - آمار audit
 
-- **Device Management**
-  - POST `/devices/register` - ثبت دستگاه
-  - DELETE `/devices/{token}` - حذف دستگاه
-  - POST `/devices/advanced/register` - ثبت پیشرفته
-  - GET `/devices/list` - لیست دستگاهها
-  - GET `/devices/{device}/activity` - فعالیت دستگاه
-  - POST `/devices/{device}/trust` - اعتماد به دستگاه
-  - DELETE `/devices/{device}/revoke` - لغو دستگاه
-  - POST `/devices/revoke-all` - لغو همه
-  - GET `/devices/security-check` - بررسی امنیتی
+---
+
+## 2. Device Management 📱
+
+### Controller
+- `DeviceController`
+
+### Features
+- POST `/devices/register` - ثبت دستگاه
+- DELETE `/devices/{token}` - حذف دستگاه
+- POST `/devices/advanced/register` - ثبت پیشرفته
+- GET `/devices/list` - لیست دستگاهها
+- GET `/devices/{device}/activity` - فعالیت دستگاه
+- POST `/devices/{device}/trust` - اعتماد به دستگاه
+- DELETE `/devices/{device}/revoke` - لغو دستگاه
+- POST `/devices/revoke-all` - لغو همه
+- GET `/devices/security-check` - بررسی امنیتی
 
 ---
 
-## 2. Authentication 🔐
+## 3. Authentication 🔐
 
 ### Controllers
 - `UnifiedAuthController`
@@ -90,7 +96,7 @@
 
 ---
 
-## 3. Posts & Content 📝
+## 4. Posts & Content 📝
 
 ### Controllers
 - `PostController`
@@ -135,7 +141,7 @@
 
 ---
 
-## 4. Comments 💬
+## 5. Comments 💬
 
 ### Controller
 - `CommentController`
@@ -148,7 +154,7 @@
 
 ---
 
-## 5. Social Features 👥
+## 6. Social Features 👥
 
 ### Controllers
 - `ProfileController`
@@ -178,7 +184,7 @@
 
 ---
 
-## 6. Profile & Account 👤
+## 7. Profile & Account 👤
 
 ### Controller
 - `ProfileController`
@@ -201,7 +207,7 @@
 
 ---
 
-## 7. Search & Discovery 🔍
+## 8. Search & Discovery 🔍
 
 ### Controllers
 - `SearchController`
@@ -232,7 +238,7 @@
 
 ---
 
-## 8. Messaging 💌
+## 9. Messaging 💌
 
 ### Controller
 - `MessageController`
@@ -247,7 +253,7 @@
 
 ---
 
-## 9. Notifications 🔔
+## 10. Notifications 🔔
 
 ### Controllers
 - `NotificationController`
@@ -276,7 +282,7 @@
 
 ---
 
-## 10. Communities 🏘️
+## 11. Communities 🏘️
 
 ### Controllers
 - `CommunityController`
@@ -305,7 +311,7 @@
 
 ---
 
-## 11. Spaces (Audio Rooms) 🎙️
+## 12. Spaces (Audio Rooms) 🎙️
 
 ### Controller
 - `SpaceController`
@@ -321,7 +327,7 @@
 
 ---
 
-## 12. Lists 📋
+## 13. Lists 📋
 
 ### Controller
 - `ListController`
@@ -341,7 +347,7 @@
 
 ---
 
-## 13. Bookmarks & Reposts 🔖
+## 14. Bookmarks & Reposts 🔖
 
 ### Controllers
 - `BookmarkController`
@@ -360,7 +366,7 @@
 
 ---
 
-## 14. Hashtags #️⃣
+## 15. Hashtags #️⃣
 
 ### Controller
 - `HashtagController`
@@ -373,7 +379,7 @@
 
 ---
 
-## 15. Polls 📊
+## 16. Polls 📊
 
 ### Controller
 - `PollController`
@@ -385,7 +391,7 @@
 
 ---
 
-## 16. Mentions @
+## 17. Mentions @
 
 ### Controller
 - `MentionController`
@@ -397,7 +403,7 @@
 
 ---
 
-## 17. Moderation & Reporting 🚨
+## 18. Moderation & Reporting 🚨
 
 ### Controller
 - `ModerationController`
@@ -418,7 +424,7 @@
 
 ---
 
-## 18. Media Management 🖼️
+## 19. Media Management 🖼️
 
 ### Controller
 - `MediaController`
@@ -434,7 +440,7 @@
 
 ---
 
-## 19. Moments ⭐
+## 20. Moments ⭐
 
 ### Controller
 - `MomentController`
@@ -452,7 +458,7 @@
 
 ---
 
-## 20. Analytics 📈
+## 21. Analytics 📈
 
 ### Controllers
 - `AnalyticsController`
@@ -473,7 +479,7 @@
 
 ---
 
-## 21. A/B Testing 🧪
+## 22. A/B Testing 🧪
 
 ### Controller
 - `ABTestController`
@@ -489,7 +495,7 @@
 
 ---
 
-## 22. Monetization 💰
+## 23. Monetization 💰
 
 ### Controllers
 - `AdvertisementController`
@@ -519,7 +525,7 @@
 
 ---
 
-## 23. Performance & Monitoring ⚡
+## 24. Performance & Monitoring ⚡
 
 ### Controllers
 - `PerformanceController`
@@ -554,7 +560,7 @@
 
 ---
 
-## 24. Real-time Features ⚡
+## 25. Real-time Features ⚡
 
 ### Controllers
 - `OnlineStatusController`
@@ -568,7 +574,7 @@
 
 ---
 
-## 25. Subscriptions 💳
+## 26. Subscriptions 💳
 
 ### Controller
 - `SubscriptionController`
@@ -620,5 +626,5 @@
 
 ---
 
-تاریخ بروزرسانی: 2025-02-04
-نسخه: 6.0.0
+تاریخ بروزرسانی: 2025-02-16
+نسخه: 7.0.0

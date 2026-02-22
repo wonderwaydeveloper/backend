@@ -15,9 +15,9 @@ class DevicePolicy
         return $user->hasPermissionTo('device.view');
     }
 
-    public function view(User $user, DeviceToken $device): bool
+    public function view(User $user): bool
     {
-        return $user->id === $device->user_id && $user->hasPermissionTo('device.view');
+        return $user->hasPermissionTo('device.view');
     }
 
     public function register(User $user): bool

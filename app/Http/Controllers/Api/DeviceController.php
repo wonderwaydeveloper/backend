@@ -19,9 +19,7 @@ class DeviceController extends Controller
         private \App\Services\RateLimitingService $rateLimiter,
         private \App\Services\SessionTimeoutService $timeoutService,
         private \App\Services\VerificationCodeService $verificationCodeService
-    ) {
-        $this->middleware('auth:sanctum');
-    }
+    ) {}
     /**
      * Register a new device (simple registration)
      */
@@ -57,9 +55,21 @@ class DeviceController extends Controller
     /**
      * Advanced device registration with detailed info
      */
-    public function registerAdvanced(AdvancedDeviceRequest $request): JsonResponse
+    public function registerAdvanced(Request $request): JsonResponse
     {
         $this->authorize('register', DeviceToken::class);
+
+        // Support both old (token, platform, device_name) and new (name, type) formats
+        $validated = $request->validate([
+            'name' => 'required_without:token|string|max:255',
+            'type' => 'required_without:platform|in:mobile,desktop,tablet,ios,android,web',
+            'token' => 'required_without:name|string|max:255',
+            'platform' => 'required_without:type|in:ios,android,web',
+            'device_name' => 'nullable|string|max:255',
+            'browser' => 'nullable|string|max:100',
+            'os' => 'nullable|string|max:100',
+            'push_token' => 'nullable|string|max:255',
+        ]);
 
         $fingerprint = DeviceFingerprintService::generate($request);
         
@@ -70,12 +80,12 @@ class DeviceController extends Controller
                 'fingerprint' => $fingerprint,
             ],
             [
-                'token' => 'device_' . Str::random(config('security.device.token_length')),
-                'device_name' => $request->name,
-                'device_type' => $request->type,
-                'browser' => $request->browser,
-                'os' => $request->os,
-                'push_token' => $request->push_token,
+                'token' => $request->input('token', 'device_' . Str::random(config('security.device.token_length', 64))),
+                'device_name' => $request->input('name') ?? $request->input('device_name', 'Unknown Device'),
+                'device_type' => $request->input('type') ?? $request->input('platform', 'web'),
+                'browser' => $request->input('browser'),
+                'os' => $request->input('os'),
+                'push_token' => $request->input('push_token'),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'last_used_at' => now(),
@@ -132,8 +142,9 @@ class DeviceController extends Controller
      */
     public function revoke(Request $request, $deviceId): JsonResponse
     {
-        $this->authorize('revoke', DeviceToken::class);
         $device = $request->user()->devices()->findOrFail($deviceId);
+        $this->authorize('revoke', $device);
+        
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
         // Prevent revoking current device
@@ -141,26 +152,10 @@ class DeviceController extends Controller
             return response()->json(['error' => 'Cannot revoke current device'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
         
-        $user = $request->user();
-        $currentToken = $user->currentAccessToken();
-        
-        // Use transaction to prevent race conditions
-        DB::transaction(function () use ($user, $device, $currentToken) {
-            // Revoke tokens for security
-            $user->tokens()
-                ->where('id', '!=', $currentToken->id)
-                ->delete();
-            
-            $device->delete();
-            
-            // Clear cached data
-            Cache::forget("device_verification_by_fingerprint:{$device->fingerprint}");
-        });
+        $device->delete();
+        Cache::forget("device_verification_by_fingerprint:{$device->fingerprint}");
 
-        return response()->json([
-            'message' => 'Device revoked successfully',
-            'warning' => 'Other sessions terminated for security'
-        ]);
+        return response()->json(['message' => 'Device revoked successfully']);
     }
 
     /**
@@ -168,8 +163,6 @@ class DeviceController extends Controller
      */
     public function revokeAll(Request $request): JsonResponse
     {
-        $this->authorize('revoke', DeviceToken::class);
-        
         $request->validate(['password' => 'required']);
 
         if (!Hash::check($request->password, $request->user()->password)) {
