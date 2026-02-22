@@ -13,6 +13,15 @@ class PermissionSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
+        // Authentication
+        Permission::firstOrCreate(['name' => 'auth.login', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.register', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.logout', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.password.reset', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.email.verify', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.2fa.enable', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'auth.2fa.disable', 'guard_name' => 'sanctum']);
+
         // Posts
         Permission::firstOrCreate(['name' => 'post.create', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'post.edit.own', 'guard_name' => 'sanctum']);
@@ -160,6 +169,7 @@ class PermissionSeeder extends Seeder
         // Assign permissions to roles
         $user = Role::findByName('user', 'sanctum');
         $user->syncPermissions([
+            'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify',
             'post.create', 'post.edit.own', 'post.delete.own',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
@@ -176,6 +186,7 @@ class PermissionSeeder extends Seeder
 
         $verified = Role::findByName('verified', 'sanctum');
         $verified->syncPermissions([
+            'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own',
             'comment.create', 'comment.delete.own',
             'message.send', 'message.delete.own',
@@ -197,6 +208,7 @@ class PermissionSeeder extends Seeder
 
         $premium = Role::findByName('premium', 'sanctum');
         $premium->syncPermissions([
+            'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own',
             'message.send', 'message.delete.own',
@@ -220,6 +232,7 @@ class PermissionSeeder extends Seeder
 
         $organization = Role::findByName('organization', 'sanctum');
         $organization->syncPermissions([
+            'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own',
             'message.send', 'message.delete.own',
@@ -242,6 +255,7 @@ class PermissionSeeder extends Seeder
 
         $moderator = Role::findByName('moderator', 'sanctum');
         $moderator->syncPermissions([
+            'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own', 'post.delete.any',
             'comment.create', 'comment.delete.own', 'comment.delete.any',
             'message.send', 'message.delete.own',

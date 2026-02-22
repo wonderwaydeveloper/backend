@@ -15,6 +15,24 @@ return [
     // AUTHENTICATION
     // ========================================================================
 
+    'password_security' => [
+        'history_limit' => 5,
+        'min_age_hours' => 1,
+        'max_age_days' => 90,
+        'strength_scores' => [
+            'length_multiplier' => 2,
+            'max_length_bonus' => 25,
+            'letter_bonus' => 10,
+            'number_bonus' => 10,
+            'special_char_bonus' => 10,
+            'mixed_case_bonus' => 5,
+            'repeated_penalty' => 10,
+            'sequential_penalty' => 10,
+            'common_password_penalty' => 25,
+            'max_score' => 100,
+        ],
+    ],
+
     'password' => [
         'reset' => [
             'expire_minutes' => env('PASSWORD_RESET_EXPIRE', 15),
