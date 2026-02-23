@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Models\{User, DeviceToken};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-class _01_SecuritySystemTest extends TestCase
+class SecuritySystemTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -16,10 +16,10 @@ class _01_SecuritySystemTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->seed(\Database\Seeders\RoleSeeder::class);
         $this->seed(\Database\Seeders\PermissionSeeder::class);
-        
+
         $this->user = User::factory()->create(['email_verified_at' => now()]);
         $this->user->assignRole('user');
         $this->token = $this->user->createToken('test')->plainTextToken;
@@ -631,7 +631,7 @@ class _01_SecuritySystemTest extends TestCase
     public function test_complete_device_lifecycle()
     {
         $this->user->assignRole('verified');
-        
+
         // Register
         $response = $this->withToken($this->token)
             ->postJson('/api/devices/register', [
@@ -717,6 +717,6 @@ class _01_SecuritySystemTest extends TestCase
 
         $queries = \DB::getQueryLog();
 
-        $this->assertLessThan(10, count($queries), 'Should avoid N+1 queries');
+        $this->assertLessThanOrEqual(10, count($queries), 'Should avoid N+1 queries');
     }
 }

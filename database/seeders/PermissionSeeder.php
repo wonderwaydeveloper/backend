@@ -271,7 +271,7 @@ class PermissionSeeder extends Seeder
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'user.ban', 'user.suspend', 'content.moderate', 'report.review', 'report.create',
-            'device.view', 'device.register', 'device.trust', 'device.revoke',
+            'device.view', 'device.register', 'device.trust', 'device.revoke', 'device.manage', 'device.security',
         ]);
 
         $admin = Role::findByName('admin', 'sanctum');

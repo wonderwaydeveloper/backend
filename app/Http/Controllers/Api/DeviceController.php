@@ -32,12 +32,12 @@ class DeviceController extends Controller
         $device = DeviceToken::updateOrCreate(
             [
                 'user_id' => $request->user()->id,
-                'fingerprint' => $fingerprint,
+                'fingerprint' => $fingerprint
             ],
             [
-                'token' => $request->input('token'),
-                'device_type' => $request->input('platform'),
-                'device_name' => $request->input('device_name', 'Unknown Device'),
+                'token' => strip_tags($request->input('token')),
+                'device_type' => strip_tags($request->input('platform')),
+                'device_name' => strip_tags($request->input('device_name', 'Unknown Device')),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'last_used_at' => now(),
@@ -59,7 +59,6 @@ class DeviceController extends Controller
     {
         $this->authorize('register', DeviceToken::class);
 
-        // Support both old (token, platform, device_name) and new (name, type) formats
         $validated = $request->validate([
             'name' => 'required_without:token|string|max:255',
             'type' => 'required_without:platform|in:mobile,desktop,tablet,ios,android,web',
@@ -73,19 +72,18 @@ class DeviceController extends Controller
 
         $fingerprint = DeviceFingerprintService::generate($request);
         
-        // Use updateOrCreate to prevent race conditions
         $device = DeviceToken::updateOrCreate(
             [
                 'user_id' => $request->user()->id,
-                'fingerprint' => $fingerprint,
+                'fingerprint' => $fingerprint
             ],
             [
-                'token' => $request->input('token', 'device_' . Str::random(config('security.device.token_length', 64))),
-                'device_name' => $request->input('name') ?? $request->input('device_name', 'Unknown Device'),
-                'device_type' => $request->input('type') ?? $request->input('platform', 'web'),
-                'browser' => $request->input('browser'),
-                'os' => $request->input('os'),
-                'push_token' => $request->input('push_token'),
+                'token' => strip_tags($request->input('token', 'device_' . Str::random(config('security.device.token_length', 64)))),
+                'device_name' => strip_tags($request->input('name') ?? $request->input('device_name', 'Unknown Device')),
+                'device_type' => strip_tags($request->input('type') ?? $request->input('platform', 'web')),
+                'browser' => strip_tags($request->input('browser')),
+                'os' => strip_tags($request->input('os')),
+                'push_token' => strip_tags($request->input('push_token')),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'last_used_at' => now(),
@@ -107,17 +105,19 @@ class DeviceController extends Controller
         $this->authorize('viewAny', DeviceToken::class);
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
+        $perPage = min($request->input('per_page', 15), 100);
+        
         $devices = $request->user()->devices()
             ->select(['id', 'device_name', 'device_type', 'browser', 'os', 'ip_address', 'last_used_at', 'is_trusted', 'created_at', 'fingerprint'])
             ->orderBy('last_used_at', 'desc')
-            ->get()
-            ->map(function ($device) use ($currentFingerprint) {
+            ->paginate($perPage)
+            ->through(function ($device) use ($currentFingerprint) {
                 $device->is_current = $device->fingerprint === $currentFingerprint;
-                unset($device->fingerprint); // Remove for security
+                unset($device->fingerprint);
                 return $device;
             });
 
-        return response()->json(DeviceResource::collection($devices));
+        return response()->json(['data' => $devices->items(), 'meta' => ['total' => $devices->total(), 'per_page' => $devices->perPage(), 'current_page' => $devices->currentPage()]]);
     }
 
     /**
@@ -125,8 +125,17 @@ class DeviceController extends Controller
      */
     public function trust(TrustDeviceRequest $request, $deviceId): JsonResponse
     {
-        $device = $request->user()->devices()->findOrFail($deviceId);
+        $device = $request->user()->devices()->find($deviceId);
+        
+        if (!$device) {
+            return response()->json(['error' => 'Device not found'], Response::HTTP_NOT_FOUND);
+        }
+        
         $this->authorize('trust', $device);
+
+        if ($device->is_trusted) {
+            return response()->json(['error' => 'Device is already trusted'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
 
         if (!Hash::check($request->password, $request->user()->password)) {
             return response()->json(['error' => 'Invalid password'], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -142,12 +151,16 @@ class DeviceController extends Controller
      */
     public function revoke(Request $request, $deviceId): JsonResponse
     {
-        $device = $request->user()->devices()->findOrFail($deviceId);
+        $device = $request->user()->devices()->find($deviceId);
+        
+        if (!$device) {
+            return response()->json(['error' => 'Device not found'], Response::HTTP_NOT_FOUND);
+        }
+        
         $this->authorize('revoke', $device);
         
         $currentFingerprint = DeviceFingerprintService::generate($request);
         
-        // Prevent revoking current device
         if ($device->fingerprint === $currentFingerprint) {
             return response()->json(['error' => 'Cannot revoke current device'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
@@ -370,9 +383,12 @@ class DeviceController extends Controller
     public function getActivity(Request $request, $deviceId): JsonResponse
     {
         $this->authorize('view', DeviceToken::class);
-        $device = $request->user()->devices()->findOrFail($deviceId);
+        $device = $request->user()->devices()->find($deviceId);
         
-        // Get security events for this device
+        if (!$device) {
+            return response()->json(['error' => 'Device not found'], Response::HTTP_NOT_FOUND);
+        }
+        
         $securityService = app(\App\Services\SecurityMonitoringService::class);
         $events = $securityService->getSecurityEvents($request->user()->id);
         
@@ -380,7 +396,7 @@ class DeviceController extends Controller
             'device' => $device,
             'activity' => $events,
             'last_login' => $device->last_used_at,
-            'total_logins' => 0, // Can be calculated from activity logs
+            'total_logins' => 0,
             'security_score' => $this->calculateSecurityScore($device)
         ]);
     }

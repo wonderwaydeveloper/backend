@@ -179,7 +179,10 @@ endSection($s4);
 // ═══════════════════════════════════════════════════════════════
 $s5 = section("5️⃣ بخش 5: Core Features");
 
-$testUser = User::factory()->create(['email' => 'core_test@test.com']);
+$testUser = User::where('email', 'core_test@test.com')->first();
+if (!$testUser) {
+    $testUser = User::factory()->create(['email' => 'core_test@test.com']);
+}
 $testUsers[] = $testUser;
 
 test("Create audit log", function() use ($testUser) {
@@ -554,7 +557,10 @@ endSection($s15);
 // ═══════════════════════════════════════════════════════════════
 $s16 = section("1️⃣6️⃣ بخش 16: User Flows");
 
-$flowUser = User::factory()->create(['email' => 'flow_test@test.com']);
+$flowUser = User::where('email', 'flow_test@test.com')->first();
+if (!$flowUser) {
+    $flowUser = User::factory()->create(['email' => 'flow_test@test.com']);
+}
 $testUsers[] = $flowUser;
 
 test("Flow: Register device", function() use ($flowUser) {
@@ -639,14 +645,15 @@ endSection($s17);
 $s18 = section("1️⃣8️⃣ بخش 18: Roles & Permissions Database");
 
 // ایجاد کاربران با نقش‌های مختلف
-$roleUsers = [
-    'user' => User::factory()->create(['email' => 'role_user@test.com']),
-    'verified' => User::factory()->create(['email' => 'role_verified@test.com']),
-    'premium' => User::factory()->create(['email' => 'role_premium@test.com']),
-    'organization' => User::factory()->create(['email' => 'role_org@test.com']),
-    'moderator' => User::factory()->create(['email' => 'role_mod@test.com']),
-    'admin' => User::factory()->create(['email' => 'role_admin@test.com'])
-];
+$roleUsers = [];
+foreach (['user', 'verified', 'premium', 'organization', 'moderator', 'admin'] as $role) {
+    $email = "role_{$role}@test.com";
+    $user = User::where('email', $email)->first();
+    if (!$user) {
+        $user = User::factory()->create(['email' => $email]);
+    }
+    $roleUsers[$role] = $user;
+}
 $testUsers = array_merge($testUsers, array_values($roleUsers));
 
 // اختصاص نقش‌ها
