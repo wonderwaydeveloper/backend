@@ -82,6 +82,26 @@ class SpamDetectionService
         ];
     }
 
+    // NEW: Check content before saving to database
+    public function checkContent(string $content): array
+    {
+        $score = 0;
+        $reasons = [];
+
+        // Content analysis only (no user behavior)
+        $contentScore = $this->analyzeContent($content);
+        $score += $contentScore['score'];
+        $reasons = array_merge($reasons, $contentScore['reasons']);
+
+        $isSpam = $score >= config('security.spam.thresholds.comment', 80);
+
+        return [
+            'is_spam' => $isSpam,
+            'score' => $score,
+            'reasons' => $reasons,
+        ];
+    }
+
     private function analyzeContent(string $content): array
     {
         $score = 0;

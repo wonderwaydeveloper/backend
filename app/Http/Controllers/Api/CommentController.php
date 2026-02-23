@@ -20,8 +20,11 @@ class CommentController extends Controller
     public function index(Post $post)
     {
         $comments = $post->comments()
-            ->with('user:id,name,username,avatar')
-            ->withCount('likes')
+            ->whereNull('parent_id')
+            ->with(['user:id,name,username,avatar', 'replies.user:id,name,username,avatar'])
+            ->withCount(['likes', 'replies'])
+            ->visible()
+            ->orderBy('is_pinned', 'desc')
             ->latest()
             ->paginate(config('limits.pagination.comments'));
 
@@ -34,12 +37,14 @@ class CommentController extends Controller
 
         try {
             $mediaFile = $request->hasFile('media') ? $request->file('media') : null;
+            $parentId = $request->input('parent_id');
             
             $comment = $this->commentService->createComment(
                 $post,
                 $request->user(),
                 $request->input('content'),
-                $mediaFile
+                $mediaFile,
+                $parentId
             );
 
             // Process mentions
@@ -79,13 +84,45 @@ class CommentController extends Controller
 
     public function like(Comment $comment)
     {
-        if (!auth()->user()->can('comment.like')) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         try {
             $result = $this->commentService->toggleLike($comment, auth()->user());
             return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function update(Request $request, Comment $comment)
+    {
+        $this->authorize('update', $comment);
+
+        $request->validate([
+            'content' => 'required|string|max:' . config('content.validation.content.comment.max_length'),
+        ]);
+
+        try {
+            $updated = $this->commentService->updateComment($comment, auth()->user(), $request->input('content'));
+            return response()->json($updated);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function pin(Comment $comment)
+    {
+        try {
+            $this->commentService->pinComment($comment, auth()->user());
+            return response()->json(['message' => 'Comment pinned successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
+
+    public function hide(Comment $comment)
+    {
+        try {
+            $this->commentService->hideComment($comment, auth()->user());
+            return response()->json(['message' => 'Comment hidden successfully']);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }

@@ -55,6 +55,18 @@ class CommentPolicy
         return $user->id === $comment->user_id && $user->can('comment.delete.own');
     }
 
+    public function pin(User $user, Comment $comment): bool
+    {
+        // Only post owner can pin comments
+        return $user->id === $comment->post->user_id;
+    }
+
+    public function hide(User $user, Comment $comment): bool
+    {
+        // Post owner or comment owner can hide
+        return $user->id === $comment->post->user_id || $user->id === $comment->user_id;
+    }
+
     public function restore(User $user, Comment $comment): bool
     {
         return false;

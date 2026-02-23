@@ -71,6 +71,10 @@ return [
             'search' => '180,15',
             'view' => '180,15',
         ],
+        'comments' => [
+            'create' => '60,1',
+            'like' => '20,1',
+        ],
         'realtime' => [
             'default' => '60,1',
         ],

@@ -23,7 +23,7 @@ class CommentService
         });
     }
 
-    public function createComment(Post $post, User $user, string $content, $mediaFile = null): Comment
+    public function createComment(Post $post, User $user, string $content, $mediaFile = null, ?int $parentId = null): Comment
     {
         // Check if post is draft
         if ($post->is_draft) {
@@ -40,7 +40,15 @@ class CommentService
             throw new \Exception('You cannot comment on this post');
         }
 
-        // Sanitize content - remove script tags and their content completely
+        // Validate parent comment if replying
+        if ($parentId) {
+            $parentComment = Comment::find($parentId);
+            if (!$parentComment || $parentComment->post_id !== $post->id) {
+                throw new \Exception('Invalid parent comment');
+            }
+        }
+
+        // Sanitize content
         $content = preg_replace('#<script(.*?)>(.*?)</script>#is', '', $content);
         $content = strip_tags($content);
         $content = trim($content);
@@ -53,25 +61,31 @@ class CommentService
             throw new \Exception('Content too long');
         }
 
+        // NEW: Check spam BEFORE database save
+        $spamCheck = $this->spamDetection->checkContent($content);
+        if ($spamCheck['is_spam'] && $spamCheck['score'] >= 80) {
+            throw new \Exception('Content detected as spam');
+        }
+
         DB::beginTransaction();
         try {
             // Create comment
-            $comment = $post->comments()->create([
-                'user_id' => $user->id,
-                'content' => $content,
-            ]);
+            $comment = new Comment();
+            $comment->user_id = $user->id;
+            $comment->post_id = $post->id;
+            $comment->parent_id = $parentId;
+            $comment->content = $content;
+            $comment->save();
+            
+            // Increment parent replies_count if nested reply
+            if ($parentId) {
+                Comment::where('id', $parentId)->increment('replies_count');
+            }
             
             // Handle media
             if ($mediaFile) {
                 $media = app(\App\Services\MediaService::class)->uploadImage($mediaFile, $user);
                 app(\App\Services\MediaService::class)->attachToModel($media, $comment);
-            }
-
-            // Check spam AFTER creation but BEFORE commit
-            $spamCheck = $this->spamDetection->checkComment($comment);
-            if ($spamCheck['is_spam'] && $spamCheck['score'] >= 80) {
-                DB::rollBack();
-                throw new \Exception('Content detected as spam');
             }
 
             // Process mentions
@@ -97,6 +111,11 @@ class CommentService
         }
         DB::beginTransaction();
         try {
+            // Decrement parent replies_count if nested reply
+            if ($comment->parent_id) {
+                Comment::where('id', $comment->parent_id)->decrement('replies_count');
+            }
+            
             $comment->delete();
             DB::commit();
         } catch (\Exception $e) {
@@ -133,5 +152,56 @@ class CommentService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function updateComment(Comment $comment, User $user, string $content): Comment
+    {
+        if ($comment->user_id !== $user->id) {
+            throw new \Exception('Unauthorized');
+        }
+
+        $content = trim(strip_tags($content));
+        if (empty($content)) {
+            throw new \Exception('Content cannot be empty');
+        }
+
+        DB::beginTransaction();
+        try {
+            $comment->content = $content;
+            $comment->markAsEdited();
+            DB::commit();
+            return $comment->fresh();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function pinComment(Comment $comment, User $user): void
+    {
+        $post = $comment->post;
+        if ($post->user_id !== $user->id) {
+            throw new \Exception('Only post owner can pin comments');
+        }
+
+        DB::beginTransaction();
+        try {
+            Comment::where('post_id', $post->id)->update(['is_pinned' => false]);
+            $comment->update(['is_pinned' => true]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function hideComment(Comment $comment, User $user): void
+    {
+        $post = $comment->post;
+        if ($post->user_id !== $user->id && $comment->user_id !== $user->id) {
+            throw new \Exception('Unauthorized');
+        }
+
+        $comment->update(['is_hidden' => true]);
     }
 }

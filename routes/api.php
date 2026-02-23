@@ -211,9 +211,13 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
     // Comments Routes
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])
-        ->middleware(['permission:comment.create', 'check.reply.permission', 'role.ratelimit', 'throttle:60,1']);
+        ->middleware(['permission:comment.create', 'throttle:' . config('limits.rate_limits.comments.create')]);
+    Route::put('/comments/{comment}', [CommentController::class, 'update']);
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy']);
-    Route::post('/comments/{comment}/like', [CommentController::class, 'like'])->middleware('permission:post.like');
+    Route::post('/comments/{comment}/like', [CommentController::class, 'like'])
+        ->middleware(['permission:post.like', 'throttle:' . config('limits.rate_limits.comments.like')]);
+    Route::post('/comments/{comment}/pin', [CommentController::class, 'pin']);
+    Route::post('/comments/{comment}/hide', [CommentController::class, 'hide']);
 
     // Follow/Unfollow Actions (ProfileController) - Twitter Standard: 400 follows per day
     Route::post('/users/{user}/follow', [ProfileController::class, 'follow'])->middleware(['throttle:' . config('limits.rate_limits.social.follow'), 'can:follow,user']);

@@ -5,22 +5,38 @@ namespace App\Models;
 use App\Traits\Mentionable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Comment extends Model
 {
     use HasFactory;
     use Mentionable;
+    use SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'post_id',
         'content',
+        'is_pinned',
+        'is_hidden',
     ];
 
-    protected $guarded = ['id', 'likes_count'];
+    protected $guarded = [
+        'id',
+        'user_id',
+        'post_id',
+        'parent_id',
+        'likes_count',
+        'replies_count',
+        'view_count',
+    ];
 
     protected $casts = [
         'likes_count' => 'integer',
+        'replies_count' => 'integer',
+        'view_count' => 'integer',
+        'is_pinned' => 'boolean',
+        'is_hidden' => 'boolean',
+        'edited_at' => 'datetime',
+        'deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -66,6 +82,16 @@ class Comment extends Model
         return $this->morphMany(Media::class, 'mediable');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(Comment::class, 'parent_id');
+    }
+
     public function isLikedBy($userId)
     {
         return $this->likes()->where('user_id', $userId)->exists();
@@ -85,6 +111,7 @@ class Comment extends Model
     public function scopeForPost($query, $postId)
     {
         return $query->where('post_id', $postId)
+            ->whereNull('parent_id')
             ->withUser()
             ->withCounts()
             ->latest();
@@ -93,5 +120,31 @@ class Comment extends Model
     public function scopeRecent($query)
     {
         return $query->orderBy('created_at', 'desc');
+    }
+
+    public function scopePinned($query)
+    {
+        return $query->where('is_pinned', true);
+    }
+
+    public function scopeVisible($query)
+    {
+        return $query->where('is_hidden', false);
+    }
+
+    public function scopeRootComments($query)
+    {
+        return $query->whereNull('parent_id');
+    }
+
+    public function isEdited()
+    {
+        return $this->edited_at !== null;
+    }
+
+    public function markAsEdited()
+    {
+        $this->edited_at = now();
+        $this->save();
     }
 }

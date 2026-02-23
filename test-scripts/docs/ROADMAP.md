@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-23  
-**پیشرفت کلی:** 23.1% (6/26 سیستم کاملاً مطابق با معماری جدید)
+**پیشرفت کلی:** 26.9% (7/26 سیستم کاملاً مطابق با معماری جدید)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,14 +9,14 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 6/26 (23.1%) - 🟢 معماری کامل
-### 🟡 سیستمهای نیمه کامل: 2/26 (7.7%) - 🟡 نیاز به Script Tests
+### ✅ سیستمهای تکمیل شده: 7/26 (26.9%) - 🟢 معماری کامل
+### 🟡 سیستمهای نیمه کامل: 1/26 (3.8%) - 🟡 نیاز به Script Tests
 ### ⚪ سیستمهای بدون تست: 18/26 (69.2%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2334 تست (Script: 1936 + Feature: 398)
-- **تعداد کل PHPUnit تستها:** 356 تست
-- **میانگین تست هر سیستم:** 292 تست
+- **تعداد کل تستها:** 2387 تست (Script: 1936 + Feature: 451)
+- **تعداد کل PHPUnit تستها:** 409 تست
+- **میانگین تست هر سیستم:** 298 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
@@ -25,7 +25,7 @@
 | 2 | Device Management | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 3 | Authentication | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 4 | Posts & Content | ✅ | 100% | 🟢 کامل | 114/100 | 🔴 حیاتی |
-| 5 | Comments | 🟡 | 100% | 🟡 نیمه | 100/100 | 🔴 حیاتی |
+| 5 | Comments | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 6 | Social Features | 🟡 | 100% | 🟡 نیمه | 89/100 | 🔴 حیاتی |
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
@@ -115,13 +115,13 @@
 
 #### 5. Comments ✅
 - **Controller:** CommentController
-- **Features:** Comment CRUD, Likes, Broadcasting
-- **Endpoints:** 4
+- **Features:** Comment CRUD, Nested Replies, Likes, Pin/Hide, Media Upload
+- **Endpoints:** 6
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (51 تست PHPUnit)
-- **تاریخ تکمیل:** 2025-02-04
-- **تست فایل:** `tests/Feature/CommentSystemTest.php` (51 تست)
-- **توضیح:** Authorization Twitter-standard، Broadcasting با ShouldBroadcast، Block/Mute در Service
+- **Test Coverage:** 100% (53 تست Feature)
+- **تاریخ تکمیل:** 2025-02-23
+- **تست فایل:** `tests/Feature/CommentSystemTest.php` (53 تست، 9 بخش)
+- **توضیح:** CRUD، Nested replies، Like toggle، Pin/Hide، Media upload، Spam detection، همه 6 نقش، Block/Mute integration، Events & Notifications
 
 #### 6. Social Features ✅
 - **Controllers:** FollowController, FollowRequestController, ProfileController
@@ -256,8 +256,8 @@
 - [x] Device Management (✅ 100/100 - 191 تست: Script 191)
 - [x] Authentication (✅ 100/100 - 349 تست: Script 239 + Feature 110)
 - [x] Posts & Content (✅ 114/100 - 352 تست: Script 271 + Feature 81)
-- [x] Comments (✅ 100/100 - 51 تست)
-- [x] Social Features (✅ 100/100 - 231 تست)
+- [x] Comments (✅ 100/100 - 53 تست Feature)
+- [x] Social Features (✅ 100/100 - 65 تست Feature)
 - [x] Profile & Account (✅ 100/100 - 287 تست)
 - [x] Search & Discovery (✅ 100/100 - 259 تست)
 - [ ] Messaging
@@ -268,20 +268,7 @@
 - [ ] Bookmarks & Reposts
 
 **پیشرفت فاز 1:** 8/14 (57.1%)
-**تعداد تستهای فاز 1:** 1711 تست [x] Posts & Content (✅ 100/100 - 289 تست)
-- [x] Comments (✅ 100/100 - 51 تست)
-- [x] Social Features (✅ 100/100 - 231 تست)
-- [x] Profile & Account (✅ 100/100 - 287 تست)
-- [x] Search & Discovery (✅ 100/100 - 259 تست)
-- [ ] Messaging
-- [ ] Notifications
-- [ ] Communities
-- [ ] Spaces
-- [ ] Lists
-- [ ] Bookmarks & Reposts
-
-**پیشرفت فاز 1:** 8/13 (61.5%)
-**تعداد تستهای فاز 1:** 2070 تست
+**تعداد تستهای فاز 1:** 1801 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
