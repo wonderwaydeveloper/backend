@@ -94,9 +94,9 @@ return [
             'max_file_size_kb' => 5120,
             'posts_per_day' => 100,
             'video_length_seconds' => 140,
-            'scheduled_posts' => 0,
+            'scheduled_posts' => 5,
             'rate_limit_per_minute' => 60,
-            'hd_upload' => false,
+            'hd_upload' => true,
             'advertisements' => false,
         ],
         'verified' => [
@@ -104,9 +104,9 @@ return [
             'max_file_size_kb' => 10240,
             'posts_per_day' => 200,
             'video_length_seconds' => 140,
-            'scheduled_posts' => 0,
+            'scheduled_posts' => 10,
             'rate_limit_per_minute' => 100,
-            'hd_upload' => false,
+            'hd_upload' => true,
             'advertisements' => false,
         ],
         'premium' => [

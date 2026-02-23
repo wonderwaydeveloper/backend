@@ -15,7 +15,7 @@ class PublishScheduledPosts extends Command
     public function handle()
     {
         $scheduledPosts = ScheduledPost::where('scheduled_at', '<=', now())
-            ->where('published', false)
+            ->where('status', 'pending')
             ->get();
 
         foreach ($scheduledPosts as $scheduledPost) {
@@ -23,15 +23,16 @@ class PublishScheduledPosts extends Command
                 $post = Post::create([
                     'user_id' => $scheduledPost->user_id,
                     'content' => $scheduledPost->content,
-                    'media_urls' => $scheduledPost->media_urls,
-                    'reply_settings' => $scheduledPost->reply_settings,
+                    'media_urls' => $scheduledPost->media_urls ?? null,
+                    'reply_settings' => $scheduledPost->reply_settings ?? 'everyone',
                 ]);
 
-                $scheduledPost->update(['published' => true, 'post_id' => $post->id]);
+                $scheduledPost->update(['status' => 'published', 'post_id' => $post->id]);
 
                 Log::info('Scheduled post published', ['post_id' => $post->id]);
                 $this->info("Published post: {$post->id}");
             } catch (\Exception $e) {
+                $scheduledPost->update(['status' => 'failed']);
                 Log::error('Failed to publish scheduled post', ['error' => $e->getMessage()]);
                 $this->error("Failed to publish scheduled post: {$e->getMessage()}");
             }

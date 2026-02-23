@@ -20,18 +20,17 @@ class PostPolicy
      */
     public function view(?User $user, Post $post): bool
     {
-        // Public posts can be viewed by anyone
-        if (!$post->is_private) {
-            return true;
-        }
-        
-        // Private posts only by owner or followers
-        if (!$user) {
+        // Deleted posts cannot be viewed
+        if ($post->is_deleted) {
             return false;
         }
         
-        return $user->id === $post->user_id || 
-               $user->following()->where('following_id', $post->user_id)->exists();
+        // Private posts can only be viewed by owner
+        if ($post->is_private) {
+            return $user && $user->id === $post->user_id;
+        }
+        
+        return true;
     }
 
     /**

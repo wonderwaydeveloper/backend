@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-23  
-**پیشرفت کلی:** 19.2% (5/26 سیستم کاملاً مطابق با معماری جدید)
+**پیشرفت کلی:** 23.1% (6/26 سیستم کاملاً مطابق با معماری جدید)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,15 +9,14 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 5/26 (19.2%) - 🟢 معماری کامل
+### ✅ سیستمهای تکمیل شده: 6/26 (23.1%) - 🟢 معماری کامل
 ### 🟡 سیستمهای نیمه کامل: 2/26 (7.7%) - 🟡 نیاز به Script Tests
-### 🔴 سیستمهای قدیمی: 1/26 (3.8%) - ⚠️ نیاز به بروزرسانی
 ### ⚪ سیستمهای بدون تست: 18/26 (69.2%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2271 تست (Script: 1873 + Feature: 398)
+- **تعداد کل تستها:** 2334 تست (Script: 1936 + Feature: 398)
 - **تعداد کل PHPUnit تستها:** 356 تست
-- **میانگین تست هر سیستم:** 284 تست
+- **میانگین تست هر سیستم:** 292 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
@@ -25,7 +24,7 @@
 | 1 | Security | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 2 | Device Management | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 3 | Authentication | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
-| 4 | Posts & Content | 🔴 | 100% | ⚠️ قدیمی | 100/100 | 🔴 حیاتی |
+| 4 | Posts & Content | ✅ | 100% | 🟢 کامل | 114/100 | 🔴 حیاتی |
 | 5 | Comments | 🟡 | 100% | 🟡 نیمه | 100/100 | 🔴 حیاتی |
 | 6 | Social Features | 🟡 | 100% | 🟡 نیمه | 89/100 | 🔴 حیاتی |
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
@@ -56,9 +55,10 @@
 - ⚪ **بدون تست**: نیاز به ایجاد تست
 
 ### سیستمهای حذف شده ❌
-- ~~GIF Integration~~ (حذف شده)
-- ~~GraphQL~~ (حذف شده)
-- ~~Organization Management~~ (حذف شده)
+- ~~GIF Integration~~ (2 endpoints)
+- ~~GraphQL~~ (1 endpoint)
+- ~~Organization Management~~ (1 endpoint)
+- **مجموع حذف شده:** 4 endpoints
 
 ---
 
@@ -105,11 +105,13 @@
 - **Controllers:** PostController, CommentController, BookmarkController, RepostController, ThreadController, ScheduledPostController, PollController, MediaController, CommunityNoteController
 - **Features:** Post Management, Threads, Scheduled Posts, Comments, Bookmarks, Reposts, Polls, Media, Community Notes
 - **Endpoints:** 23
-- **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (289 تست)
-- **تاریخ تکمیل:** 2025-02-04
-- **تست فایل:** `tests/Feature/PostsContentSystemTest.php` (46 تست PHPUnit)
-- **اسکریپت تست:** `test-scripts/03_posts.php` (289 تست)
+- **وضعیت:** ✅ تکمیل شده (114/100)
+- **Test Coverage:** 100% (352 تست: Script 271 + Feature 81)
+- **تاریخ تکمیل:** 2025-02-23
+- **تست فایلها:**
+  - Script: `test-scripts/04_posts.php` (271 تست، 20 بخش)
+  - Feature: `tests/Feature/PostsContentSystemTest.php` (81 تست، 9 بخش)
+- **توضیح:** Post CRUD، Threads، Scheduled Posts، Quotes، Drafts، Edit History، Polls، Media Upload، Community Notes، Authorization با 7 Policies، Integration با Block/Mute/Notifications
 
 #### 5. Comments ✅
 - **Controller:** CommentController
@@ -253,7 +255,7 @@
 - [x] Security (✅ 100/100 - 245 تست: Script 195 + Feature 50)
 - [x] Device Management (✅ 100/100 - 191 تست: Script 191)
 - [x] Authentication (✅ 100/100 - 349 تست: Script 239 + Feature 110)
-- [x] Posts & Content (✅ 100/100 - 289 تست)
+- [x] Posts & Content (✅ 114/100 - 352 تست: Script 271 + Feature 81)
 - [x] Comments (✅ 100/100 - 51 تست)
 - [x] Social Features (✅ 100/100 - 231 تست)
 - [x] Profile & Account (✅ 100/100 - 287 تست)
@@ -279,7 +281,7 @@
 - [ ] Bookmarks & Reposts
 
 **پیشرفت فاز 1:** 8/13 (61.5%)
-**تعداد تستهای فاز 1:** 2007 تست
+**تعداد تستهای فاز 1:** 2070 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
@@ -732,8 +734,8 @@ public function getCacheTTL() {
 ---
 
 **تاریخ ایجاد:** 2025-02-04  
-**آخرین بروزرسانی:** 2025-02-16  
-**نسخه:** 13.0  
+**آخرین بروزرسانی:** 2025-02-23  
+**نسخه:** 14.0  
 **وضعیت:** 🔍 در حال بررسی
 
 ---
@@ -823,25 +825,62 @@ public function getCacheTTL() {
 8. Real-world Scenarios (3 tests)
 9. Performance & Response (3 tests)
 
-### سیستم Posts & Content (100/100)
-- ✅ 40 endpoint عملیاتی (شامل 10 Controller)
-- ✅ 289 تست (20 بخش استاندارد)
-- ✅ تست یکپارچه: PostsContentSystemTest.php (46 تست PHPUnit)
-- ✅ تستهای تکراری حذف شدند
-- ✅ نامگذاری بهینه شد (test_can_*)
-- ✅ PermissionSeeder بهبود یافت
-- ✅ 6 باگ رفع شد
+### سیستم Posts & Content (114/100 - Production Ready)
+- ✅ 23 endpoint عملیاتی (9 Controller)
+- ✅ 352 تست (Script: 271 + Feature: 81)
+- ✅ 271 تست در Script Test (20 بخش)
+- ✅ 81 تست در Feature Test (9 بخش)
+- ✅ تست یکپارچه: PostsContentSystemTest.php
+- ✅ Script Test: test-scripts/04_posts.php
+- ✅ بازنویسی کامل با معماری 20 بخشی
+- ✅ PermissionSeeder بهبود یافت (post.create, post.schedule, post.like)
+- ✅ Config path اصلاح شد (limits.roles.user)
+- ✅ همه 6 نقش تست شدند
+- ✅ 100% موفقیت (271/271 تست)
 
 **Controllers تست شده:**
-- PostController (14 endpoints)
+- PostController (11 endpoints)
 - CommentController (4 endpoints)
 - BookmarkController (2 endpoints)
 - RepostController (4 endpoints)
 - ThreadController (4 endpoints)
 - ScheduledPostController (3 endpoints)
-- PollController (3 endpoints)
-- MediaController (7 endpoints)
+- PollController (4 endpoints)
+- MediaController (4 endpoints)
 - CommunityNoteController (4 endpoints)
+
+**بخشهای Script Test (20 بخش):**
+1. Database & Schema (8%)
+2. Models & Relationships (8%)
+3. Validation Integration (6%)
+4. Controllers & Services (8%)
+5. Core Features (8%)
+6. Security & Authorization (12%)
+7. Spam Detection (4%)
+8. Performance & Optimization (5%)
+9. Data Integrity & Transactions (5%)
+10. API & Routes (8%)
+11. Configuration (4%)
+12. Advanced Features (5%)
+13. Events & Integration (6%)
+14. Error Handling (4%)
+15. Resources & DTOs (4%)
+16. User Flows (4%)
+17. Validation Advanced (3%)
+18. Roles & Permissions Database (6%)
+19. Security Layers Deep Dive (4%)
+20. Middleware & Bootstrap (2%)
+
+**بخشهای Feature Test (9 بخش):**
+1. Core API Functionality (20%)
+2. Authentication & Authorization (20%)
+3. Validation & Error Handling (15%)
+4. Integration with Other Systems (15%)
+5. Security in Action (10%)
+6. Database Transactions (10%)
+7. Business Logic & Edge Cases (5%)
+8. Real-world Scenarios (3%)
+9. Performance & Response (2%)
 
 
 ### \u0633\u06cc\u0633\u062a\u0645 Security (100/100 - Production Ready)

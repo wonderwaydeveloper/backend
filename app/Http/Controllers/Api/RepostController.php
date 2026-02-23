@@ -25,7 +25,9 @@ class RepostController extends Controller
 
             if ($existing) {
                 $existing->delete();
-                $post->decrement('reposts_count');
+                if ($post->reposts_count > 0) {
+                    $post->decrement('reposts_count');
+                }
 
                 return response()->json(['message' => 'Repost cancelled', 'reposted' => false]);
             }
@@ -54,7 +56,9 @@ class RepostController extends Controller
 
             if ($existing) {
                 $existing->delete();
-                $post->decrement('reposts_count');
+                if ($post->reposts_count > 0) {
+                    $post->decrement('reposts_count');
+                }
                 return response()->json(['message' => 'Repost cancelled', 'reposted' => false]);
             }
 

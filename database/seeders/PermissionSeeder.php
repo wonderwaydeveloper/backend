@@ -170,7 +170,7 @@ class PermissionSeeder extends Seeder
         $user = Role::findByName('user', 'sanctum');
         $user->syncPermissions([
             'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify',
-            'post.create', 'post.edit.own', 'post.delete.own',
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
@@ -187,8 +187,8 @@ class PermissionSeeder extends Seeder
         $verified = Role::findByName('verified', 'sanctum');
         $verified->syncPermissions([
             'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
-            'post.create', 'post.edit.own', 'post.delete.own',
-            'comment.create', 'comment.delete.own',
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
+            'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
             'post.like', 'post.repost', 'post.bookmark',
@@ -210,7 +210,7 @@ class PermissionSeeder extends Seeder
         $premium->syncPermissions([
             'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
-            'comment.create', 'comment.delete.own',
+            'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
             'post.like', 'post.repost', 'post.bookmark',
@@ -234,7 +234,7 @@ class PermissionSeeder extends Seeder
         $organization->syncPermissions([
             'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
-            'comment.create', 'comment.delete.own',
+            'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
             'post.like', 'post.repost', 'post.bookmark',
@@ -256,8 +256,8 @@ class PermissionSeeder extends Seeder
         $moderator = Role::findByName('moderator', 'sanctum');
         $moderator->syncPermissions([
             'auth.login', 'auth.register', 'auth.logout', 'auth.password.reset', 'auth.email.verify', 'auth.2fa.enable', 'auth.2fa.disable',
-            'post.create', 'post.edit.own', 'post.delete.own', 'post.delete.any',
-            'comment.create', 'comment.delete.own', 'comment.delete.any',
+            'post.create', 'post.edit.own', 'post.delete.own', 'post.delete.any', 'post.schedule',
+            'comment.create', 'comment.delete.own', 'comment.delete.any', 'comment.like',
             'message.send', 'message.delete.own',
             'profile.edit.own', 'user.follow', 'user.unfollow',
             'post.like', 'post.repost', 'post.bookmark',
