@@ -7,7 +7,7 @@ use App\Events\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\{LoginRequest, PhoneLoginRequest, PhoneRegisterRequest};
 use App\Models\{User, PhoneVerificationCode};
-use App\Services\{AuthService, EmailService, SmsService, TwoFactorService, PasswordSecurityService, DeviceFingerprintService};
+use App\Services\{AuthService, EmailService, SmsService, TwoFactorService, PasswordSecurityService, DeviceFingerprintService, VerificationCodeService};
 use App\Rules\{StrongPassword, MinimumAge, ValidUsername};
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Cache, Hash};

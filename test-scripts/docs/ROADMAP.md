@@ -1,7 +1,7 @@
 # 🗺️ نقشه راه سیستمها
 
-**آخرین بهروزرسانی:** 2025-02-16  
-**پیشرفت کلی:** 11.5% (3/26 سیستم کاملاً مطابق با معماری جدید)
+**آخرین بهروزرسانی:** 2025-02-23  
+**پیشرفت کلی:** 15.4% (4/26 سیستم کاملاً مطابق با معماری جدید)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -9,22 +9,22 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 3/26 (11.5%) - 🟢 معماری کامل
+### ✅ سیستمهای تکمیل شده: 4/26 (15.4%) - 🟢 معماری کامل
 ### 🟡 سیستمهای نیمه کامل: 2/26 (7.7%) - 🟡 نیاز به Script Tests
-### 🔴 سیستمهای قدیمی: 2/26 (7.7%) - ⚠️ نیاز به بروزرسانی
+### 🔴 سیستمهای قدیمی: 1/26 (3.8%) - ⚠️ نیاز به بروزرسانی
 ### ⚪ سیستمهای بدون تست: 19/26 (73.1%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 1297 تست (Script: 1009 + Feature: 288)
-- **تعداد کل PHPUnit تستها:** 246 تست
-- **میانگین تست هر سیستم:** 185 تست
+- **تعداد کل تستها:** 1646 تست (Script: 1248 + Feature: 398)
+- **تعداد کل PHPUnit تستها:** 356 تست
+- **میانگین تست هر سیستم:** 235 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
 |---|-------|-------|---------------|---------|--------|--------|
 | 1 | Security | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
-| 2 | Device Management | ⚪ | - | - | - | 🔴 حیاتی |
-| 3 | Authentication | 🔴 | 100% | ⚠️ قدیمی | 100/100 | 🔴 حیاتی |
+| 2 | Authentication | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
+| 3 | Device Management | ⚪ | - | - | - | 🔴 حیاتی |
 | 4 | Posts & Content | 🔴 | 100% | ⚠️ قدیمی | 100/100 | 🔴 حیاتی |
 | 5 | Comments | 🟡 | 100% | 🟡 نیمه | 100/100 | 🔴 حیاتی |
 | 6 | Social Features | 🟡 | 100% | 🟡 نیمه | 89/100 | 🔴 حیاتی |
@@ -79,12 +79,16 @@
 - **توضیح:** Device Management، Audit Trail، Security Monitoring، 2FA، Bot Detection، Threat Detection، Rate Limiting
 
 #### 2. Authentication ✅
-- **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController
-- **Features:** Login/Logout, Multi-step Registration, Email/Phone Verification, Password Management
-- **Endpoints:** 31
+- **Controllers:** UnifiedAuthController, PasswordResetController, SocialAuthController, DeviceController, AuditController
+- **Features:** Login/Logout, Multi-step Registration, Email/Phone Verification, Password Management, 2FA, Device Management, Audit Trail
+- **Endpoints:** 38
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (126 تست)
-- **تاریخ تکمیل:** 2025-02-04
+- **Test Coverage:** 100% (349 تست: Script 239 + Feature 110)
+- **تاریخ تکمیل:** 2025-02-23
+- **تست فایلها:**
+  - Script: `test-scripts/02_authentication.php` (239 تست، 25 بخش)
+  - Feature: `tests/Feature/AuthenticationSystemTest.php` (110 تست، 9 بخش)
+- **توضیح:** Multi-step Registration، Email/Phone Verification،2FA (TOTP)، Device Management، Session Management، Password Security، Threat Detection، Audit Trail
 
 #### 3. Posts & Content ✅
 - **Controllers:** PostController, CommentController, BookmarkController, RepostController, ThreadController, ScheduledPostController, PollController, MediaController, CommunityNoteController
@@ -236,7 +240,7 @@
 
 ### فاز 1: بررسی سیستمهای حیاتی (13 سیستم)
 - [x] Security (✅ 100/100 - 245 تست: Script 195 + Feature 50)
-- [x] Authentication (✅ 100/100 - 126 تست)
+- [x] Authentication (✅ 100/100 - 349 تست: Script 239 + Feature 110)
 - [x] Posts & Content (✅ 100/100 - 289 تست)
 - [x] Comments (✅ 100/100 - 51 تست)
 - [x] Social Features (✅ 100/100 - 231 تست)
@@ -250,7 +254,7 @@
 - [ ] Bookmarks & Reposts
 
 **پیشرفت فاز 1:** 8/13 (61.5%)
-**تعداد تستهای فاز 1:** 1593 تست
+**تعداد تستهای فاز 1:** 1816 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
