@@ -211,6 +211,17 @@ class NotificationService implements NotificationServiceInterface
         $this->sendPushNotification($owner, 'poll_voted', $voter->name);
     }
 
+    public function notifyBlock($blocker, $blocked)
+    {
+        // Block notifications are typically not sent to the blocked user
+        // This is a silent action for privacy reasons
+        // Log for audit purposes only
+        \Log::info('User blocked', [
+            'blocker_id' => $blocker->id,
+            'blocked_id' => $blocked->id,
+        ]);
+    }
+
     private function createNotification($user, $type, $data)
     {
         try {

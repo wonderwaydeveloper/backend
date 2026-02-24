@@ -86,6 +86,14 @@ class ProfileController extends Controller
     public function follow(User $user): JsonResponse
     {
         $this->authorize('follow', $user);
+        
+        // Check if account is private
+        if ($user->is_private) {
+            return response()->json([
+                'message' => 'This account is private. Send a follow request instead.',
+            ], 400);
+        }
+        
         $result = $this->userService->followUser(auth()->user(), $user);
         return response()->json($result);
     }

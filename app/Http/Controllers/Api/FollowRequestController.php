@@ -19,6 +19,13 @@ class FollowRequestController extends Controller
             ], 400);
         }
 
+        // Check if account is public
+        if (!$user->is_private) {
+            return response()->json([
+                'message' => 'This account is public. Use follow endpoint instead.',
+            ], 400);
+        }
+
         if ($currentUser->isFollowing($user->id)) {
             return response()->json([
                 'message' => 'Already following this user',
@@ -69,10 +76,11 @@ class FollowRequestController extends Controller
 
         $followRequest->update(['status' => 'accepted']);
 
-        $request->user()->followers()->attach($followRequest->follower_id);
+        // Create follow relationship
+        $followRequest->follower->following()->attach($followRequest->following_id);
         
         // Increment counters (Twitter Standard)
-        $request->user()->increment('followers_count');
+        $followRequest->following->increment('followers_count');
         $followRequest->follower->increment('following_count');
 
         return response()->json([

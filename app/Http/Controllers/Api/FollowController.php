@@ -17,6 +17,13 @@ class FollowController extends Controller
     {
         $this->authorize('follow', $user);
         
+        // Check if account is private
+        if ($user->is_private) {
+            return response()->json([
+                'message' => 'This account is private. Send a follow request instead.',
+            ], 400);
+        }
+        
         $this->followService->follow(auth()->user(), $user);
 
         return response()->json(['message' => 'User followed successfully']);
