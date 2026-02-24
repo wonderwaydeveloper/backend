@@ -21,9 +21,7 @@ class MessageController extends Controller
     {
         $conversations = $this->messageService->getConversations($request->user());
 
-        return response()->json([
-            'data' => ConversationResource::collection($conversations)
-        ]);
+        return ConversationResource::collection($conversations);
     }
 
     public function messages(Request $request, User $user)
@@ -82,6 +80,8 @@ class MessageController extends Controller
 
     public function markAsRead(Request $request, Message $message)
     {
+        $this->authorize('view', $message);
+        
         try {
             $this->messageService->markAsRead($message, $request->user());
             return response()->json(['message' => 'Marked as read']);

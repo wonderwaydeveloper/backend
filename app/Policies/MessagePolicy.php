@@ -15,7 +15,7 @@ class MessagePolicy
         }
 
         // Can't send if blocked
-        if (in_array($sender->id, $recipient->blocked_users ?? [])) {
+        if ($sender->hasBlocked($recipient->id) || $recipient->hasBlocked($sender->id)) {
             return false;
         }
 
@@ -35,11 +35,12 @@ class MessagePolicy
 
     public function view(User $user, Message $message): bool
     {
-        return $user->id === $message->sender_id || $user->id === $message->recipient_id;
+        $conversation = $message->conversation;
+        return $user->id === $conversation->user_one_id || $user->id === $conversation->user_two_id;
     }
 
     public function delete(User $user, Message $message): bool
     {
-        return $user->id === $message->sender_id || $user->id === $message->recipient_id;
+        return $user->id === $message->sender_id;
     }
 }

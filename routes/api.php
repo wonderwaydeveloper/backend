@@ -277,12 +277,12 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
 
 
     Route::prefix('messages')->group(function () {
-        Route::get('/conversations', [MessageController::class, 'conversations']);
-        Route::get('/users/{user}', [MessageController::class, 'messages']);
-        Route::post('/users/{user}', [MessageController::class, 'send'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
-        Route::post('/users/{user}/typing', [MessageController::class, 'typing']);
-        Route::post('/{message}/read', [MessageController::class, 'markAsRead']);
-        Route::get('/unread-count', [MessageController::class, 'unreadCount']);
+        Route::get('/conversations', [MessageController::class, 'conversations'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::get('/users/{user}', [MessageController::class, 'messages'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/users/{user}', [MessageController::class, 'send'])->middleware(['permission:message.send', 'throttle:' . config('limits.rate_limits.messaging.send')]);
+        Route::post('/users/{user}/typing', [MessageController::class, 'typing'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/{message}/read', [MessageController::class, 'markAsRead'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::get('/unread-count', [MessageController::class, 'unreadCount'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
     });
 
 

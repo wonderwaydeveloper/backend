@@ -23,6 +23,17 @@ class MessageService
             throw new \Exception('Cannot send message to muted user');
         }
 
+        // Check DM settings
+        $dmSettings = $recipient->notification_preferences['dm_settings'] ?? 'everyone';
+        if ($dmSettings === 'none') {
+            throw new \Exception('User does not accept direct messages');
+        }
+        if ($dmSettings === 'followers') {
+            if (!method_exists($recipient, 'isFollowing') || !$recipient->isFollowing($sender->id)) {
+                throw new \Exception('User only accepts messages from followers');
+            }
+        }
+
         try {
             return DB::transaction(function () use ($sender, $recipient, $data) {
                 $conversation = Conversation::between($sender->id, $recipient->id);
@@ -38,7 +49,7 @@ class MessageService
                 $messageData = [
                     'conversation_id' => $conversation->id,
                     'sender_id' => $sender->id,
-                    'content' => isset($data['content']) ? strip_tags($data['content']) : null,
+                    'content' => isset($data['content']) ? htmlspecialchars(strip_tags($data['content']), ENT_QUOTES, 'UTF-8') : null,
                 ];
 
                 if (isset($data['gif_url'])) {
@@ -111,13 +122,15 @@ class MessageService
 
     public function getUnreadCount(User $user): int
     {
-        return Message::whereHas('conversation', function ($query) use ($user) {
-            $query->where('user_one_id', $user->id)
-                  ->orWhere('user_two_id', $user->id);
-        })
-        ->where('sender_id', '!=', $user->id)
-        ->unread()
-        ->count();
+        return Message::join('conversations', 'messages.conversation_id', '=', 'conversations.id')
+            ->where(function($query) use ($user) {
+                $query->where('conversations.user_one_id', $user->id)
+                      ->orWhere('conversations.user_two_id', $user->id);
+            })
+            ->where('messages.sender_id', '!=', $user->id)
+            ->whereNull('messages.read_at')
+            ->whereNull('messages.deleted_at')
+            ->count();
     }
 
     private function markConversationAsRead(Conversation $conversation, int $currentUserId, int $otherUserId): void

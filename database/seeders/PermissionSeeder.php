@@ -37,6 +37,8 @@ class PermissionSeeder extends Seeder
 
         // Messages
         Permission::firstOrCreate(['name' => 'message.send', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'message.view', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'message.delete', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'message.delete.own', 'guard_name' => 'sanctum']);
 
         // Profile

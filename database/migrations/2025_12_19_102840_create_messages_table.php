@@ -17,9 +17,12 @@ return new class () extends Migration {
             $table->text('content')->nullable();
             $table->string('gif_url')->nullable();
             $table->timestamp('read_at')->nullable();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->index(['conversation_id', 'created_at']);
+            $table->index('sender_id');
+            $table->index('read_at');
         });
     }
 

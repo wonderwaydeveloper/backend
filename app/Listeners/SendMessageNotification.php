@@ -28,11 +28,14 @@ class SendMessageNotification implements ShouldQueue
             ? $conversation->user_two_id 
             : $conversation->user_one_id;
 
-        $this->notificationService->sendNotification(
-            $recipientId,
-            'message',
-            "New message from {$sender->name}",
-            ['message_id' => $message->id, 'conversation_id' => $conversation->id]
-        );
+        $recipient = \App\Models\User::find($recipientId);
+        
+        if ($recipient) {
+            $this->notificationService->sendToUser(
+                $recipient,
+                'message',
+                ['message_id' => $message->id, 'conversation_id' => $conversation->id, 'sender_name' => $sender->name]
+            );
+        }
     }
 }
