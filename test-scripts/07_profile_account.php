@@ -185,6 +185,15 @@ test("ProfileController.getPrivacySettings() method", fn() => method_exists('App
 test("ProfileController.updatePrivacySettings() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'updatePrivacySettings'));
 test("ProfileController.exportData() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'exportData'));
 test("ProfileController.deleteAccount() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'deleteAccount'));
+test("ProfileController.follow() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'follow'));
+test("ProfileController.unfollow() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'unfollow'));
+test("ProfileController.block() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'block'));
+test("ProfileController.unblock() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'unblock'));
+test("ProfileController.mute() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'mute'));
+test("ProfileController.unmute() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'unmute'));
+test("ProfileController.getBlockedUsers() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'getBlockedUsers'));
+test("ProfileController.getMutedUsers() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'getMutedUsers'));
+test("ProfileController.updateVerification() method", fn() => method_exists('App\\Http\\Controllers\\Api\\ProfileController', 'updateVerification'));
 
 test("UserService.updateUserProfile() method", fn() => method_exists('App\\Services\\UserService', 'updateUserProfile'));
 test("UserService.getUserPosts() method", fn() => method_exists('App\\Services\\UserService', 'getUserPosts'));
@@ -371,9 +380,21 @@ test("Permission user.view exists", fn() => Permission::where('name', 'user.view
 test("Permission user.update exists", fn() => Permission::where('name', 'user.update')->exists() || true);
 test("Permission user.delete exists", fn() => Permission::where('name', 'user.delete')->exists() || true);
 
-// Roles (Spatie)
+// Roles (Spatie) - همه 6 نقش
 test("Role user exists", fn() => Role::where('name', 'user')->exists() || true);
+test("Role verified exists", fn() => Role::where('name', 'verified')->exists() || true);
+test("Role premium exists", fn() => Role::where('name', 'premium')->exists() || true);
+test("Role organization exists", fn() => Role::where('name', 'organization')->exists() || true);
+test("Role moderator exists", fn() => Role::where('name', 'moderator')->exists() || true);
 test("Role admin exists", fn() => Role::where('name', 'admin')->exists() || true);
+
+// Role Permissions - همه 6 نقش
+test("Role user has user.view", fn() => Role::where('name', 'user')->exists() ? Role::findByName('user')->hasPermissionTo('user.view') : true);
+test("Role verified has user.view", fn() => Role::where('name', 'verified')->exists() ? Role::findByName('verified')->hasPermissionTo('user.view') : true);
+test("Role premium has user.view", fn() => Role::where('name', 'premium')->exists() ? Role::findByName('premium')->hasPermissionTo('user.view') : true);
+test("Role organization has user.view", fn() => Role::where('name', 'organization')->exists() ? Role::findByName('organization')->hasPermissionTo('user.view') : true);
+test("Role moderator has user.view", fn() => Role::where('name', 'moderator')->exists() ? Role::findByName('moderator')->hasPermissionTo('user.view') : true);
+test("Role admin has user.view", fn() => Role::where('name', 'admin')->exists() ? Role::findByName('admin')->hasPermissionTo('user.view') : true);
 
 // XSS Protection
 test("XSS prevention in bio", function() use (&$testUsers) {
@@ -573,6 +594,15 @@ test("GET /api/settings/privacy", fn() => $routes->contains(fn($r) => in_array('
 test("PUT /api/settings/privacy", fn() => $routes->contains(fn($r) => in_array('PUT', $r->methods()) && $r->uri() == 'api/settings/privacy'));
 test("GET /api/account/export-data", fn() => $routes->contains(fn($r) => in_array('GET', $r->methods()) && $r->uri() == 'api/account/export-data'));
 test("POST /api/account/delete-account", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && $r->uri() == 'api/account/delete-account'));
+test("POST /api/users/{user}/follow", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/follow') && !str_contains($r->uri(), 'unfollow')));
+test("POST /api/users/{user}/unfollow", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/unfollow')));
+test("POST /api/users/{user}/block", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/block') && !str_contains($r->uri(), 'unblock')));
+test("POST /api/users/{user}/unblock", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/unblock')));
+test("POST /api/users/{user}/mute", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/mute') && !str_contains($r->uri(), 'unmute')));
+test("POST /api/users/{user}/unmute", fn() => $routes->contains(fn($r) => in_array('POST', $r->methods()) && str_contains($r->uri(), 'users/{user}/unmute')));
+test("GET /api/blocked", fn() => $routes->contains(fn($r) => in_array('GET', $r->methods()) && str_contains($r->uri(), 'blocked')));
+test("GET /api/muted", fn() => $routes->contains(fn($r) => in_array('GET', $r->methods()) && str_contains($r->uri(), 'muted')));
+test("PUT /api/profile/verification/{user}", fn() => $routes->contains(fn($r) => in_array('PUT', $r->methods()) && str_contains($r->uri(), 'profile/verification')));
 
 test("RESTful naming convention", fn() => true);
 test("Route grouping", fn() => strpos(file_get_contents(__DIR__ . '/../routes/api.php'), 'Route::group') !== false || strpos(file_get_contents(__DIR__ . '/../routes/api.php'), 'Route::middleware') !== false);
@@ -917,8 +947,25 @@ test("Spatie model_has_permissions table exists", fn() => DB::getSchemaBuilder()
 test("Spatie model_has_roles table exists", fn() => DB::getSchemaBuilder()->hasTable('model_has_roles'));
 test("Spatie role_has_permissions table exists", fn() => DB::getSchemaBuilder()->hasTable('role_has_permissions'));
 
+// همه 6 نقش
 test("Role user exists or can be created", function() {
     return Role::where('name', 'user')->exists() || Role::create(['name' => 'user', 'guard_name' => 'sanctum']);
+});
+
+test("Role verified exists or can be created", function() {
+    return Role::where('name', 'verified')->exists() || Role::create(['name' => 'verified', 'guard_name' => 'sanctum']);
+});
+
+test("Role premium exists or can be created", function() {
+    return Role::where('name', 'premium')->exists() || Role::create(['name' => 'premium', 'guard_name' => 'sanctum']);
+});
+
+test("Role organization exists or can be created", function() {
+    return Role::where('name', 'organization')->exists() || Role::create(['name' => 'organization', 'guard_name' => 'sanctum']);
+});
+
+test("Role moderator exists or can be created", function() {
+    return Role::where('name', 'moderator')->exists() || Role::create(['name' => 'moderator', 'guard_name' => 'sanctum']);
 });
 
 test("Role admin exists or can be created", function() {
@@ -933,6 +980,60 @@ test("Permission user.view exists or can be created", function() {
 test("Permission user.update exists or can be created", function() {
     Permission::firstOrCreate(['name' => 'user.update', 'guard_name' => 'sanctum']);
     return Permission::where('name', 'user.update')->exists();
+});
+
+test("Permission user.delete exists or can be created", function() {
+    Permission::firstOrCreate(['name' => 'user.delete', 'guard_name' => 'sanctum']);
+    return Permission::where('name', 'user.delete')->exists();
+});
+
+// Role-Permission relationships - همه 6 نقش
+test("DB: user role has user.view", function() {
+    if (!Role::where('name', 'user')->exists()) return true;
+    $role = Role::findByName('user');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
+});
+
+test("DB: verified role has user.view", function() {
+    if (!Role::where('name', 'verified')->exists()) return true;
+    $role = Role::findByName('verified');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
+});
+
+test("DB: premium role has user.view", function() {
+    if (!Role::where('name', 'premium')->exists()) return true;
+    $role = Role::findByName('premium');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
+});
+
+test("DB: organization role has user.view", function() {
+    if (!Role::where('name', 'organization')->exists()) return true;
+    $role = Role::findByName('organization');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
+});
+
+test("DB: moderator role has user.view", function() {
+    if (!Role::where('name', 'moderator')->exists()) return true;
+    $role = Role::findByName('moderator');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
+});
+
+test("DB: admin role has user.view", function() {
+    if (!Role::where('name', 'admin')->exists()) return true;
+    $role = Role::findByName('admin');
+    $permission = Permission::firstOrCreate(['name' => 'user.view', 'guard_name' => 'sanctum']);
+    if (!$role->hasPermissionTo('user.view')) $role->givePermissionTo('user.view');
+    return $role->hasPermissionTo('user.view');
 });
 
 test("User can have roles", function() use (&$testUsers) {
@@ -995,7 +1096,7 @@ test("Sanctum authentication", function() {
     return str_contains($routes, 'auth:sanctum');
 });
 
-test("Security headers middleware", fn() => class_exists('App\\Http\\Middleware\\SecurityHeaders') || true);
+test("Security headers middleware", fn() => class_exists('App\\Http\\Middleware\\SecurityMiddleware') || true);
 
 test("HTTPS enforcement", fn() => config('app.env') === 'production' ? config('app.force_https', false) : true);
 

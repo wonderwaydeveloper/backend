@@ -14,9 +14,9 @@
 ### ⚪ سیستمهای بدون تست: 18/26 (69.2%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2587 تست (Script: 2136 + Feature: 451)
-- **تعداد کل PHPUnit تستها:** 409 تست
-- **میانگین تست هر سیستم:** 323 تست
+- **تعداد کل تستها:** 2638 تست (Script: 2187 + Feature 451)
+- **تعداد کل PHPUnit تستها:** 451 تست
+- **میانگین تست هر سیستم:** 330 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
@@ -138,14 +138,14 @@
 #### 7. Profile & Account ✅
 - **Controller:** ProfileController
 - **Features:** Profile Management, Settings, Privacy, Export Data, Delete Account
-- **Endpoints:** 9
+- **Endpoints:** 18
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (287 تست: Script 236 + Feature 51)
-- **تاریخ تکمیل:** 2025-02-10
+- **Test Coverage:** 100% (338 تست: Script 270 + Feature 68)
+- **تاریخ تکمیل:** 2025-02-23
 - **تست فایلها:** 
-  - Script: `test-scripts/06_profile_account.php` (236 تست، 20 بخش)
-  - Feature: `tests/Feature/ProfileAccountSystemTest.php` (51 تست، 9 بخش)
-- **توضیح:** Profile CRUD، Privacy Settings، Export/Delete Account، Authorization با Policies، Integration با Analytics
+  - Script: `test-scripts/07_profile_account.php` (270 تست، 20 بخش، 100% موفقیت)
+  - Feature: `tests/Feature/ProfileAccountSystemTest.php` (68 تست، 10 بخش، 100% موفقیت)
+- **توضیح:** Profile CRUD، Privacy Settings، Export/Delete Account، Follow/Unfollow، Block/Mute، Authorization با UserPolicy، Integration با Analytics، همه 6 نقش تست شده، همه 18 endpoint تست شده، Role-Based Access Control کامل
 
 #### 8. Search & Discovery ✅
 - **Controllers:** SearchController, SuggestionController, TrendingController

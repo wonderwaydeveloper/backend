@@ -168,6 +168,77 @@ class ProfileAccountSystemTest extends TestCase
     }
 
     /** @test */
+    public function test_user_role_can_view_profile()
+    {
+        $userRole = User::factory()->create(['email_verified_at' => now()]);
+        $userRole->assignRole('user');
+        
+        $response = $this->actingAs($userRole, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_verified_role_can_view_profile()
+    {
+        $verified = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'verified', 'guard_name' => 'sanctum']);
+        $verified->assignRole('verified');
+        
+        $response = $this->actingAs($verified, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_premium_role_can_view_profile()
+    {
+        $premium = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'premium', 'guard_name' => 'sanctum']);
+        $premium->assignRole('premium');
+        
+        $response = $this->actingAs($premium, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_organization_role_can_view_profile()
+    {
+        $organization = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'organization', 'guard_name' => 'sanctum']);
+        $organization->assignRole('organization');
+        
+        $response = $this->actingAs($organization, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_moderator_role_can_view_profile()
+    {
+        $moderator = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'moderator', 'guard_name' => 'sanctum']);
+        $moderator->assignRole('moderator');
+        
+        $response = $this->actingAs($moderator, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_admin_role_can_view_profile()
+    {
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $admin->assignRole('admin');
+        
+        $response = $this->actingAs($admin, 'sanctum')
+            ->getJson("/api/users/{$this->otherUser->id}");
+        $response->assertOk();
+    }
+
+    /** @test */
     public function test_cannot_update_others_profile()
     {
         $response = $this->withToken($this->token)
@@ -224,6 +295,84 @@ class ProfileAccountSystemTest extends TestCase
 
         $response->assertOk();
         $this->assertDatabaseMissing('users', ['id' => $this->user->id]);
+    }
+
+    /** @test */
+    public function test_can_follow_user()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/follow");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_unfollow_user()
+    {
+        $this->user->following()->attach($this->otherUser->id);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/unfollow");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_block_user()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/block");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_unblock_user()
+    {
+        $this->user->blockedUsers()->attach($this->otherUser->id);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/unblock");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_mute_user()
+    {
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/mute");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_unmute_user()
+    {
+        $this->user->mutedUsers()->attach($this->otherUser->id);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/users/{$this->otherUser->id}/unmute");
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_get_blocked_users()
+    {
+        $response = $this->withToken($this->token)
+            ->getJson('/api/blocked');
+
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_get_muted_users()
+    {
+        $response = $this->withToken($this->token)
+            ->getJson('/api/muted');
+
+        $response->assertOk();
     }
 
     // ==================== SECTION 3: Validation & Error Handling ====================
@@ -699,5 +848,46 @@ class ProfileAccountSystemTest extends TestCase
 
         $data = $response->json('data');
         $this->assertLessThanOrEqual(20, count($data));
+    }
+
+    // ==================== SECTION 10: Role-Based Access Control ====================
+
+    /** @test */
+    public function test_all_roles_can_update_own_profile()
+    {
+        $roles = ['user', 'verified', 'premium', 'organization', 'moderator', 'admin'];
+        
+        foreach ($roles as $roleName) {
+            $user = User::factory()->create(['email_verified_at' => now()]);
+            $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'sanctum']);
+            $user->assignRole($roleName);
+            
+            $response = $this->actingAs($user, 'sanctum')
+                ->putJson('/api/profile', ['bio' => 'Test bio']);
+            
+            $response->assertOk();
+        }
+    }
+
+    /** @test */
+    public function test_only_admin_can_update_verification()
+    {
+        $admin = User::factory()->create(['email_verified_at' => now()]);
+        $role = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
+        $admin->assignRole('admin');
+        
+        $response = $this->actingAs($admin, 'sanctum')
+            ->putJson("/api/profile/verification/{$this->otherUser->id}", ['verified' => true]);
+        
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_non_admin_cannot_update_verification()
+    {
+        $response = $this->withToken($this->token)
+            ->putJson("/api/profile/verification/{$this->otherUser->id}", ['verified' => true]);
+        
+        $response->assertForbidden();
     }
 }

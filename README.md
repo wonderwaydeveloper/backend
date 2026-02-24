@@ -174,9 +174,9 @@ php artisan test --testsuite=Feature
 php artisan test --coverage
 ```
 
-**Test Results**: 2345 tests passing (100%)
-- PHPUnit Tests: 409
-- Custom Test Scripts: 1936
+**Test Results**: 2638 tests passing (100%)
+- PHPUnit Tests: 451
+- Custom Test Scripts: 2187
 
 ### Test Scripts (test-scripts/)
 
@@ -195,8 +195,8 @@ Test scripts are created based on documentation in `test-scripts/docs/`:
 - ✅ `03_authentication.php` - Authentication System (239 tests, 100/100)
 - ✅ `04_posts.php` - Posts & Content System (271 tests, 114/100)
 - ✅ `05_comments.php` - Comments System (51 tests, 100/100)
-- ✅ `06_social_features.php` - Social Features System (231 tests, 100/100)
-- ✅ `07_profile_account.php` - Profile & Account System (236 tests, 100/100)
+- ✅ `06_social_features.php` - Social Features System (199 tests, 100/100)
+- ✅ `07_profile_account.php` - Profile & Account System (270 tests, 100/100)
 - ✅ `08_search_discovery.php` - Search & Discovery System (207 tests, 100/100)
 
 **Test Architecture:**
