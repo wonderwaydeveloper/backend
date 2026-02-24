@@ -111,10 +111,7 @@ class ProfileController extends Controller
 
     public function updateVerification(Request $request, User $user): JsonResponse
     {
-        // Only admins can verify users
-        if (!$request->user()->hasRole('admin')) {
-            return response()->json(['error' => 'Unauthorized'], Response::HTTP_FORBIDDEN);
-        }
+        $this->authorize('updateVerification', $user);
         
         $request->validate(['verified' => 'required|boolean']);
         $user->update(['verified' => $request->verified]);

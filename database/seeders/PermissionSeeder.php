@@ -46,6 +46,11 @@ class PermissionSeeder extends Seeder
         // Follow
         Permission::firstOrCreate(['name' => 'user.follow', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'user.unfollow', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'follow.user', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'block.user', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'mute.user', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'unblock.user', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'unmute.user', 'guard_name' => 'sanctum']);
 
         // Interactions
         Permission::firstOrCreate(['name' => 'post.like', 'guard_name' => 'sanctum']);
@@ -173,7 +178,7 @@ class PermissionSeeder extends Seeder
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
-            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'profile.edit.own', 'user.follow', 'user.unfollow', 'follow.user', 'block.user', 'mute.user', 'unblock.user', 'unmute.user',
             'post.like', 'post.repost', 'post.bookmark',
             'poll.create', 'poll.vote', 'poll.delete.own',
             'mention.view', 'mention.create',
@@ -190,7 +195,7 @@ class PermissionSeeder extends Seeder
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
-            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'profile.edit.own', 'user.follow', 'user.unfollow', 'follow.user', 'block.user', 'mute.user', 'unblock.user', 'unmute.user',
             'post.like', 'post.repost', 'post.bookmark',
             'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
             'space.join', 'space.leave',
@@ -212,7 +217,7 @@ class PermissionSeeder extends Seeder
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
-            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'profile.edit.own', 'user.follow', 'user.unfollow', 'follow.user', 'block.user', 'mute.user', 'unblock.user', 'unmute.user',
             'post.like', 'post.repost', 'post.bookmark',
             'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
             'space.create', 'space.host', 'space.speak', 'space.join', 'space.leave', 'space.manage.own', 'space.delete.own', 'space.update.own', 'space.manage.roles', 'space.end.own',
@@ -236,7 +241,7 @@ class PermissionSeeder extends Seeder
             'post.create', 'post.edit.own', 'post.delete.own', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.like',
             'message.send', 'message.delete.own',
-            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'profile.edit.own', 'user.follow', 'user.unfollow', 'follow.user', 'block.user', 'mute.user', 'unblock.user', 'unmute.user',
             'post.like', 'post.repost', 'post.bookmark',
             'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
             'space.create', 'space.host', 'space.speak', 'space.join', 'space.leave', 'space.manage.own', 'space.delete.own', 'space.update.own', 'space.manage.roles', 'space.end.own',
@@ -259,7 +264,7 @@ class PermissionSeeder extends Seeder
             'post.create', 'post.edit.own', 'post.delete.own', 'post.delete.any', 'post.schedule',
             'comment.create', 'comment.delete.own', 'comment.delete.any', 'comment.like',
             'message.send', 'message.delete.own',
-            'profile.edit.own', 'user.follow', 'user.unfollow',
+            'profile.edit.own', 'user.follow', 'user.unfollow', 'follow.user', 'block.user', 'mute.user', 'unblock.user', 'unmute.user',
             'post.like', 'post.repost', 'post.bookmark',
             'list.create', 'list.edit.own', 'list.delete.own', 'list.update.own', 'list.manage.members', 'list.subscribe',
             'space.join', 'space.leave',

@@ -57,6 +57,11 @@ class UserPolicy
         return $user->id === $model->id || $user->hasRole('admin');
     }
 
+    public function updateVerification(User $user, User $model): bool
+    {
+        return $user->hasRole('admin');
+    }
+
     public function follow(User $user, User $model): bool
     {
         return $user->id !== $model->id && !$model->hasBlocked($user->id);

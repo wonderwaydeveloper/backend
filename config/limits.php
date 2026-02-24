@@ -29,6 +29,8 @@ return [
             'block' => '10,1',
             'mute' => '20,1',
             'report' => '5,1',
+            'max_follows_per_day' => 400,
+            'max_follow_requests_per_day' => 100,
         ],
         'search' => [
             'posts' => '450,15',
@@ -214,5 +216,16 @@ return [
     'posts' => [
         'edit_timeout_minutes' => env('POST_EDIT_TIMEOUT_MINUTES', 60),
         'max_thread_posts' => 25,
+    ],
+
+    // ========================================================================
+    // SOCIAL
+    // ========================================================================
+
+    'social' => [
+        'max_follows_per_day' => 400,
+        'max_follow_requests_per_day' => 100,
+        'max_blocks_per_day' => 50,
+        'max_mutes_per_day' => 100,
     ],
 ];

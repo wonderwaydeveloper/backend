@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Models\FollowRequest;
 
 class FollowPolicy
 {
@@ -14,7 +15,7 @@ class FollowPolicy
         }
 
         // Can't follow if blocked
-        if (in_array($user->id, $targetUser->blocked_users ?? [])) {
+        if ($targetUser->hasBlocked($user->id)) {
             return false;
         }
 
@@ -29,6 +30,16 @@ class FollowPolicy
     public function unfollow(User $user, User $targetUser): bool
     {
         return $user->isFollowing($targetUser->id);
+    }
+
+    public function accept(User $user, FollowRequest $followRequest): bool
+    {
+        return $user->id === $followRequest->following_id;
+    }
+
+    public function reject(User $user, FollowRequest $followRequest): bool
+    {
+        return $user->id === $followRequest->following_id;
     }
 
     public function viewFollowers(User $currentUser, User $targetUser): bool

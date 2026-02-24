@@ -47,6 +47,11 @@ class FollowRequestController extends Controller
         ]);
     }
 
+    public function store(Request $request, User $user)
+    {
+        return $this->send($request, $user);
+    }
+
     public function index(Request $request)
     {
         $requests = FollowRequest::where('following_id', $request->user()->id)
@@ -65,6 +70,10 @@ class FollowRequestController extends Controller
         $followRequest->update(['status' => 'accepted']);
 
         $request->user()->followers()->attach($followRequest->follower_id);
+        
+        // Increment counters (Twitter Standard)
+        $request->user()->increment('followers_count');
+        $followRequest->follower->increment('following_count');
 
         return response()->json([
             'message' => 'Follow request accepted',

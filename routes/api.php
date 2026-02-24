@@ -238,6 +238,7 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     Route::get('/users/{user}/media', [ProfileController::class, 'media'])->middleware('can:view,user');
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::put('/profile/privacy', [ProfileController::class, 'updatePrivacy']);
+    Route::put('/profile/verification/{user}', [ProfileController::class, 'updateVerification'])->middleware('role:admin');
     
     // Settings Routes
     Route::prefix('settings')->group(function () {

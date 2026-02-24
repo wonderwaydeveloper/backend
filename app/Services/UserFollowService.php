@@ -9,8 +9,11 @@ use Illuminate\Support\Facades\Log;
 
 class UserFollowService
 {
-    public function follow(int $userId, int $targetUserId): bool
+    public function follow(int|User $userId, int|User $targetUserId): bool
     {
+        $userId = $userId instanceof User ? $userId->id : $userId;
+        $targetUserId = $targetUserId instanceof User ? $targetUserId->id : $targetUserId;
+        
         // Prevent self-follow
         if ($userId === $targetUserId) {
             throw new \InvalidArgumentException('Cannot follow yourself');
@@ -48,8 +51,16 @@ class UserFollowService
         }
     }
 
-    public function unfollow(int $userId, int $targetUserId): bool
+    public function followUser(User $user, User $targetUser): bool
     {
+        return $this->follow($user, $targetUser);
+    }
+
+    public function unfollow(int|User $userId, int|User $targetUserId): bool
+    {
+        $userId = $userId instanceof User ? $userId->id : $userId;
+        $targetUserId = $targetUserId instanceof User ? $targetUserId->id : $targetUserId;
+        
         try {
             return DB::transaction(function () use ($userId, $targetUserId) {
                 $user = User::lockForUpdate()->findOrFail($userId);
@@ -79,6 +90,11 @@ class UserFollowService
             ]);
             throw $e;
         }
+    }
+
+    public function unfollowUser(User $user, User $targetUser): bool
+    {
+        return $this->unfollow($user, $targetUser);
     }
 
     public function getFollowers(int $userId): \Illuminate\Contracts\Pagination\LengthAwarePaginator
