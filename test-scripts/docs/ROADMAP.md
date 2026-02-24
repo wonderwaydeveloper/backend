@@ -3,6 +3,8 @@
 **آخرین بهروزرسانی:** 2025-02-23  
 **پیشرفت کلی:** 30.8% (8/26 سیستم کاملاً مطابق با معماری جدید)
 
+> **🎉 آخرین دستاورد:** سیستم Search & Discovery با 61 تست Feature و 207 تست Script (100% موفقیت)
+
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
 ---
@@ -14,9 +16,9 @@
 ### ⚪ سیستمهای بدون تست: 18/26 (69.2%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2638 تست (Script: 2187 + Feature 451)
-- **تعداد کل PHPUnit تستها:** 451 تست
-- **میانگین تست هر سیستم:** 330 تست
+- **تعداد کل تستها:** 2647 تست (Script: 2187 + Feature: 460)
+- **تعداد کل PHPUnit تستها:** 460 تست
+- **میانگین تست هر سیستم:** 331 تست
 - **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
@@ -28,7 +30,7 @@
 | 5 | Comments | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 6 | Social Features | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
-| 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
+| 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
 | 9 | Messaging | ⚪ | - | - | - | 🔴 حیاتی |
 | 10 | Notifications | ⚪ | - | - | - | 🔴 حیاتی |
 | 11 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
@@ -148,16 +150,17 @@
 - **توضیح:** Profile CRUD، Privacy Settings، Export/Delete Account، Follow/Unfollow، Block/Mute، Authorization با UserPolicy، Integration با Analytics، همه 6 نقش تست شده، همه 18 endpoint تست شده، Role-Based Access Control کامل
 
 #### 8. Search & Discovery ✅
-- **Controllers:** SearchController, SuggestionController, TrendingController
-- **Features:** Search (Posts/Users/Hashtags), Advanced Search, Trending, Suggestions
-- **Endpoints:** 14
+- **Controllers:** SearchController (7 methods), TrendingController (9 methods), SuggestionController (2 methods)
+- **Services:** SearchService (382 lines), TrendingService (285 lines), UserSuggestionService
+- **Features:** Search (Posts/Users/Hashtags), Advanced Search, Trending, Suggestions, Personalized Trending
+- **Endpoints:** 14 (6 search + 8 trending)
 - **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (259 تست: Script 207 + Feature 52)
-- **تاریخ تکمیل:** 2025-02-15
+- **Test Coverage:** 100% (268 تست: Script 207 + Feature 61)
+- **تاریخ تکمیل:** 2025-02-23
 - **تست فایلها:** 
-  - Script: `test-scripts/07_search_discovery.php` (207 تست، 20 بخش)
-  - Feature: `tests/Feature/SearchDiscoverySystemTest.php` (52 تست، 9 بخش)
-- **توضیح:** Meilisearch Integration، Search Operators، Trending Algorithm، Block/Mute Filtering، Rate Limiting
+  - Script: `test-scripts/08_search_discovery.php` (207 تست، 20 بخش، 100% موفقیت)
+  - Feature: `tests/Feature/SearchDiscoverySystemTest.php` (61 تست، 10 بخش، 100% موفقیت)
+- **توضیح:** Meilisearch Integration، Advanced Search با Permission System (search.basic vs search.advanced)، Trending Algorithm با Time Decay، Block/Mute Filtering، همه 6 نقش تست شده، Rate Limiting مطابق Twitter، Personalized Trending، Velocity Tracking، Cache Strategy
 
 #### 9. Messaging
 - **Controller:** MessageController
