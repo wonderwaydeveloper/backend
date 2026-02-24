@@ -14,7 +14,7 @@
 ### ⚪ سیستمهای بدون تست: 18/26 (69.2%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2586 تست (Script: 2135 + Feature: 451)
+- **تعداد کل تستها:** 2587 تست (Script: 2136 + Feature: 451)
 - **تعداد کل PHPUnit تستها:** 409 تست
 - **میانگین تست هر سیستم:** 323 تست
 - **نرخ موفقیت:** 100%
@@ -131,9 +131,9 @@
 - **Test Coverage:** 100% (264 تست: Script 199 + Feature 65)
 - **تاریخ تکمیل:** 2025-02-23
 - **تست فایلها:**
-  - Script: `test-scripts/06_social_features.php` (199 تست، 20 بخش)
-  - Feature: `tests/Feature/SocialFeaturesSystemTest.php` (65 تست، 9 بخش)
-- **توضیح:** Follow/Unfollow، Follow Requests، Block/Mute، Private Accounts، Authorization با UserPolicy و FollowPolicy، Integration با Notifications، همه 6 نقش تست شده
+  - Script: `test-scripts/06_social_features.php` (199 تست، 20 بخش، 100% موفقیت)
+  - Feature: `tests/Feature/SocialFeaturesSystemTest.php` (65 تست، 9 بخش، 100% موفقیت)
+- **توضیح:** Follow/Unfollow، Follow Requests، Block/Mute، Private Accounts، Authorization با UserPolicy و FollowPolicy، Integration با Notifications، همه 6 نقش تست شده، تمام هشدارها رفع شده
 
 #### 7. Profile & Account ✅
 - **Controller:** ProfileController

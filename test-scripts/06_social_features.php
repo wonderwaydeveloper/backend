@@ -724,15 +724,21 @@ test("Mute expiration works", function() {
 });
 
 test("Private account requires follow request", function() {
-    $privateUser = User::where('is_private', true)->first();
-    return $privateUser ? $privateUser->is_private === true : null;
+    DB::beginTransaction();
+    $privateUser = User::factory()->create(['username' => 'private_' . time(), 'is_private' => true]);
+    $result = $privateUser->is_private === true;
+    DB::rollBack();
+    return $result;
 });
 
 test("Follow request status transitions", function() {
     DB::beginTransaction();
+    $u1 = User::factory()->create(['username' => 'trans1_' . time()]);
+    $u2 = User::factory()->create(['username' => 'trans2_' . time()]);
+    
     $request = FollowRequest::create([
-        'follower_id' => 1,
-        'following_id' => 2,
+        'follower_id' => $u1->id,
+        'following_id' => $u2->id,
         'status' => 'pending'
     ]);
     
