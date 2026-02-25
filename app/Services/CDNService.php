@@ -36,36 +36,46 @@ class CDNService
 
     public function uploadImage(UploadedFile $file, string $folder = 'images'): array
     {
+        $disk = config('filesystems.default', 'public');
         $filename = $this->generateUniqueFilename($file);
         $path = $folder . '/' . date('Y/m') . '/' . $filename;
         
-        $uploaded = Storage::disk('public')->put($path, file_get_contents($file));
+        $uploaded = Storage::disk($disk)->put($path, file_get_contents($file));
         
         if (!$uploaded) {
             throw new \Exception('Failed to upload to CDN');
         }
         
+        $cdnUrl = config('filesystems.cdn_url');
+        $url = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($path, '/') : $this->getCDNUrl($path, 'images');
+        $thumbnailPath = $this->generateThumbnail($path);
+        $thumbnailUrl = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($thumbnailPath, '/') : $this->getCDNUrl($thumbnailPath, 'images');
+        
         return [
             'path' => $path,
-            'url' => $this->getCDNUrl($path, 'images'),
-            'thumbnail' => $this->getCDNUrl($this->generateThumbnail($path), 'images')
+            'url' => $url,
+            'thumbnail' => $thumbnailUrl
         ];
     }
 
     public function uploadVideo(UploadedFile $file, string $folder = 'videos'): array
     {
+        $disk = config('filesystems.default', 'public');
         $filename = $this->generateUniqueFilename($file);
         $path = $folder . '/' . date('Y/m') . '/' . $filename;
         
-        $uploaded = Storage::disk('public')->put($path, file_get_contents($file));
+        $uploaded = Storage::disk($disk)->put($path, file_get_contents($file));
         
         if (!$uploaded) {
             throw new \Exception('Failed to upload to CDN');
         }
         
+        $cdnUrl = config('filesystems.cdn_url');
+        $url = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($path, '/') : $this->getCDNUrl($path, 'videos');
+        
         return [
             'path' => $path,
-            'url' => $this->getCDNUrl($path, 'videos'),
+            'url' => $url,
             'processing' => true
         ];
     }

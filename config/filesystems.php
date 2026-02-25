@@ -11,9 +11,23 @@ return [
     | by the framework. The "local" disk, as well as a variety of cloud
     | based disks are available to your application for file storage.
     |
+    | Supported: "local", "public", "s3"
+    |
     */
 
-    'default' => env('FILESYSTEM_DISK', 'local'),
+    'default' => env('FILESYSTEM_DISK', 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | CDN URL
+    |--------------------------------------------------------------------------
+    |
+    | If you're using a CDN (CloudFront, CloudFlare, etc.) to serve your media,
+    | specify the CDN URL here. Leave empty to use default storage URLs.
+    |
+    */
+
+    'cdn_url' => env('CDN_URL', null),
 
     /*
     |--------------------------------------------------------------------------

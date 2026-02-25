@@ -27,19 +27,20 @@ class MediaService
         
         return \DB::transaction(function () use ($file, $user, $altText, $type) {
             try {
+                $disk = $this->getStorageDisk();
                 $filename = $this->generateFilename('webp');
                 $path = "media/images/" . date('Y/m/d');
                 
                 $processedImage = $this->processImage($file, $type, 85);
                 $fullPath = "{$path}/{$filename}";
                 
-                Storage::disk('public')->put($fullPath, $processedImage);
+                Storage::disk($disk)->put($fullPath, $processedImage);
                 
-                if (!Storage::disk('public')->exists($fullPath)) {
+                if (!Storage::disk($disk)->exists($fullPath)) {
                     throw new \Exception('Failed to save image file');
                 }
                 
-                $url = Storage::disk('public')->url($fullPath);
+                $url = $this->getMediaUrl($disk, $fullPath);
                 $dimensions = $this->getImageDimensions($processedImage);
                 
                 $media = Media::create([
@@ -60,8 +61,8 @@ class MediaService
                 return $media;
                 
             } catch (\Exception $e) {
-                if (isset($fullPath) && Storage::disk('public')->exists($fullPath)) {
-                    Storage::disk('public')->delete($fullPath);
+                if (isset($fullPath) && isset($disk) && Storage::disk($disk)->exists($fullPath)) {
+                    Storage::disk($disk)->delete($fullPath);
                 }
                 throw $e;
             }
@@ -74,17 +75,18 @@ class MediaService
         
         return \DB::transaction(function () use ($file, $user, $type) {
             try {
+                $disk = $this->getStorageDisk();
                 $filename = $this->generateFilename($file->getClientOriginalExtension());
                 $path = "media/{$type}s/videos/" . date('Y/m/d');
                 $fullPath = "{$path}/{$filename}";
                 
-                Storage::disk('public')->putFileAs($path, $file, $filename);
+                Storage::disk($disk)->putFileAs($path, $file, $filename);
                 
-                if (!Storage::disk('public')->exists($fullPath)) {
+                if (!Storage::disk($disk)->exists($fullPath)) {
                     throw new \Exception('Failed to save video file');
                 }
                 
-                $url = Storage::disk('public')->url($fullPath);
+                $url = $this->getMediaUrl($disk, $fullPath);
                 
                 $media = Media::create([
                     'user_id' => $user->id,
@@ -103,8 +105,8 @@ class MediaService
                 return $media;
                 
             } catch (\Exception $e) {
-                if (isset($fullPath) && Storage::disk('public')->exists($fullPath)) {
-                    Storage::disk('public')->delete($fullPath);
+                if (isset($fullPath) && isset($disk) && Storage::disk($disk)->exists($fullPath)) {
+                    Storage::disk($disk)->delete($fullPath);
                 }
                 throw $e;
             }
@@ -115,13 +117,14 @@ class MediaService
     {
         $this->validator->validateDocument($file);
         
+        $disk = $this->getStorageDisk();
         $filename = $this->generateFilename($file->getClientOriginalExtension());
         $path = "media/documents/" . date('Y/m/d');
         $fullPath = "{$path}/{$filename}";
         
-        Storage::disk('public')->putFileAs($path, $file, $filename);
+        Storage::disk($disk)->putFileAs($path, $file, $filename);
         
-        $url = Storage::disk('public')->url($fullPath);
+        $url = $this->getMediaUrl($disk, $fullPath);
         
         return Media::create([
             'user_id' => $user->id,
@@ -134,33 +137,59 @@ class MediaService
         ]);
     }
 
+    public function uploadAudio($file, User $user)
+    {
+        $this->validator->validateAudio($file);
+        
+        $disk = $this->getStorageDisk();
+        $filename = $this->generateFilename($file->getClientOriginalExtension());
+        $path = "media/audio/" . date('Y/m/d');
+        $fullPath = "{$path}/{$filename}";
+        
+        Storage::disk($disk)->putFileAs($path, $file, $filename);
+        
+        $url = $this->getMediaUrl($disk, $fullPath);
+        
+        return Media::create([
+            'user_id' => $user->id,
+            'type' => 'audio',
+            'path' => $fullPath,
+            'url' => $url,
+            'filename' => $filename,
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getSize(),
+        ]);
+    }
+
     public function deleteMedia(Media $media)
     {
-        if (Storage::disk('public')->exists($media->path)) {
-            Storage::disk('public')->delete($media->path);
+        $disk = $this->getStorageDisk();
+        
+        if (Storage::disk($disk)->exists($media->path)) {
+            Storage::disk($disk)->delete($media->path);
         }
         
         if ($media->thumbnail_url) {
-            $thumbnailPath = str_replace('/storage/', '', parse_url($media->thumbnail_url, PHP_URL_PATH));
-            if (Storage::disk('public')->exists($thumbnailPath)) {
-                Storage::disk('public')->delete($thumbnailPath);
+            $thumbnailPath = $this->extractPathFromUrl($media->thumbnail_url);
+            if ($thumbnailPath && Storage::disk($disk)->exists($thumbnailPath)) {
+                Storage::disk($disk)->delete($thumbnailPath);
             }
         }
 
         if ($media->image_variants) {
             foreach ($media->image_variants as $variant) {
-                $variantPath = str_replace('/storage/', '', parse_url($variant, PHP_URL_PATH));
-                if (Storage::disk('public')->exists($variantPath)) {
-                    Storage::disk('public')->delete($variantPath);
+                $variantPath = $this->extractPathFromUrl($variant);
+                if ($variantPath && Storage::disk($disk)->exists($variantPath)) {
+                    Storage::disk($disk)->delete($variantPath);
                 }
             }
         }
 
         if ($media->video_qualities) {
             foreach ($media->video_qualities as $quality) {
-                $qualityPath = str_replace('/storage/', '', parse_url($quality, PHP_URL_PATH));
-                if (Storage::disk('public')->exists($qualityPath)) {
-                    Storage::disk('public')->delete($qualityPath);
+                $qualityPath = $this->extractPathFromUrl($quality);
+                if ($qualityPath && Storage::disk($disk)->exists($qualityPath)) {
+                    Storage::disk($disk)->delete($qualityPath);
                 }
             }
         }
@@ -235,7 +264,8 @@ class MediaService
             return;
         }
 
-        $imageContent = Storage::disk('public')->get($media->path);
+        $disk = $this->getStorageDisk();
+        $imageContent = Storage::disk($disk)->get($media->path);
         $manager = new ImageManager(new Driver());
         $thumbnail = $manager->read($imageContent);
         $thumbnail->cover(300, 300);
@@ -243,10 +273,37 @@ class MediaService
         $pathInfo = pathinfo($media->path);
         $thumbnailPath = $pathInfo['dirname'] . '/thumbnails/' . $pathInfo['basename'];
         
-        Storage::disk('public')->put($thumbnailPath, $thumbnail->toJpeg(80)->toString());
+        Storage::disk($disk)->put($thumbnailPath, $thumbnail->toJpeg(80)->toString());
         
         $media->update([
-            'thumbnail_url' => Storage::disk('public')->url($thumbnailPath),
+            'thumbnail_url' => $this->getMediaUrl($disk, $thumbnailPath),
         ]);
+    }
+
+    private function getStorageDisk(): string
+    {
+        return config('filesystems.default', 'public');
+    }
+
+    private function getMediaUrl(string $disk, string $path): string
+    {
+        $cdnUrl = config('filesystems.cdn_url');
+        
+        if ($cdnUrl) {
+            return rtrim($cdnUrl, '/') . '/' . ltrim($path, '/');
+        }
+        
+        return Storage::disk($disk)->url($path);
+    }
+
+    private function extractPathFromUrl(string $url): ?string
+    {
+        $cdnUrl = config('filesystems.cdn_url');
+        
+        if ($cdnUrl && str_starts_with($url, $cdnUrl)) {
+            return str_replace($cdnUrl, '', $url);
+        }
+        
+        return str_replace('/storage/', '', parse_url($url, PHP_URL_PATH));
     }
 }

@@ -37,7 +37,9 @@ class ProcessVideoJob implements ShouldQueue
             return;
         }
 
-        if (!Storage::disk('public')->exists($this->media->path)) {
+        $disk = config('filesystems.default', 'public');
+
+        if (!Storage::disk($disk)->exists($this->media->path)) {
             Log::error('Video file not found', ['media_id' => $this->media->id, 'path' => $this->media->path]);
             $this->media->update(['encoding_status' => 'failed', 'processing_progress' => 0]);
             $this->fail(new \Exception('Video file not found'));
@@ -54,7 +56,7 @@ class ProcessVideoJob implements ShouldQueue
                 'ffmpeg.threads'   => 12,
             ]);
             
-            $videoPath = Storage::disk('public')->path($this->media->path);
+            $videoPath = Storage::disk($disk)->path($this->media->path);
             $video = $ffmpeg->open($videoPath);
             
             $duration = (int) $ffmpeg->getFFProbe()->format($videoPath)->get('duration');
@@ -80,13 +82,14 @@ class ProcessVideoJob implements ShouldQueue
                 $format = (new X264())->setKiloBitrate($config['bitrate'])->setAudioCodec('aac')->setAudioKiloBitrate(128);
                 
                 $video->filters()->resize(new Dimension($config['width'], $config['height']));
-                $video->save($format, Storage::disk('public')->path($outputPath));
+                $video->save($format, Storage::disk($disk)->path($outputPath));
                 
-                if (!Storage::disk('public')->exists($outputPath)) {
+                if (!Storage::disk($disk)->exists($outputPath)) {
                     throw new \Exception("Failed to create {$quality} quality video");
                 }
                 
-                $qualities[$quality] = Storage::disk('public')->url($outputPath);
+                $cdnUrl = config('filesystems.cdn_url');
+                $qualities[$quality] = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($outputPath, '/') : Storage::disk($disk)->url($outputPath);
                 $currentQuality++;
                 $progress = (int)(($currentQuality / $totalQualities) * 90);
                 $this->media->update(['processing_progress' => $progress]);
@@ -95,16 +98,19 @@ class ProcessVideoJob implements ShouldQueue
             }
 
             $thumbnailPath = str_replace(pathinfo($this->media->path, PATHINFO_EXTENSION), 'jpg', $this->media->path);
-            $video->frame(TimeCode::fromSeconds(1))->save(Storage::disk('public')->path($thumbnailPath));
+            $video->frame(TimeCode::fromSeconds(1))->save(Storage::disk($disk)->path($thumbnailPath));
             
-            if (!Storage::disk('public')->exists($thumbnailPath)) {
+            if (!Storage::disk($disk)->exists($thumbnailPath)) {
                 Log::warning('Failed to generate thumbnail', ['media_id' => $this->media->id]);
             }
+
+            $cdnUrl = config('filesystems.cdn_url');
+            $thumbnailUrl = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($thumbnailPath, '/') : Storage::disk($disk)->url($thumbnailPath);
 
             $this->media->update([
                 'encoding_status' => 'completed',
                 'video_qualities' => $qualities,
-                'thumbnail_url' => Storage::disk('public')->url($thumbnailPath),
+                'thumbnail_url' => $thumbnailUrl,
                 'processing_progress' => 100,
                 'duration' => $duration,
             ]);

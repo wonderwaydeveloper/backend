@@ -86,6 +86,36 @@ class FileValidationService
         return true;
     }
 
+    public function validateAudio(UploadedFile $file): bool
+    {
+        // Check mime type
+        $allowedMimes = [
+            'audio/mpeg',
+            'audio/mp3',
+            'audio/wav',
+            'audio/ogg',
+            'audio/webm',
+            'audio/x-m4a',
+            'application/octet-stream'
+        ];
+        if (!in_array($file->getMimeType(), $allowedMimes)) {
+            throw new \Exception('Invalid audio type');
+        }
+
+        // Check file extension
+        $allowedExtensions = ['mp3', 'wav', 'ogg', 'webm', 'm4a'];
+        if (!in_array(strtolower($file->getClientOriginalExtension()), $allowedExtensions)) {
+            throw new \Exception('Invalid audio extension');
+        }
+
+        // Check file size (max 10MB for voice messages)
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            throw new \Exception('Audio file too large (max 10MB)');
+        }
+
+        return true;
+    }
+
     public function sanitizeFilename(string $filename): string
     {
         // Remove any path traversal attempts

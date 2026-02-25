@@ -11,10 +11,15 @@ class ConversationResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'user_one_id' => $this->user_one_id,
-            'user_two_id' => $this->user_two_id,
-            'user_one' => new UserResource($this->whenLoaded('userOne')),
-            'user_two' => new UserResource($this->whenLoaded('userTwo')),
+            'type' => $this->type,
+            'name' => $this->when($this->isGroup(), $this->name),
+            'user_one_id' => $this->when($this->isDirect(), $this->user_one_id),
+            'user_two_id' => $this->when($this->isDirect(), $this->user_two_id),
+            'user_one' => $this->when($this->isDirect(), new UserResource($this->whenLoaded('userOne'))),
+            'user_two' => $this->when($this->isDirect(), new UserResource($this->whenLoaded('userTwo'))),
+            'participants' => $this->when($this->isGroup(), UserResource::collection($this->whenLoaded('activeParticipants'))),
+            'participants_count' => $this->when($this->isGroup(), $this->activeParticipants()->count()),
+            'max_participants' => $this->when($this->isGroup(), $this->max_participants),
             'last_message' => new MessageResource($this->whenLoaded('lastMessage')),
             'last_message_at' => $this->last_message_at,
             'unread_count' => $this->when(auth()->check(), function() {

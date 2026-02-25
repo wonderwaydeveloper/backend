@@ -283,6 +283,39 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::post('/users/{user}/typing', [MessageController::class, 'typing'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
         Route::post('/{message}/read', [MessageController::class, 'markAsRead'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
         Route::get('/unread-count', [MessageController::class, 'unreadCount'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        
+        // Group Chat Routes
+        Route::post('/groups', [MessageController::class, 'createGroup'])->middleware(['permission:message.send', 'throttle:' . config('limits.rate_limits.messaging.send')]);
+        Route::post('/groups/{conversation}', [MessageController::class, 'sendGroupMessage'])->middleware(['permission:message.send', 'throttle:' . config('limits.rate_limits.messaging.send')]);
+        Route::get('/groups/{conversation}', [MessageController::class, 'getGroupMessages'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/groups/{conversation}/members/{user}', [MessageController::class, 'addMember'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::delete('/groups/{conversation}/members/{user}', [MessageController::class, 'removeMember'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/groups/{conversation}/leave', [MessageController::class, 'leaveGroup'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        
+        // Message Reactions Routes
+        Route::post('/{message}/reactions', [MessageController::class, 'addReaction'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::delete('/{message}/reactions/{emoji}', [MessageController::class, 'removeReaction'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::get('/{message}/reactions', [MessageController::class, 'getReactions'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        
+        // Voice Messages Routes
+        Route::post('/users/{user}/voice', [MessageController::class, 'sendVoice'])->middleware(['permission:message.send', 'throttle:' . config('limits.rate_limits.messaging.send')]);
+        Route::post('/groups/{conversation}/voice', [MessageController::class, 'sendGroupVoice'])->middleware(['permission:message.send', 'throttle:' . config('limits.rate_limits.messaging.send')]);
+        
+        // Message Search Route
+        Route::get('/search', [MessageController::class, 'search'])->middleware('throttle:' . config('limits.rate_limits.search.all'));
+        
+        // Forward/Edit/Delete Routes
+        Route::post('/{message}/forward', [MessageController::class, 'forward'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::put('/{message}/edit', [MessageController::class, 'edit'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::delete('/{message}/delete-for-everyone', [MessageController::class, 'deleteForEveryone'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        
+        // Conversation Settings Routes
+        Route::post('/conversations/{conversation}/mute', [MessageController::class, 'muteConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/conversations/{conversation}/unmute', [MessageController::class, 'unmuteConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/conversations/{conversation}/archive', [MessageController::class, 'archiveConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/conversations/{conversation}/unarchive', [MessageController::class, 'unarchiveConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/conversations/{conversation}/pin', [MessageController::class, 'pinConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
+        Route::post('/conversations/{conversation}/unpin', [MessageController::class, 'unpinConversation'])->middleware('throttle:' . config('limits.rate_limits.messaging.send'));
     });
 
 

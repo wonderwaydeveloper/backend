@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Conversation extends Model
 {
-    protected $guarded = ['id'];
-
+    use HasFactory;
     protected $fillable = [
         'user_one_id',
         'user_two_id',
+        'name',
+        'type',
+        'max_participants',
         'last_message_at',
     ];
 
@@ -33,6 +36,18 @@ class Conversation extends Model
         return $this->hasMany(Message::class);
     }
 
+    public function participants()
+    {
+        return $this->belongsToMany(User::class, 'conversation_participants')
+            ->withPivot('role', 'joined_at', 'left_at')
+            ->withTimestamps();
+    }
+
+    public function activeParticipants()
+    {
+        return $this->participants()->whereNull('conversation_participants.left_at');
+    }
+
     public function lastMessage()
     {
         return $this->hasOne(Message::class)->latest();
@@ -40,7 +55,30 @@ class Conversation extends Model
 
     public function getOtherUser($userId)
     {
+        if ($this->isGroup()) {
+            return null;
+        }
         return $this->user_one_id === $userId ? $this->userTwo : $this->userOne;
+    }
+
+    public function isGroup(): bool
+    {
+        return $this->type === 'group';
+    }
+
+    public function isDirect(): bool
+    {
+        return $this->type === 'direct';
+    }
+
+    public function canAddParticipant(): bool
+    {
+        return $this->activeParticipants()->count() < $this->max_participants;
+    }
+
+    public function hasParticipant(int $userId): bool
+    {
+        return $this->activeParticipants()->where('user_id', $userId)->exists();
     }
 
     public static function between($userOneId, $userTwoId)

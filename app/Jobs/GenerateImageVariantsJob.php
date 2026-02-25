@@ -31,7 +31,9 @@ class GenerateImageVariantsJob implements ShouldQueue
             return;
         }
 
-        if (!Storage::disk('public')->exists($this->media->path)) {
+        $disk = config('filesystems.default', 'public');
+
+        if (!Storage::disk($disk)->exists($this->media->path)) {
             Log::error('Image file not found', ['media_id' => $this->media->id, 'path' => $this->media->path]);
             $this->fail(new \Exception('Image file not found'));
             return;
@@ -39,7 +41,7 @@ class GenerateImageVariantsJob implements ShouldQueue
 
         try {
             $manager = new ImageManager(new Driver());
-            $imageContent = Storage::disk('public')->get($this->media->path);
+            $imageContent = Storage::disk($disk)->get($this->media->path);
             
             if (empty($imageContent)) {
                 throw new \Exception('Image file is empty');
@@ -61,13 +63,14 @@ class GenerateImageVariantsJob implements ShouldQueue
                     $variantPath = $pathInfo['dirname'] . '/' . $pathInfo['filename'] . "_{$name}." . $pathInfo['extension'];
                     
                     $variantContent = $image->toWebp($quality)->toString();
-                    Storage::disk('public')->put($variantPath, $variantContent);
+                    Storage::disk($disk)->put($variantPath, $variantContent);
                     
-                    if (!Storage::disk('public')->exists($variantPath)) {
+                    if (!Storage::disk($disk)->exists($variantPath)) {
                         throw new \Exception("Failed to save {$name} variant");
                     }
                     
-                    $variants[$name] = Storage::disk('public')->url($variantPath);
+                    $cdnUrl = config('filesystems.cdn_url');
+                    $variants[$name] = $cdnUrl ? rtrim($cdnUrl, '/') . '/' . ltrim($variantPath, '/') : Storage::disk($disk)->url($variantPath);
                     Log::info("Generated {$name} variant", ['media_id' => $this->media->id]);
                     
                 } catch (\Exception $e) {

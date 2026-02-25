@@ -76,13 +76,15 @@ class GenerateThumbnailJob implements ShouldQueue
     private function handleNewThumbnail()
     {
         try {
-            if (! Storage::disk('public')->exists($this->imagePath)) {
+            $disk = config('filesystems.default', 'public');
+            
+            if (! Storage::disk($disk)->exists($this->imagePath)) {
                 Log::warning('Image not found for thumbnail generation', ['path' => $this->imagePath]);
 
                 return;
             }
 
-            $imageContent = Storage::disk('public')->get($this->imagePath);
+            $imageContent = Storage::disk($disk)->get($this->imagePath);
             $manager = new ImageManager(new Driver());
             $image = $manager->read($imageContent);
 
@@ -97,7 +99,7 @@ class GenerateThumbnailJob implements ShouldQueue
                 $thumbnailPath = $this->getThumbnailPath($this->imagePath, $size);
                 $thumbnailContent = $thumbnail->toJpeg(80)->toString();
 
-                Storage::disk('public')->put($thumbnailPath, $thumbnailContent);
+                Storage::disk($disk)->put($thumbnailPath, $thumbnailContent);
             }
 
             Log::info('Thumbnails generated successfully', [

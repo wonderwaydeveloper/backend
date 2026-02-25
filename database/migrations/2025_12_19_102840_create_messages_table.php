@@ -14,8 +14,12 @@ return new class () extends Migration {
             $table->id();
             $table->foreignId('conversation_id')->constrained()->cascadeOnDelete();
             $table->foreignId('sender_id')->constrained('users')->cascadeOnDelete();
+            $table->enum('message_type', ['text', 'voice', 'video', 'gif', 'link'])->default('text');
             $table->text('content')->nullable();
             $table->string('gif_url')->nullable();
+            $table->integer('voice_duration')->nullable()->comment('Duration in seconds');
+            $table->foreignId('forwarded_from_message_id')->nullable()->constrained('messages')->nullOnDelete();
+            $table->timestamp('edited_at')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->softDeletes();
             $table->timestamps();
@@ -23,6 +27,8 @@ return new class () extends Migration {
             $table->index(['conversation_id', 'created_at']);
             $table->index('sender_id');
             $table->index('read_at');
+            $table->index(['conversation_id', 'sender_id', 'created_at'], 'messages_conversation_sender_created_idx');
+            $table->index(['sender_id', 'read_at', 'deleted_at'], 'idx_unread_messages');
         });
     }
 
