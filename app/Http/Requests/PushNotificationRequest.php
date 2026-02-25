@@ -15,7 +15,7 @@ class PushNotificationRequest extends FormRequest
     {
         return [
             'device_token' => 'required|string|max:' . config('content.validation.max.url'),
-            'device_type' => 'required|string|in:ios,android,web',
+            'device_type' => 'required|string|in:' . implode(',', config('content.validation.device_types')),
             'app_version' => 'nullable|string|max:' . config('content.validation.max.version'),
             'title' => 'sometimes|required|string|max:' . config('content.validation.max.title'),
             'body' => 'sometimes|required|string|max:' . config('content.validation.max.text_long'),

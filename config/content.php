@@ -54,6 +54,8 @@ return [
             'media_general' => ['max_size_kb' => 10240, 'allowed_types' => ['jpeg', 'png', 'gif', 'webp', 'mp4', 'mov'], 'allowed_mimes' => 'jpeg,png,gif,webp,mp4,mov'],
         ],
 
+        'device_types' => ['ios', 'android', 'web'],
+
         'max' => [
             'name' => 100,
             'title' => 100,

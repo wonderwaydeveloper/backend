@@ -1,9 +1,9 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-25  
-**پیشرفت کلی:** 34.6% (9/26 سیستم کاملاً مطابق با معماری جدید)
+**پیشرفت کلی:** 38.5% (10/26 سیستم کاملاً مطابق با معماری جدید)
 
-> **🎉 آخرین دستاورد:** سیستم Messaging با 62 تست Feature (98.2% موفقیت)
+> **🎉 آخرین دستاورد:** سیستم Notifications با 47 تست Feature (100% موفقیت)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -11,15 +11,15 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 9/26 (34.6%) - 🟢 معماری کامل
+### ✅ سیستمهای تکمیل شده: 10/26 (38.5%) - 🟢 معماری کامل
 ### 🟡 سیستمهای نیمه کامل: 0/26 (0%) - 🟡 نیاز به Script Tests
-### ⚪ سیستمهای بدون تست: 17/26 (65.4%)
+### ⚪ سیستمهای بدون تست: 16/26 (61.5%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2709 تست (Script: 2187 + Feature: 522)
-- **تعداد کل PHPUnit تستها:** 522 تست
-- **میانگین تست هر سیستم:** 301 تست
-- **نرخ موفقیت:** 98.2%
+- **تعداد کل تستها:** 2756 تست (Script: 2187 + Feature: 569)
+- **تعداد کل PHPUnit تستها:** 569 تست
+- **میانگین تست هر سیستم:** 276 تست
+- **نرخ موفقیت:** 100%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
 |---|-------|-------|---------------|---------|--------|--------|
@@ -31,8 +31,8 @@
 | 6 | Social Features | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
-| 9 | Messaging | ✅ | 98.2% | 🟢 کامل | 92/100 | 🔴 حیاتی | ⭐ NEW
-| 10 | Notifications | ⚪ | - | - | - | 🔴 حیاتی |
+| 9 | Messaging | ✅ | 98.2% | 🟢 کامل | 92/100 | 🔴 حیاتی |
+| 10 | Notifications | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
 | 11 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
 | 12 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
 | 13 | Lists | ⚪ | - | - | - | 🔴 حیاتی |
@@ -174,11 +174,16 @@
   - Feature: `tests/Feature/MessagingTest.php` (62 تست، 10 بخش، 54 passed + 1 skipped + 7 bonus)
 - **توضیح:** Direct Messaging، Group Chat، Message Reactions، Voice Messages، Forward/Edit/Delete، Message Search (Meilisearch)، Conversation Settings (Mute/Archive/Pin)، Block/Mute Integration، همه 6 نقش تست شده، Events (MessageSent، UserTyping)، Jobs (ProcessMessageJob)، Role-Permission System Isolation (Spatie Global + Conversation-specific)
 
-#### 10. Notifications
+#### 10. Notifications ✅
 - **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
 - **Features:** Notifications, Preferences, Push
 - **Endpoints:** 13
-- **وضعیت:** ⏳ در انتظار بررسی
+- **وضعیت:** ✅ تکمیل شده (100/100)
+- **Test Coverage:** 100% (47 تست Feature)
+- **تاریخ تکمیل:** 2025-02-25
+- **تست فایلها:**
+  - Feature: `tests/Feature/NotificationSystemTest.php` (47 تست، 9 بخش)
+- **توضیح:** Notification CRUD، Mark as Read/Unread، Preferences، Push Notifications، Integration با Events (UserFollowed، PostLiked، etc.)، همه 6 نقش، Queued Listeners، Real-time Broadcasting
 
 #### 11. Communities
 - **Controllers:** CommunityController, CommunityNoteController
@@ -270,15 +275,15 @@
 - [x] Social Features (✅ 100/100 - 65 تست Feature)
 - [x] Profile & Account (✅ 100/100 - 287 تست)
 - [x] Search & Discovery (✅ 100/100 - 268 تست: Script 207 + Feature 61)
-- [x] Messaging (✅ 99.7/100 - 269 تست: Script 223 + Feature 46)
-- [ ] Notifications
+- [x] Messaging (✅ 92/100 - 62 تست Feature)
+- [x] Notifications (✅ 100/100 - 47 تست Feature)
 - [ ] Communities
 - [ ] Spaces
 - [ ] Lists
 - [ ] Bookmarks & Reposts
 
-**پیشرفت فاز 1:** 9/14 (64.3%)
-**تعداد تستهای فاز 1:** 2709 تست
+**پیشرفت فاز 1:** 10/14 (71.4%)
+**تعداد تستهای فاز 1:** 2756 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
