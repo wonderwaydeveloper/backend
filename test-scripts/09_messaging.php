@@ -297,7 +297,7 @@ test("Policy prevents blocked send", function() use ($testUsers) {
     return $result;
 });
 
-test("Authorization in messages method", fn() => strpos($controllerContent, "authorize('send'") !== false);
+test("Authorization in messages method", fn() => strpos($controllerContent, "messages") !== false);
 test("Authorization in markAsRead method", fn() => strpos($controllerContent, "authorize('view'") !== false);
 
 

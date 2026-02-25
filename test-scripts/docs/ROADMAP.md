@@ -3,7 +3,7 @@
 **آخرین بهروزرسانی:** 2025-02-23  
 **پیشرفت کلی:** 34.6% (9/26 سیستم کاملاً مطابق با معماری جدید)
 
-> **🎉 آخرین دستاورد:** سیستم Messaging با 223 تست Script (99.6% موفقیت)
+> **🎉 آخرین دستاورد:** سیستم Messaging با 269 تست (99.7% موفقیت)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -16,10 +16,10 @@
 ### ⚪ سیستمهای بدون تست: 17/26 (65.4%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2870 تست (Script: 2410 + Feature: 460)
+- **تعداد کل تستها:** 2916 تست (Script: 2456 + Feature: 460)
 - **تعداد کل PHPUnit تستها:** 460 تست
-- **میانگین تست هر سیستم:** 319 تست
-- **نرخ موفقیت:** 99.5%
+- **میانگین تست هر سیستم:** 324 تست
+- **نرخ موفقیت:** 99.6%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
 |---|-------|-------|---------------|---------|--------|--------|
@@ -31,7 +31,7 @@
 | 6 | Social Features | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
-| 9 | Messaging | ✅ | 99.6% | 🟢 کامل | 99.6/100 | 🔴 حیاتی | ⭐ NEW
+| 9 | Messaging | ✅ | 99.7% | 🟢 کامل | 99.7/100 | 🔴 حیاتی | ⭐ NEW
 | 10 | Notifications | ⚪ | - | - | - | 🔴 حیاتی |
 | 11 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
 | 12 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
@@ -163,16 +163,17 @@
 - **توضیح:** Meilisearch Integration، Advanced Search با Permission System (search.basic vs search.advanced)، Trending Algorithm با Time Decay، Block/Mute Filtering، همه 6 نقش تست شده، Rate Limiting مطابق Twitter، Personalized Trending، Velocity Tracking، Cache Strategy
 
 #### 9. Messaging ✅
-- **Controllers:** MessageController (7 methods)
+- **Controllers:** MessageController (6 methods)
 - **Services:** MessageService (5 methods)
 - **Features:** Direct Messages, Conversations, Typing Indicators, Unread Count, Media Attachments
 - **Endpoints:** 6
-- **وضعیت:** ✅ تکمیل شده (99.6/100)
-- **Test Coverage:** 99.6% (223 تست: Script 223)
+- **وضعیت:** ✅ تکمیل شده (99.7/100)
+- **Test Coverage:** 99.7% (269 تست: Script 223 + Feature 46)
 - **تاریخ تکمیل:** 2025-02-23
 - **تست فایلها:**
   - Script: `test-scripts/09_messaging.php` (223 تست، 20 بخش، 99.6% موفقیت)
-- **توضیح:** Direct Messaging، Conversations، Typing Indicators، Read Receipts، Media Attachments، GIF Support، Block/Mute Integration، Authorization با MessagePolicy، همه 6 نقش تست شده، Events (MessageSent، UserTyping)، Jobs (ProcessMessageJob)
+  - Feature: `tests/Feature/MessagingSystemTest.php` (46 تست، 9 بخش، 100% موفقیت)
+- **توضیح:** Direct Messaging، Conversations، Typing Indicators، Read Receipts، Media Attachments، GIF Support، Block/Mute Integration، Authorization با MessagePolicy، همه 6 نقش تست شده، Events (MessageSent، UserTyping)، Jobs (ProcessMessageJob)، Listener (SendMessageNotification)
 
 #### 10. Notifications
 - **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
@@ -270,7 +271,7 @@
 - [x] Social Features (✅ 100/100 - 65 تست Feature)
 - [x] Profile & Account (✅ 100/100 - 287 تست)
 - [x] Search & Discovery (✅ 100/100 - 268 تست: Script 207 + Feature 61)
-- [x] Messaging (✅ 99.6/100 - 223 تست: Script 223)
+- [x] Messaging (✅ 99.7/100 - 269 تست: Script 223 + Feature 46)
 - [ ] Notifications
 - [ ] Communities
 - [ ] Spaces
@@ -278,7 +279,7 @@
 - [ ] Bookmarks & Reposts
 
 **پیشرفت فاز 1:** 9/14 (64.3%)
-**تعداد تستهای فاز 1:** 2223 تست
+**تعداد تستهای فاز 1:** 2269 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
