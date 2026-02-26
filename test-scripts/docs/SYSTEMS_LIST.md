@@ -253,7 +253,7 @@
 
 ---
 
-## 10. Notifications 🔔
+## 10. Communities 🏘️
 
 ### Controllers
 - `NotificationController`
@@ -282,7 +282,7 @@
 
 ---
 
-## 11. Communities 🏘️
+## 11. Spaces (Audio Rooms) 🎙️
 
 ### Controllers
 - `CommunityController`
@@ -311,7 +311,7 @@
 
 ---
 
-## 12. Spaces (Audio Rooms) 🎙️
+## 12. Lists 📋
 
 ### Controller
 - `SpaceController`
@@ -327,7 +327,7 @@
 
 ---
 
-## 13. Lists 📋
+## 13. Bookmarks & Reposts 🔖
 
 ### Controller
 - `ListController`
@@ -347,7 +347,7 @@
 
 ---
 
-## 14. Bookmarks & Reposts 🔖
+## 14. Hashtags #️⃣
 
 ### Controllers
 - `BookmarkController`
@@ -366,7 +366,7 @@
 
 ---
 
-## 15. Hashtags #️⃣
+## 15. Polls 📊
 
 ### Controller
 - `HashtagController`
@@ -379,7 +379,7 @@
 
 ---
 
-## 16. Polls 📊
+## 16. Mentions @
 
 ### Controller
 - `PollController`
@@ -391,15 +391,32 @@
 
 ---
 
-## 17. Mentions @
+## 17. Notifications 🔔
 
-### Controller
-- `MentionController`
+### Controllers
+- `NotificationController`
+- `NotificationPreferenceController`
+- `PushNotificationController`
 
 ### Features
-- GET `/mentions/search-users` - جستجوی کاربران
-- GET `/mentions/my-mentions` - منشنهای من
-- GET `/mentions/{type}/{id}` - منشنهای پست/کامنت
+- **Notifications**
+  - GET `/notifications` - لیست نوتیفیکیشنها
+  - GET `/notifications/unread` - خوانده نشدهها
+  - GET `/notifications/unread-count` - تعداد
+  - POST `/notifications/{notification}/read` - خوانده شده
+  - POST `/notifications/mark-all-read` - همه خوانده شده
+
+- **Preferences**
+  - GET `/notifications/preferences` - تنظیمات
+  - PUT `/notifications/preferences` - ویرایش
+  - PUT `/notifications/preferences/{type}` - ویرایش نوع
+  - PUT `/notifications/preferences/{type}/{category}` - ویرایش دسته
+
+- **Push Notifications**
+  - POST `/push/register` - ثبت دستگاه
+  - DELETE `/push/unregister/{token}` - حذف دستگاه
+  - POST `/push/test` - تست نوتیفیکیشن
+  - GET `/push/devices` - لیست دستگاهها
 
 ---
 

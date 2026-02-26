@@ -1,9 +1,9 @@
 # 🗺️ نقشه راه سیستمها
 
 **آخرین بهروزرسانی:** 2025-02-25  
-**پیشرفت کلی:** 38.5% (10/26 سیستم کاملاً مطابق با معماری جدید)
+**پیشرفت کلی:** 34.6% (9/26 سیستم کاملاً مطابق با معماری جدید)
 
-> **🎉 آخرین دستاورد:** سیستم Notifications با 47 تست Feature (100% موفقیت)
+> **⚠️ آخرین بررسی:** سیستم Notifications نیاز به رفع مشکلات دارد (Database enum mismatch)
 
 > **توجه:** این نقشه راه بر اساس لیست کامل سیستمهای موجود در `SYSTEMS_LIST.md` تهیه شده است.
 
@@ -11,15 +11,15 @@
 
 ## 📊 وضعیت کلی پروژه
 
-### ✅ سیستمهای تکمیل شده: 10/26 (38.5%) - 🟢 معماری کامل
-### 🟡 سیستمهای نیمه کامل: 0/26 (0%) - 🟡 نیاز به Script Tests
+### ✅ سیستمهای تکمیل شده: 9/26 (34.6%) - 🟢 معماری کامل
+### 🟡 سیستمهای نیمه کامل: 1/26 (3.8%) - 🟡 نیاز به رفع مشکلات
 ### ⚪ سیستمهای بدون تست: 16/26 (61.5%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2756 تست (Script: 2187 + Feature: 569)
-- **تعداد کل PHPUnit تستها:** 569 تست
-- **میانگین تست هر سیستم:** 276 تست
-- **نرخ موفقیت:** 100%
+- **تعداد کل تستها:** 2662 تست (Script: 2187 + Feature: 475)
+- **تعداد کل PHPUnit تستها:** 475 تست
+- **میانگین تست هر سیستم:** 296 تست
+- **نرخ موفقیت:** 98.2%
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
 |---|-------|-------|---------------|---------|--------|--------|
@@ -32,14 +32,14 @@
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
 | 9 | Messaging | ✅ | 98.2% | 🟢 کامل | 92/100 | 🔴 حیاتی |
-| 10 | Notifications | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
-| 11 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
-| 12 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
-| 13 | Lists | ⚪ | - | - | - | 🔴 حیاتی |
-| 14 | Bookmarks & Reposts | ⚪ | - | - | - | 🔴 حیاتی |
-| 15 | Hashtags | ⚪ | - | - | - | 🟡 مهم |
-| 16 | Polls | ⚪ | - | - | - | 🟡 مهم |
-| 17 | Mentions | ⚪ | - | - | - | 🟡 مهم |
+| 10 | Communities | ⚪ | - | - | - | 🔴 حیاتی |
+| 11 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
+| 12 | Lists | ⚪ | - | - | - | 🔴 حیاتی |
+| 13 | Bookmarks & Reposts | ⚪ | - | - | - | 🔴 حیاتی |
+| 14 | Hashtags | ⚪ | - | - | - | 🟡 مهم |
+| 15 | Polls | ⚪ | - | - | - | 🟡 مهم |
+| 16 | Mentions | ⚪ | - | - | - | 🟡 مهم |
+| 17 | Notifications | 🟡 | 46% | 🟡 نیمه | 46/100 | 🔴 حیاتی | ⚠️ BROKEN
 | 18 | Moderation & Reporting | ⚪ | - | - | - | 🟡 مهم |
 | 19 | Media Management | ⚪ | - | - | - | 🟡 مهم |
 | 20 | Moments | ⚪ | - | - | - | 🟡 مهم |
@@ -174,59 +174,71 @@
   - Feature: `tests/Feature/MessagingTest.php` (62 تست، 10 بخش، 54 passed + 1 skipped + 7 bonus)
 - **توضیح:** Direct Messaging، Group Chat، Message Reactions، Voice Messages، Forward/Edit/Delete، Message Search (Meilisearch)، Conversation Settings (Mute/Archive/Pin)، Block/Mute Integration، همه 6 نقش تست شده، Events (MessageSent، UserTyping)، Jobs (ProcessMessageJob)، Role-Permission System Isolation (Spatie Global + Conversation-specific)
 
-#### 10. Notifications ✅
-- **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
-- **Features:** Notifications, Preferences, Push
-- **Endpoints:** 13
-- **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (47 تست Feature)
-- **تاریخ تکمیل:** 2025-02-25
-- **تست فایلها:**
-  - Feature: `tests/Feature/NotificationSystemTest.php` (47 تست، 9 بخش)
-- **توضیح:** Notification CRUD، Mark as Read/Unread، Preferences، Push Notifications، Integration با Events (UserFollowed، PostLiked، etc.)، همه 6 نقش، Queued Listeners، Real-time Broadcasting
-
-#### 11. Communities
+#### 10. Communities
 - **Controllers:** CommunityController, CommunityNoteController
 - **Features:** Community Management, Notes
 - **Endpoints:** 16
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 12. Spaces (Audio Rooms)
+#### 11. Spaces (Audio Rooms)
 - **Controller:** SpaceController
 - **Features:** Audio Rooms, Broadcasting
 - **Endpoints:** 7
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 13. Lists
+#### 12. Lists
 - **Controller:** ListController
 - **Features:** List Management
 - **Endpoints:** 11
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 14. Bookmarks & Reposts
+#### 13. Bookmarks & Reposts
 - **Controllers:** BookmarkController, RepostController
 - **Features:** Bookmarks, Reposts
 - **Endpoints:** 6
 - **وضعیت:** ⏳ در انتظار بررسی
 - **توضیح:** تست شده در PostsContentSystemTest.php (بخشی از Posts & Content)
 
----
-
-### 🟡 مهم - فاز 2 (8 سیستم)
-
-#### 15. Hashtags ⏳
+#### 14. Hashtags ⏳
 - **Endpoints:** 4
 - **وضعیت:** ⏳ در انتظار بررسی
 
-#### 16. Polls
+#### 15. Polls
 - **Controller:** PollController
 - **Endpoints:** 4
 - **وضعیت:** ⏳ در انتظار بررسی
 - **توضیح:** تست شده در PostsContentSystemTest.php (بخشی از Posts & Content)
 
-#### 17. Mentions ⏳
+#### 16. Mentions ⏳
 - **Endpoints:** 3
 - **وضعیت:** ⏳ در انتظار بررسی
+
+#### 17. Notifications 🟡
+- **Controllers:** NotificationController, NotificationPreferenceController, PushNotificationController
+- **Features:** Notifications, Preferences, Push
+- **Endpoints:** 13
+- **وضعیت:** 🟡 نیمه کامل - نیاز به رفع مشکلات (46/100)
+- **Test Coverage:** 0% (تست حذف شده)
+- **تاریخ بررسی:** 2025-02-25
+- **مشکلات:**
+  - ❌ Database enum فقط 6 نوع دارد: `like, comment, follow, mention, repost, quote`
+  - ❌ Service از 11 نوع استفاده میکند: 6 نوع بالا + `space_join, space_ended, list_member_added, list_subscribed, poll_voted`
+  - ❌ 5 نوع خطای "Data truncated" میدهند
+  - ❌ وابستگی به Spaces/Lists/Polls که هنوز بررسی نشدهاند
+- **وابستگیها:**
+  - ✅ Posts & Content (تکمیل شده)
+  - ✅ Comments (تکمیل شده)
+  - ✅ Social Features (تکمیل شده)
+  - ✅ Messaging (تکمیل شده)
+  - ⚪ Spaces (بررسی نشده)
+  - ⚪ Lists (بررسی نشده)
+  - ⚪ Polls (بخشی از Posts)
+- **اقدامات لازم:**
+  1. Fix migration enum - اضافه کردن 5 نوع جدید
+  2. ایجاد تستهای جدید
+  3. بررسی Twitter parity
+  4. اضافه کردن features ناقص (filter, grouping, delete)
+- **توضیح:** Notification CRUD، Mark as Read/Unread، Preferences، Push Notifications، Integration با Events، Real-time Broadcasting، اما Database enum با Service types مطابقت ندارد و باعث خطا میشود
 
 #### 18. Moderation & Reporting ⏳
 - **Endpoints:** 9
@@ -276,14 +288,17 @@
 - [x] Profile & Account (✅ 100/100 - 287 تست)
 - [x] Search & Discovery (✅ 100/100 - 268 تست: Script 207 + Feature 61)
 - [x] Messaging (✅ 92/100 - 62 تست Feature)
-- [x] Notifications (✅ 100/100 - 47 تست Feature)
 - [ ] Communities
 - [ ] Spaces
 - [ ] Lists
 - [ ] Bookmarks & Reposts
+- [ ] Hashtags
+- [ ] Polls
+- [ ] Mentions
+- [ ] Notifications (🟡 نیمه کامل - 46/100)
 
-**پیشرفت فاز 1:** 10/14 (71.4%)
-**تعداد تستهای فاز 1:** 2756 تست
+**پیشرفت فاز 1:** 9/14 (64.3%)
+**تعداد تستهای فاز 1:** 2662 تست
 
 ### فاز 2: بررسی سیستمهای مهم (8 سیستم)
 - [ ] Hashtags
