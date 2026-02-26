@@ -50,7 +50,7 @@ class CommunityController extends Controller
             'joined_at' => now(),
         ]);
 
-        $community->increment('member_count');
+        $community->incrementMemberCount();
 
         return response()->json([
             'message' => 'Community created successfully',
@@ -97,7 +97,7 @@ class CommunityController extends Controller
         }
 
         if ($community->privacy === 'private') {
-            // Check if request already exists
+            // Check if pending request already exists
             $existingRequest = CommunityJoinRequest::where([
                 'community_id' => $community->id,
                 'user_id' => $user->id,
@@ -107,6 +107,12 @@ class CommunityController extends Controller
             if ($existingRequest) {
                 return response()->json(['message' => 'Join request already sent'], Response::HTTP_BAD_REQUEST);
             }
+
+            // Delete old rejected/approved requests to allow new request
+            CommunityJoinRequest::where([
+                'community_id' => $community->id,
+                'user_id' => $user->id,
+            ])->whereIn('status', ['rejected', 'approved'])->delete();
 
             CommunityJoinRequest::create([
                 'community_id' => $community->id,
@@ -121,7 +127,7 @@ class CommunityController extends Controller
             'joined_at' => now(),
         ]);
 
-        $community->increment('member_count');
+        $community->incrementMemberCount();
 
         return response()->json(['message' => 'Joined successfully']);
     }
@@ -140,7 +146,7 @@ class CommunityController extends Controller
         }
 
         $community->members()->detach($user->id);
-        $community->decrement('member_count');
+        $community->decrementMemberCount();
 
         return response()->json(['message' => 'Left community successfully']);
     }

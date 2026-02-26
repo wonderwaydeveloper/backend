@@ -23,9 +23,15 @@ class Community extends Model
         'rules',
         'settings',
         'created_by',
+        'is_verified',
+    ];
+
+    protected $guarded = [
+        'id',
         'member_count',
         'post_count',
-        'is_verified',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
@@ -33,6 +39,16 @@ class Community extends Model
         'settings' => 'array',
         'is_verified' => 'boolean',
     ];
+
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = strip_tags($value);
+    }
+
+    public function setDescriptionAttribute($value)
+    {
+        $this->attributes['description'] = strip_tags($value);
+    }
 
     protected static function boot()
     {
@@ -111,5 +127,37 @@ class Community extends Model
     public function scopeVerified($query)
     {
         return $query->where('is_verified', true);
+    }
+
+    public function decrement($column, $amount = 1, array $extra = [])
+    {
+        if (in_array($column, ['member_count', 'post_count'])) {
+            $this->$column = max(0, $this->$column - $amount);
+            $this->save();
+            return $this;
+        }
+        return parent::decrement($column, $amount, $extra);
+    }
+
+    public function incrementMemberCount()
+    {
+        $this->increment('member_count');
+    }
+
+    public function decrementMemberCount()
+    {
+        $this->member_count = max(0, $this->member_count - 1);
+        $this->save();
+    }
+
+    public function incrementPostCount()
+    {
+        $this->increment('post_count');
+    }
+
+    public function decrementPostCount()
+    {
+        $this->post_count = max(0, $this->post_count - 1);
+        $this->save();
     }
 }

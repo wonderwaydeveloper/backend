@@ -23,6 +23,25 @@ class CommunityJoinRequest extends Model
         'reviewed_at' => 'datetime',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($request) {
+            if ($request->status === 'pending') {
+                $exists = static::where([
+                    'community_id' => $request->community_id,
+                    'user_id' => $request->user_id,
+                    'status' => 'pending',
+                ])->exists();
+                
+                if ($exists) {
+                    throw new \Exception('A pending join request already exists for this user and community.');
+                }
+            }
+        });
+    }
+
     public function community(): BelongsTo
     {
         return $this->belongsTo(Community::class);

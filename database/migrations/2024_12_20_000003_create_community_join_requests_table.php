@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
             
-            $table->unique(['community_id', 'user_id']);
+            $table->index(['community_id', 'user_id', 'status']);
             $table->index(['status', 'created_at']);
         });
     }
