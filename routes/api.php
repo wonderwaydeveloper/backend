@@ -563,9 +563,9 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
     });
 
     // Communities Routes
-    Route::prefix('communities')->group(function () {
+    Route::prefix('communities')->middleware('security:communities')->group(function () {
         Route::get('/', [CommunityController::class, 'index']);
-        Route::post('/', [CommunityController::class, 'store']);
+        Route::post('/', [CommunityController::class, 'store'])->middleware('permission:community.create');
         Route::get('/{community}', [CommunityController::class, 'show']);
         Route::put('/{community}', [CommunityController::class, 'update']);
         Route::delete('/{community}', [CommunityController::class, 'destroy']);

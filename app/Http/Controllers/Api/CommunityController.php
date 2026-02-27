@@ -9,6 +9,8 @@ use App\Http\Resources\CommunityResource;
 use App\Http\Resources\PostResource;
 use App\Models\Community;
 use App\Models\CommunityJoinRequest;
+use App\Events\CommunityCreated;
+use App\Events\MemberJoined;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -51,6 +53,8 @@ class CommunityController extends Controller
         ]);
 
         $community->incrementMemberCount();
+
+        event(new CommunityCreated($community));
 
         return response()->json([
             'message' => 'Community created successfully',
@@ -128,6 +132,8 @@ class CommunityController extends Controller
         ]);
 
         $community->incrementMemberCount();
+
+        event(new MemberJoined($community, $user));
 
         return response()->json(['message' => 'Joined successfully']);
     }

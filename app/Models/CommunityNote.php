@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\CommunityNoteApproved;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -53,7 +54,14 @@ class CommunityNote extends Model
 
     public function shouldBeApproved(): bool
     {
-        return $this->helpful_votes >= 3 && $this->getHelpfulnessRatio() >= 0.7;
+        $shouldApprove = $this->helpful_votes >= 3 && $this->getHelpfulnessRatio() >= 0.7;
+        
+        if ($shouldApprove && $this->status !== 'approved') {
+            $this->update(['status' => 'approved', 'approved_at' => now()]);
+            event(new CommunityNoteApproved($this));
+        }
+        
+        return $shouldApprove;
     }
 
     public function scopeApproved($query)

@@ -23,13 +23,13 @@ class Community extends Model
         'rules',
         'settings',
         'created_by',
-        'is_verified',
     ];
 
     protected $guarded = [
         'id',
         'member_count',
         'post_count',
+        'is_verified',
         'created_at',
         'updated_at',
     ];

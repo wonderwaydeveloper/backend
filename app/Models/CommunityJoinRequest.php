@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\MemberJoined;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,6 +78,8 @@ class CommunityJoinRequest extends Model
         ]);
 
         $this->community->increment('member_count');
+        
+        event(new MemberJoined($this->community, $this->user));
     }
 
     public function reject(User $reviewer): void
