@@ -20,7 +20,9 @@ class CommunityController extends Controller
 {
     public function index(Request $request)
     {
-        $communities = Community::query()
+        $user = $request->user();
+        
+        $query = Community::query()
             ->when($request->search, function($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                       ->orWhere('description', 'like', "%{$search}%");
@@ -30,8 +32,20 @@ class CommunityController extends Controller
             })
             ->when($request->verified, function($query) {
                 $query->verified();
-            })
-            ->withCount('members', 'posts')
+            });
+        
+        // Filter blocked/muted users
+        if ($user) {
+            $blockedIds = $user->blockedUsers()->pluck('blocked_id');
+            $mutedIds = $user->mutedUsers()->pluck('muted_id');
+            $excludedIds = $blockedIds->merge($mutedIds)->unique();
+            
+            if ($excludedIds->isNotEmpty()) {
+                $query->whereNotIn('created_by', $excludedIds);
+            }
+        }
+        
+        $communities = $query->withCount('members', 'posts')
             ->orderBy('member_count', 'desc')
             ->paginate(20);
 
@@ -40,10 +54,19 @@ class CommunityController extends Controller
 
     public function store(StoreCommunityRequest $request): JsonResponse
     {
+        $slug = Str::slug($request->name);
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (Community::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+        
         $community = Community::create([
             ...$request->validated(),
             'created_by' => auth()->id(),
-            'slug' => Str::slug($request->name),
+            'slug' => $slug,
         ]);
 
         // Add creator as owner
@@ -173,11 +196,27 @@ class CommunityController extends Controller
 
     public function members(Community $community, Request $request)
     {
-        $members = $community->members()
+        $this->authorize('view', $community);
+        
+        $user = $request->user();
+        
+        $query = $community->members()
             ->when($request->role, function($query, $role) {
                 $query->wherePivot('role', $role);
-            })
-            ->paginate(config('limits.pagination.users'));
+            });
+        
+        // Filter blocked/muted users
+        if ($user) {
+            $blockedIds = $user->blockedUsers()->pluck('blocked_id');
+            $mutedIds = $user->mutedUsers()->pluck('muted_id');
+            $excludedIds = $blockedIds->merge($mutedIds)->unique();
+            
+            if ($excludedIds->isNotEmpty()) {
+                $query->whereNotIn('users.id', $excludedIds);
+            }
+        }
+        
+        $members = $query->paginate(config('limits.pagination.users'));
 
         return response()->json($members);
     }

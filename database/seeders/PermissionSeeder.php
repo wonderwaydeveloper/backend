@@ -81,7 +81,11 @@ class PermissionSeeder extends Seeder
 
         // Communities
         Permission::firstOrCreate(['name' => 'community.create', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.update.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.delete.own', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'community.moderate.own', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.manage.members', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.manage.roles', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'community.post', 'guard_name' => 'sanctum']);
 
         // Moments
@@ -186,6 +190,7 @@ class PermissionSeeder extends Seeder
             'mention.view', 'mention.create',
             'search.basic',
             'media.upload', 'media.delete', 'media.view',
+            'community.create', 'community.post',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
             'device.view', 'device.register',
@@ -205,7 +210,7 @@ class PermissionSeeder extends Seeder
             'mention.view', 'mention.create',
             'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view',
-            'community.post',
+            'community.create', 'community.update.own', 'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
@@ -227,7 +232,7 @@ class PermissionSeeder extends Seeder
             'mention.view', 'mention.create',
             'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view', 'media.upload.hd',
-            'community.create', 'community.moderate.own', 'community.post',
+            'community.create', 'community.update.own', 'community.delete.own', 'community.moderate.own', 'community.manage.members', 'community.manage.roles', 'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
@@ -251,7 +256,7 @@ class PermissionSeeder extends Seeder
             'mention.view', 'mention.create',
             'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view', 'media.upload.hd',
-            'community.create', 'community.moderate.own', 'community.post',
+            'community.create', 'community.update.own', 'community.delete.own', 'community.moderate.own', 'community.manage.members', 'community.manage.roles', 'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'report.create',
@@ -274,7 +279,7 @@ class PermissionSeeder extends Seeder
             'mention.view', 'mention.create',
             'search.basic', 'search.advanced',
             'media.upload', 'media.delete', 'media.view',
-            'community.post',
+            'community.create', 'community.update.own', 'community.delete.own', 'community.moderate.own', 'community.manage.members', 'community.manage.roles', 'community.post',
             'moment.create', 'moment.edit.own', 'moment.delete.own', 'moment.manage.posts',
             'realtime.status.update', 'realtime.users.view', 'realtime.timeline.view',
             'user.ban', 'user.suspend', 'content.moderate', 'report.review', 'report.create',

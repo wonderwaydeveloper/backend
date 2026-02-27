@@ -12,16 +12,14 @@ return new class () extends Migration {
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('from_user_id')->nullable()->constrained('users')->cascadeOnDelete();
-            $table->enum('type', ['like', 'comment', 'follow', 'mention', 'repost', 'quote']);
+            $table->string('type', 255);
             $table->morphs('notifiable');
-            $table->text('data')->nullable();
+            $table->text('data');
             $table->timestamp('read_at')->nullable();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->timestamps();
 
             $table->index(['user_id', 'read_at']);
-            // Performance indexes
             $table->index(['user_id', 'read_at', 'created_at'], 'notifications_user_idx');
         });
     }

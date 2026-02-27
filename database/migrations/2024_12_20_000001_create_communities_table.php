@@ -24,6 +24,9 @@ return new class extends Migration
             $table->boolean('is_verified')->default(false);
             $table->timestamps();
             
+            $table->index('name');
+            $table->index('is_verified');
+            $table->index('created_by');
             $table->index(['privacy', 'created_at']);
             $table->index('member_count');
         });
