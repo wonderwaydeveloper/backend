@@ -87,6 +87,9 @@ class PermissionSeeder extends Seeder
         Permission::firstOrCreate(['name' => 'community.manage.members', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'community.manage.roles', 'guard_name' => 'sanctum']);
         Permission::firstOrCreate(['name' => 'community.post', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.remove.members', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.update.roles', 'guard_name' => 'sanctum']);
+        Permission::firstOrCreate(['name' => 'community.ban.members', 'guard_name' => 'sanctum']);
 
         // Moments
         Permission::firstOrCreate(['name' => 'moment.create', 'guard_name' => 'sanctum']);

@@ -41,6 +41,9 @@ return new class () extends Migration {
             $table->integer('thread_position')->nullable();
             $table->foreignId('community_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_pinned')->default(false);
+            $table->boolean('is_pinned_in_community')->default(false);
+            $table->timestamp('pinned_at')->nullable();
+            $table->foreignId('pinned_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('published_at')->nullable();
             $table->timestamp('last_edited_at')->nullable();
             $table->boolean('is_edited')->default(false);
@@ -54,6 +57,7 @@ return new class () extends Migration {
             $table->index(['thread_id', 'thread_position']);
             $table->index(['community_id', 'created_at']);
             $table->index(['community_id', 'is_pinned']);
+            $table->index(['community_id', 'is_pinned_in_community', 'pinned_at']);
             // Performance indexes
             $table->index(['user_id', 'is_draft', 'published_at'], 'posts_timeline_idx');
             $table->index(['published_at', 'likes_count'], 'posts_trending_idx');

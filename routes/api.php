@@ -576,7 +576,25 @@ Route::middleware(['auth:sanctum', 'security:api'])->group(function () {
         Route::get('/{community}/join-requests', [CommunityController::class, 'joinRequests']);
         Route::post('/{community}/join-requests/{request}/approve', [CommunityController::class, 'approveJoinRequest']);
         Route::post('/{community}/join-requests/{request}/reject', [CommunityController::class, 'rejectJoinRequest']);
+        Route::delete('/{community}/members/{user}', [CommunityController::class, 'removeMember']);
+        Route::put('/{community}/members/{user}/role', [CommunityController::class, 'updateMemberRole']);
+        Route::post('/{community}/members/{user}/ban', [CommunityController::class, 'banMember']);
+        Route::delete('/{community}/members/{user}/ban', [CommunityController::class, 'unbanMember']);
+        Route::post('/{community}/transfer-ownership', [CommunityController::class, 'transferOwnership']);
+        Route::post('/{community}/posts/{post}/pin', [CommunityController::class, 'pinPost']);
+        Route::delete('/{community}/posts/{post}/pin', [CommunityController::class, 'unpinPost']);
+        Route::delete('/{community}/posts/{post}', [CommunityController::class, 'removePost']);
+        Route::post('/{community}/mute', [CommunityController::class, 'muteCommunity']);
+        Route::delete('/{community}/mute', [CommunityController::class, 'unmuteCommunity']);
+        Route::get('/{community}/notifications/settings', [CommunityController::class, 'getNotificationSettings']);
+        Route::put('/{community}/notifications/settings', [CommunityController::class, 'updateNotificationSettings']);
+        Route::post('/{community}/invites', [CommunityController::class, 'createInvite']);
+        Route::get('/{community}/invites', [CommunityController::class, 'getInvites']);
+        Route::delete('/{community}/invites/{code}', [CommunityController::class, 'deleteInvite']);
     });
+
+    // Join with invite code (outside community prefix)
+    Route::post('/communities/join/{code}', [CommunityController::class, 'joinWithCode']);
 
 });
 

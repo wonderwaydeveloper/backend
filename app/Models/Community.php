@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -78,9 +79,27 @@ class Community extends Model
         return $this->hasMany(Post::class);
     }
 
+    public function pinnedPosts()
+    {
+        return $this->posts()
+            ->where('is_pinned_in_community', true)
+            ->orderBy('pinned_at', 'desc')
+            ->limit(3);
+    }
+
     public function joinRequests(): HasMany
     {
         return $this->hasMany(CommunityJoinRequest::class);
+    }
+
+    public function bans(): HasMany
+    {
+        return $this->hasMany(CommunityBan::class);
+    }
+
+    public function invites(): HasMany
+    {
+        return $this->hasMany(CommunityInvite::class);
     }
 
     public function moderators(): BelongsToMany
@@ -105,6 +124,25 @@ class Community extends Model
     public function canUserJoin(User $user): bool
     {
         return !$this->members()->where('user_id', $user->id)->exists();
+    }
+
+    public function isBanned(User $user): bool
+    {
+        return $this->bans()
+            ->where('user_id', $user->id)
+            ->where(function($q) {
+                $q->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+            })
+            ->exists();
+    }
+
+    public function isMutedBy(User $user): bool
+    {
+        return DB::table('community_mutes')
+            ->where('community_id', $this->id)
+            ->where('user_id', $user->id)
+            ->exists();
     }
 
     public function getUserRole(User $user): ?string

@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\{Event, Notification};
  * Communities System - Feature Test Suite
  * 
  * Architecture: 9 Standard Sections (FEATURE_TEST_ARCHITECTURE.md)
- * Coverage: 16 Endpoints + Security + Integration
- * Total Tests: 60+
+ * Coverage: 32 Endpoints + Security + Integration
+ * Total Tests: 98
  * 
- * @version 1.0.0
+ * @version 2.0.0 (Upgraded - 84% Twitter Parity)
  * @date 2025-02-25
  */
 class CommunityTest extends TestCase
@@ -37,7 +37,8 @@ class CommunityTest extends TestCase
         $this->user->givePermissionTo([
             'community.create', 'community.update.own', 'community.delete.own',
             'community.moderate.own', 'community.manage.members', 'community.manage.roles',
-            'community.post'
+            'community.post', 'community.remove.members', 'community.update.roles',
+            'community.ban.members'
         ]);
         $this->token = $this->user->createToken('test')->plainTextToken;
     }
@@ -194,6 +195,304 @@ class CommunityTest extends TestCase
         $response->assertOk();
     }
 
+    /** @test */
+    public function test_can_remove_member()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/members/{$member->id}");
+        
+        $response->assertOk();
+        $this->assertDatabaseMissing('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $member->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_update_member_role()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->putJson("/api/communities/{$community->id}/members/{$member->id}/role", [
+                'role' => 'moderator'
+            ]);
+        
+        $response->assertOk();
+        $this->assertEquals('moderator', $community->members()->find($member->id)->pivot->role);
+    }
+
+    /** @test */
+    public function test_can_ban_member()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Spam',
+                'duration' => 7
+            ]);
+        
+        $response->assertOk();
+        $this->assertDatabaseHas('community_bans', [
+            'community_id' => $community->id,
+            'user_id' => $member->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_unban_member()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $member = User::factory()->create();
+        \DB::table('community_bans')->insert([
+            'community_id' => $community->id,
+            'user_id' => $member->id,
+            'banned_by' => $this->user->id,
+            'banned_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/members/{$member->id}/ban");
+        
+        $response->assertOk();
+        $this->assertDatabaseMissing('community_bans', [
+            'community_id' => $community->id,
+            'user_id' => $member->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_pin_post()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/posts/{$post->id}/pin");
+        
+        $response->assertOk();
+        $this->assertTrue($post->fresh()->is_pinned_in_community);
+    }
+
+    /** @test */
+    public function test_can_unpin_post()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $post = Post::factory()->create([
+            'community_id' => $community->id,
+            'is_pinned_in_community' => true
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/posts/{$post->id}/pin");
+        
+        $response->assertOk();
+        $this->assertFalse($post->fresh()->is_pinned_in_community);
+    }
+
+    /** @test */
+    public function test_can_remove_post_from_community()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/posts/{$post->id}");
+        
+        $response->assertOk();
+        $this->assertNull($post->fresh()->community_id);
+    }
+
+    /** @test */
+    public function test_can_mute_community()
+    {
+        $community = Community::factory()->create();
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/mute");
+        
+        $response->assertOk();
+        $this->assertDatabaseHas('community_mutes', [
+            'community_id' => $community->id,
+            'user_id' => $this->user->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_unmute_community()
+    {
+        $community = Community::factory()->create();
+        \DB::table('community_mutes')->insert([
+            'community_id' => $community->id,
+            'user_id' => $this->user->id,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/mute");
+        
+        $response->assertOk();
+        $this->assertDatabaseMissing('community_mutes', [
+            'community_id' => $community->id,
+            'user_id' => $this->user->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_get_notification_settings()
+    {
+        $community = Community::factory()->create();
+        $community->members()->attach($this->user->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->getJson("/api/communities/{$community->id}/notifications/settings");
+        
+        $response->assertOk()
+            ->assertJsonStructure(['settings']);
+    }
+
+    /** @test */
+    public function test_can_update_notification_settings()
+    {
+        $community = Community::factory()->create();
+        $community->members()->attach($this->user->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->putJson("/api/communities/{$community->id}/notifications/settings", [
+                'new_posts' => false,
+                'new_members' => true,
+                'role_changes' => true,
+                'mentions' => true,
+                'announcements' => false
+            ]);
+        
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_create_invite()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/invites", [
+                'max_uses' => 10,
+                'expires_in_days' => 7
+            ]);
+        
+        $response->assertCreated()
+            ->assertJsonStructure(['invite' => ['invite_code']]);
+    }
+
+    /** @test */
+    public function test_can_list_invites()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->getJson("/api/communities/{$community->id}/invites");
+        
+        $response->assertOk()
+            ->assertJsonStructure(['invites']);
+    }
+
+    /** @test */
+    public function test_can_delete_invite()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $invite = \DB::table('community_invites')->insertGetId([
+            'community_id' => $community->id,
+            'invited_by' => $this->user->id,
+            'invite_code' => 'TEST123456',
+            'max_uses' => 1,
+            'uses' => 0,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/invites/TEST123456");
+        
+        $response->assertOk();
+    }
+
+    /** @test */
+    public function test_can_join_with_invite_code()
+    {
+        $community = Community::factory()->create();
+        $inviter = User::factory()->create();
+        
+        \DB::table('community_invites')->insert([
+            'community_id' => $community->id,
+            'invited_by' => $inviter->id,
+            'invite_code' => 'VALID12345',
+            'max_uses' => 10,
+            'uses' => 0,
+            'expires_at' => now()->addDays(7),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson('/api/communities/join/VALID12345');
+        
+        $response->assertOk();
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $this->user->id
+        ]);
+    }
+
+    /** @test */
+    public function test_can_transfer_ownership()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $newOwner = User::factory()->create();
+        $community->members()->attach($newOwner->id, ['role' => 'admin', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/transfer-ownership", [
+                'user_id' => $newOwner->id,
+                'confirm' => true
+            ]);
+        
+        $response->assertOk();
+        $this->assertEquals('owner', $community->members()->find($newOwner->id)->pivot->role);
+        $this->assertEquals('admin', $community->members()->find($this->user->id)->pivot->role);
+    }
+
     // ==================== SECTION 2: Authentication & Authorization ====================
 
     /** @test */
@@ -308,6 +607,69 @@ class CommunityTest extends TestCase
         $response->assertOk();
     }
 
+    /** @test */
+    public function test_non_owner_cannot_remove_member()
+    {
+        $community = Community::factory()->create();
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/members/{$member->id}");
+        
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function test_non_owner_cannot_ban_member()
+    {
+        $community = Community::factory()->create();
+        $member = User::factory()->create();
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Test'
+            ]);
+        
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function test_non_moderator_cannot_pin_post()
+    {
+        $community = Community::factory()->create();
+        $post = Post::factory()->create(['community_id' => $community->id]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/posts/{$post->id}/pin");
+        
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function test_non_member_cannot_get_notification_settings()
+    {
+        $community = Community::factory()->create();
+        
+        $response = $this->withToken($this->token)
+            ->getJson("/api/communities/{$community->id}/notifications/settings");
+        
+        $response->assertForbidden();
+    }
+
+    /** @test */
+    public function test_non_owner_cannot_create_invite()
+    {
+        $community = Community::factory()->create();
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/invites", [
+                'max_uses' => 10
+            ]);
+        
+        $response->assertForbidden();
+    }
+
     // ==================== SECTION 3: Validation & Error Handling ====================
 
     /** @test */
@@ -406,6 +768,87 @@ class CommunityTest extends TestCase
         $response->assertNotFound();
     }
 
+    /** @test */
+    public function test_invalid_role_rejected()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $response = $this->withToken($this->token)
+            ->putJson("/api/communities/{$community->id}/members/{$member->id}/role", [
+                'role' => 'invalid_role'
+            ]);
+        
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_max_pinned_posts_enforced()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        // Pin 3 posts
+        for ($i = 0; $i < 3; $i++) {
+            $post = Post::factory()->create(['community_id' => $community->id]);
+            $this->withToken($this->token)
+                ->postJson("/api/communities/{$community->id}/posts/{$post->id}/pin");
+        }
+        
+        // Try to pin 4th post
+        $post4 = Post::factory()->create(['community_id' => $community->id]);
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/posts/{$post4->id}/pin");
+        
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_expired_invite_rejected()
+    {
+        $community = Community::factory()->create();
+        $inviter = User::factory()->create();
+        
+        \DB::table('community_invites')->insert([
+            'community_id' => $community->id,
+            'invited_by' => $inviter->id,
+            'invite_code' => 'EXPIRED123',
+            'max_uses' => 10,
+            'uses' => 0,
+            'expires_at' => now()->subDays(1),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson('/api/communities/join/EXPIRED123');
+        
+        $response->assertStatus(422);
+    }
+
+    /** @test */
+    public function test_banned_user_cannot_join()
+    {
+        $community = Community::factory()->create();
+        $banner = User::factory()->create();
+        
+        \DB::table('community_bans')->insert([
+            'community_id' => $community->id,
+            'user_id' => $this->user->id,
+            'banned_by' => $banner->id,
+            'banned_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/join");
+        
+        $response->assertForbidden();
+    }
+
     // ==================== SECTION 4: Integration with Other Systems ====================
 
     /** @test */
@@ -493,6 +936,77 @@ class CommunityTest extends TestCase
         $this->withToken($this->token)->postJson("/api/communities/{$community->id}/join");
         
         Event::assertDispatched(\App\Events\MemberJoined::class);
+    }
+
+    /** @test */
+    public function test_event_dispatched_on_member_removed()
+    {
+        Event::fake();
+        
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/members/{$member->id}");
+        
+        Event::assertDispatched(\App\Events\MemberRemoved::class);
+    }
+
+    /** @test */
+    public function test_event_dispatched_on_role_updated()
+    {
+        Event::fake();
+        
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $this->withToken($this->token)
+            ->putJson("/api/communities/{$community->id}/members/{$member->id}/role", [
+                'role' => 'moderator'
+            ]);
+        
+        Event::assertDispatched(\App\Events\MemberRoleUpdated::class);
+    }
+
+    /** @test */
+    public function test_event_dispatched_on_member_banned()
+    {
+        Event::fake();
+        
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Test'
+            ]);
+        
+        Event::assertDispatched(\App\Events\MemberBanned::class);
+    }
+
+    /** @test */
+    public function test_event_dispatched_on_ownership_transferred()
+    {
+        Event::fake();
+        
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $newOwner = User::factory()->create();
+        $community->members()->attach($newOwner->id, ['role' => 'admin', 'joined_at' => now()]);
+        
+        $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/transfer-ownership", [
+                'user_id' => $newOwner->id,
+                'confirm' => true
+            ]);
+        
+        Event::assertDispatched(\App\Events\OwnershipTransferred::class);
     }
 
     /** @test */
@@ -623,6 +1137,25 @@ class CommunityTest extends TestCase
         // Creator is auto-added as owner, member_count should be 1
         $this->assertEquals(1, $community->member_count);
         $this->assertEquals(1, $community->members()->count());
+    }
+
+    /** @test */
+    public function test_member_counter_decremented_on_ban()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        $community->incrementMemberCount();
+        
+        $beforeCount = $community->fresh()->member_count;
+        
+        $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Test'
+            ]);
+        
+        $this->assertEquals($beforeCount - 1, $community->fresh()->member_count);
     }
 
     /** @test */
@@ -759,6 +1292,50 @@ class CommunityTest extends TestCase
         $this->assertNotEquals($oldTimestamp->timestamp, $community->fresh()->updated_at->timestamp);
     }
 
+    /** @test */
+    public function test_ban_with_duration_expires()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Test',
+                'duration' => 7
+            ]);
+        
+        $ban = \DB::table('community_bans')
+            ->where('community_id', $community->id)
+            ->where('user_id', $member->id)
+            ->first();
+        
+        $this->assertNotNull($ban->expires_at);
+    }
+
+    /** @test */
+    public function test_invite_max_uses_enforced()
+    {
+        $community = Community::factory()->create();
+        $inviter = User::factory()->create();
+        
+        $inviteId = \DB::table('community_invites')->insertGetId([
+            'community_id' => $community->id,
+            'invited_by' => $inviter->id,
+            'invite_code' => 'MAXUSE1234',
+            'max_uses' => 1,
+            'uses' => 1,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+        
+        $response = $this->withToken($this->token)
+            ->postJson('/api/communities/join/MAXUSE1234');
+        
+        $response->assertStatus(422);
+    }
+
     // ==================== SECTION 8: Real-world Scenarios ====================
 
     /** @test */
@@ -817,6 +1394,79 @@ class CommunityTest extends TestCase
         
         $response->assertOk();
         $this->assertEquals('private', $community->fresh()->privacy);
+    }
+
+    /** @test */
+    public function test_complete_member_management_workflow()
+    {
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        $member = User::factory()->create();
+        $community->members()->attach($member->id, ['role' => 'member', 'joined_at' => now()]);
+        
+        // Update role
+        $this->withToken($this->token)
+            ->putJson("/api/communities/{$community->id}/members/{$member->id}/role", [
+                'role' => 'moderator'
+            ]);
+        $this->assertEquals('moderator', $community->members()->find($member->id)->pivot->role);
+        
+        // Ban member
+        $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/members/{$member->id}/ban", [
+                'reason' => 'Test'
+            ]);
+        $this->assertDatabaseHas('community_bans', [
+            'community_id' => $community->id,
+            'user_id' => $member->id
+        ]);
+        
+        // Unban member
+        $this->withToken($this->token)
+            ->deleteJson("/api/communities/{$community->id}/members/{$member->id}/ban");
+        $this->assertDatabaseMissing('community_bans', [
+            'community_id' => $community->id,
+            'user_id' => $member->id
+        ]);
+    }
+
+    /** @test */
+    public function test_complete_invite_workflow()
+    {
+        // Disable notifications to avoid database compatibility issues
+        Notification::fake();
+        
+        $community = Community::factory()->create(['created_by' => $this->user->id]);
+        $community->members()->attach($this->user->id, ['role' => 'owner', 'joined_at' => now()]);
+        
+        // Create invite
+        $response = $this->withToken($this->token)
+            ->postJson("/api/communities/{$community->id}/invites", [
+                'max_uses' => 5,
+                'expires_in_days' => 7
+            ]);
+        $inviteCode = $response->json('invite.invite_code');
+        
+        // Join with invite
+        $newUser = User::factory()->create();
+        $newUser->assignRole('user');
+        $newToken = $newUser->createToken('test')->plainTextToken;
+        
+        $response = $this->withToken($newToken)
+            ->postJson("/api/communities/join/{$inviteCode}");
+        
+        // Debug output
+        if ($response->status() !== 200) {
+            dump('Response Status: ' . $response->status());
+            dump('Response Body: ' . json_encode($response->json(), JSON_PRETTY_PRINT));
+        }
+        
+        $response->assertOk();
+        $this->assertDatabaseHas('community_members', [
+            'community_id' => $community->id,
+            'user_id' => $newUser->id
+        ]);
     }
 
     // ==================== SECTION 9: Performance & Response ====================

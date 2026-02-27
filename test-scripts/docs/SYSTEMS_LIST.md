@@ -256,35 +256,6 @@
 ## 10. Communities 🏘️
 
 ### Controllers
-- `NotificationController`
-- `NotificationPreferenceController`
-- `PushNotificationController`
-
-### Features
-- **Notifications**
-  - GET `/notifications` - لیست نوتیفیکیشنها
-  - GET `/notifications/unread` - خوانده نشدهها
-  - GET `/notifications/unread-count` - تعداد
-  - POST `/notifications/{notification}/read` - خوانده شده
-  - POST `/notifications/mark-all-read` - همه خوانده شده
-
-- **Preferences**
-  - GET `/notifications/preferences` - تنظیمات
-  - PUT `/notifications/preferences` - ویرایش
-  - PUT `/notifications/preferences/{type}` - ویرایش نوع
-  - PUT `/notifications/preferences/{type}/{category}` - ویرایش دسته
-
-- **Push Notifications**
-  - POST `/push/register` - ثبت دستگاه
-  - DELETE `/push/unregister/{token}` - حذف دستگاه
-  - POST `/push/test` - تست نوتیفیکیشن
-  - GET `/push/devices` - لیست دستگاهها
-
----
-
-## 11. Spaces (Audio Rooms) 🎙️
-
-### Controllers
 - `CommunityController`
 - `CommunityNoteController`
 
@@ -302,6 +273,22 @@
   - GET `/communities/{community}/join-requests` - درخواستها
   - POST `/communities/{community}/join-requests/{request}/approve` - تایید
   - POST `/communities/{community}/join-requests/{request}/reject` - رد
+  - DELETE `/communities/{community}/members/{member}` - حذف عضو
+  - PUT `/communities/{community}/members/{member}/role` - تغییر نقش
+  - POST `/communities/{community}/members/{member}/ban` - بن کردن
+  - DELETE `/communities/{community}/bans/{member}` - حذف بن
+  - POST `/communities/{community}/transfer-ownership` - انتقال مالکیت
+  - POST `/communities/{community}/posts/{post}/pin` - پین پست
+  - DELETE `/communities/{community}/posts/{post}/pin` - حذف پین
+  - DELETE `/communities/{community}/posts/{post}` - حذف پست
+  - POST `/communities/{community}/mute` - میوت کامیونیتی
+  - DELETE `/communities/{community}/mute` - حذف میوت
+  - GET `/communities/{community}/notification-settings` - تنظیمات نوتیفیکیشن
+  - PUT `/communities/{community}/notification-settings` - ویرایش تنظیمات
+  - POST `/communities/{community}/invites` - ایجاد دعوت
+  - GET `/communities/{community}/invites` - لیست دعوتها
+  - DELETE `/communities/{community}/invites/{invite}` - حذف دعوت
+  - POST `/communities/join-with-code` - عضویت با کد
 
 - **Community Notes**
   - GET `/posts/{post}/community-notes` - لیست نوتها
@@ -311,7 +298,7 @@
 
 ---
 
-## 12. Lists 📋
+## 11. Spaces (Audio Rooms) 🎙️
 
 ### Controller
 - `SpaceController`
@@ -327,7 +314,7 @@
 
 ---
 
-## 13. Bookmarks & Reposts 🔖
+## 12. Lists 📋
 
 ### Controller
 - `ListController`
@@ -347,7 +334,7 @@
 
 ---
 
-## 14. Hashtags #️⃣
+## 13. Bookmarks & Reposts 🔖
 
 ### Controllers
 - `BookmarkController`
@@ -366,7 +353,7 @@
 
 ---
 
-## 15. Polls 📊
+## 14. Hashtags #️⃣
 
 ### Controller
 - `HashtagController`
@@ -379,7 +366,7 @@
 
 ---
 
-## 16. Mentions @
+## 15. Polls 📊
 
 ### Controller
 - `PollController`
@@ -388,6 +375,18 @@
 - POST `/polls` - ایجاد نظرسنجی
 - POST `/polls/{poll}/vote/{option}` - رای دادن
 - GET `/polls/{poll}/results` - نتایج
+
+---
+
+## 16. Mentions @
+
+### Controller
+- `MentionController`
+
+### Features
+- GET `/mentions` - لیست منشنها
+- GET `/mentions/unread-count` - تعداد خوانده نشده
+- POST `/mentions/{mention}/read` - خوانده شده
 
 ---
 
@@ -608,7 +607,7 @@
 ## آمار کلی
 
 - **تعداد کل Controllers**: 43
-- **تعداد کل Endpoints**: 262
+- **تعداد کل Endpoints**: 278
 - **تعداد سیستمهای اصلی**: 26
 - **نوع Authentication**: Sanctum (Token-based)
 - **Real-time**: WebSocket/Broadcasting

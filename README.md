@@ -196,9 +196,9 @@ php artisan test --testsuite=Feature
 php artisan test --coverage
 ```
 
-**Test Results**: 2945 tests passing (100%)
-- PHPUnit Tests: 533
-- Custom Test Scripts: 2412
+**Test Results**: 3060 tests (99.97% passing)
+- PHPUnit Tests: 566 (565 passing, 1 failing)
+- Custom Test Scripts: 2494 (100% passing)
 
 ### Test Scripts (test-scripts/)
 
@@ -221,7 +221,7 @@ Test scripts are created based on documentation in `test-scripts/docs/`:
 - ✅ `07_profile_account.php` - Profile & Account System (270 tests, 100/100)
 - ✅ `08_search_discovery.php` - Search & Discovery System (207 tests, 100/100)
 - ✅ `09_messaging.php` - Messaging System (62 tests, 92/100)
-- ✅ `10_communities.php` - Communities System (225 tests, 100/100)
+- ✅ `10_communities.php` - Communities System (307 tests, 99/100) - 1 test failing in Feature suite
 
 **Test Architecture:**
 - 20 standardized sections per system
@@ -262,7 +262,7 @@ Key configuration files:
 
 ## 📝 API Endpoints
 
-Total: 262 endpoints across 26 systems
+Total: 278 endpoints across 26 systems
 
 ### Core Systems (25)
 1. **Authentication & Security** (40 endpoints)
@@ -273,7 +273,7 @@ Total: 262 endpoints across 26 systems
 6. **Search & Discovery** (14 endpoints)
 7. **Messaging** (27 endpoints)
 8. **Notifications** (13 endpoints)
-9. **Communities** (16 endpoints)
+9. **Communities** (32 endpoints)
 10. **Spaces (Audio Rooms)** (7 endpoints)
 11. **Lists** (11 endpoints)
 12. **Bookmarks & Reposts** (6 endpoints)

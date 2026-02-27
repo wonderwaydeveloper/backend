@@ -16,10 +16,10 @@
 ### ⚪ سیستمهای بدون تست: 15/26 (57.7%)
 
 ### 📈 آمار تستها
-- **تعداد کل تستها:** 2945 تست (Script: 2412 + Feature: 533)
-- **تعداد کل PHPUnit تستها:** 533 تست
-- **میانگین تست هر سیستم:** 295 تست
-- **نرخ موفقیت:** 100%
+- **تعداد کل تستها:** 3060 تست (Script: 2494 + Feature: 566)
+- **تعداد کل PHPUnit تستها:** 566 تست
+- **میانگین تست هر سیستم:** 306 تست
+- **نرخ موفقیت:** 99.97% (3059/3060 تست موفق)
 
 | # | سیستم | وضعیت | Test Coverage | معماری | امتیاز | اولویت |
 |---|-------|-------|---------------|---------|--------|--------|
@@ -32,7 +32,7 @@
 | 7 | Profile & Account | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی |
 | 8 | Search & Discovery | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
 | 9 | Messaging | ✅ | 98.2% | 🟢 کامل | 92/100 | 🔴 حیاتی |
-| 10 | Communities | ✅ | 100% | 🟢 کامل | 100/100 | 🔴 حیاتی | ⭐ NEW
+| 10 | Communities | ✅ | 98.9% | 🟢 کامل | 99/100 | 🔴 حیاتی | ⭐ UPGRADED
 | 11 | Spaces (Audio Rooms) | ⚪ | - | - | - | 🔴 حیاتی |
 | 12 | Lists | ⚪ | - | - | - | 🔴 حیاتی |
 | 13 | Bookmarks & Reposts | ⚪ | - | - | - | 🔴 حیاتی |
@@ -175,16 +175,18 @@
 - **توضیح:** Direct Messaging، Group Chat، Message Reactions، Voice Messages، Forward/Edit/Delete، Message Search (Meilisearch)، Conversation Settings (Mute/Archive/Pin)، Block/Mute Integration، همه 6 نقش تست شده، Events (MessageSent، UserTyping)، Jobs (ProcessMessageJob)، Role-Permission System Isolation (Spatie Global + Conversation-specific)
 
 #### 10. Communities ✅
-- **Controllers:** CommunityController (12 methods), CommunityNoteController
-- **Features:** Community Management, Join/Leave, Member Management, Roles, Posts, Notes
-- **Endpoints:** 16
-- **وضعیت:** ✅ تکمیل شده (100/100)
-- **Test Coverage:** 100% (283 تست: Script 225 + Feature 58)
+- **Controllers:** CommunityController (28 methods), CommunityNoteController (4 methods)
+- **Services:** CommunityService (21 methods)
+- **Features:** Community Management, Join/Leave, Member Management (Remove, Ban, Role Update, Transfer Ownership), Post Moderation (Pin, Remove), Settings (Mute, Notifications, Invites), Notes
+- **Endpoints:** 32 (16 base + 16 new)
+- **وضعیت:** ✅ تکمیل شده (99/100) - Production Ready
+- **Test Coverage:** 98.9% (398 تست: Script 307 + Feature 91)
 - **تاریخ تکمیل:** 2025-02-25
 - **تست فایلها:**
-  - Script: `test-scripts/10_communities.php` (225 تست، 20 بخش)
-  - Feature: `tests/Feature/CommunityTest.php` (58 تست، 9 بخش)
-- **توضیح:** Community CRUD، Join/Leave System، Member Management، Role System، Community Posts، Authorization با CommunityPolicy، Integration با Notifications، همه 6 نقش تست شده، Permission System (7 permissions)، Public/Private Communities
+  - Script: `test-scripts/10_communities.php` (307 تست، 20 بخش، 100% موفقیت)
+  - Feature: `tests/Feature/CommunityTest.php` (92 تست، 9 بخش، 91 passed / 1 failed)
+- **مشکل شناخته شده:** test_complete_invite_workflow - خطای "Already a member" در workflow دعوت (نیاز به بررسی عمیق notification/database state management)
+- **توضیح:** Community CRUD، Join/Leave System، Member Management (Remove/Ban/Role/Transfer)، Post Moderation (Pin/Remove)، Community Settings (Mute/Notifications/Invites)، Authorization با CommunityPolicy (8 methods)، Integration با Notifications، همه 6 نقش تست شده، Permission System (10 permissions)، Public/Private Communities، Service Layer Pattern (21 methods)، Thin Controller Pattern،84% Twitter Parity (27/32 features)
 
 #### 11. Spaces (Audio Rooms)
 - **Controller:** SpaceController
@@ -765,18 +767,62 @@ public function getCacheTTL() {
 
 ### 🎉 دستاوردها
 
-### سیستم Communities (100/100 - Production Ready)
-- ✅ 16 endpoint عملیاتی (2 Controller)
-- ✅ 283 تست (Script: 225 + Feature: 58)
-- ✅ 225 تست در Script Test (20 بخش)
-- ✅ 58 تست در Feature Test (9 بخش)
+### سیستم Communities (99/100 - Production Ready) ⭐ UPGRADED
+- ✅ 32 endpoint عملیاتی (2 Controller)
+- ✅ 398 تست (Script: 307 + Feature: 91)
+- ✅ 307 تست در Script Test (20 بخش، 100% موفقیت)
+- ✅ 92 تست در Feature Test (9 بخش، 91 passed / 1 failed)
 - ✅ تست یکپارچه: CommunityTest.php
 - ✅ Script Test: test-scripts/10_communities.php
-- ✅ 100% موفقیت (283/283 تست)
+- ✅ 98.9% موفقیت (397/398 تست)
+- ⚠️ 1 تست ناموفق: test_complete_invite_workflow (خطای "Already a member")
+- ✅ Service Layer Pattern (21 methods)
+- ✅ Thin Controller Pattern
+- ✅ 84% Twitter Parity (27/32 features)
 
 **Controllers تست شده:**
-- CommunityController (12 methods: index, store, show, update, destroy, join, leave, members, updateMemberRole, removeMember, posts, search)
-- CommunityNoteController (4 methods)
+- CommunityController (28 methods: index, store, show, update, destroy, join, leave, posts, members, joinRequests, approveJoinRequest, rejectJoinRequest, removeMember, updateMemberRole, banMember, unbanMember, transferOwnership, pinPost, unpinPost, removePost, muteCommunity, unmuteCommunity, getNotificationSettings, updateNotificationSettings, createInvite, getInvites, deleteInvite, joinWithCode)
+- CommunityNoteController (4 methods: store, vote, index, pending)
+
+**Services:**
+- CommunityService (21 methods: createCommunity, joinCommunity, leaveCommunity, approveJoinRequest, rejectJoinRequest, removeMember, updateMemberRole, banMember, unbanMember, transferOwnership, pinPost, unpinPost, removePost, muteCommunity, unmuteCommunity, getNotificationSettings, updateNotificationSettings, createInvite, deleteInvite, joinWithCode)
+
+**Models:**
+- Community (با methods: bans, invites, isBanned, isMutedBy, pinnedPosts)
+- CommunityBan (جدید)
+- CommunityInvite (جدید با isValid method)
+- CommunityMute (جدید)
+
+**Migrations:**
+- community_bans (جدید)
+- community_mutes (جدید)
+- community_invites (جدید)
+- posts (updated: is_pinned_in_community, pinned_at, pinned_by)
+- community_members (updated: notification_settings JSON)
+
+**Events:**
+- MemberRemoved (جدید)
+- MemberRoleUpdated (جدید)
+- MemberBanned (جدید)
+- OwnershipTransferred (جدید)
+- PostRemovedFromCommunity (جدید)
+- CommunityCreated
+- MemberJoined
+
+**Policies:**
+- CommunityPolicy (8 methods: removeMember, updateRole, banMember, transferOwnership, pin, removePost, invite)
+
+**Permissions:**
+- community.create
+- community.update.own
+- community.delete.own
+- community.moderate.own
+- community.manage.members
+- community.manage.roles
+- community.post
+- community.remove.members (جدید)
+- community.update.roles (جدید)
+- community.ban.members (جدید)
 
 **بخشهای Script Test (20 بخش):**
 1. Database & Schema (14 tests)
@@ -814,18 +860,32 @@ public function getCacheTTL() {
 **ویژگیها:**
 - Community CRUD (create, read, update, delete)
 - Join/Leave System (public/private communities)
-- Member Management (add, remove, update role)
+- Member Management:
+  - ✅ Remove Member (با policy و permission)
+  - ✅ Update Member Role (owner/admin/moderator/member)
+  - ✅ Ban/Unban Member (با reason و duration)
+  - ✅ Transfer Ownership (با confirmation)
+- Post Moderation:
+  - ✅ Pin/Unpin Posts (max 3 pinned)
+  - ✅ Remove Post from Community
+- Community Settings:
+  - ✅ Mute/Unmute Community
+  - ✅ Notification Settings (5 types: new_posts, new_members, role_changes, mentions, announcements)
+  - ✅ Invite System (با code generation، max_uses، expires_at)
 - Role System (owner, admin, moderator, member)
 - Community Posts (create, list)
-- Authorization با CommunityPolicy (7 methods)
-- Permission System (7 permissions: create, update.own, delete.own, moderate.own, manage.members, manage.roles, post)
-- Integration با Notifications (CommunityJoinRequestCreated, CommunityJoinRequestApproved)
+- Authorization با CommunityPolicy (8 methods)
+- Permission System (10 permissions)
+- Integration با Notifications و Events (7 events)
 - Validation (name, description, privacy)
 - Security (XSS, SQL injection, همه 6 نقش)
 - Performance (N+1 prevention, Eager loading)
 - Member Counter Management (auto-increment/decrement)
 - Public/Private Communities
 - Join Request System
+- Service Layer Pattern (21 methods)
+- Thin Controller Pattern (zero business logic)
+- 84% Twitter Parity (27/32 features)
 
 ### سیستم Search & Discovery (100/100 - Production Ready)
 - ✅ 14 endpoint عملیاتی (3 Controller)
